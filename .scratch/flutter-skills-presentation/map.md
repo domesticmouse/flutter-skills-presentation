@@ -23,6 +23,8 @@ A complete **Presentation Script & Slidev Deck Specification** demonstrating the
 
 <!-- the index: one line per closed ticket, enough to judge relevance, then zoom the link for the detail the ticket holds -->
 
+- [Audience, Talk Duration, and Core Thesis](./issues/01-audience-and-talk-thesis.md): 45–50 min university lecture for React mobile dev students; thesis frames rules and Agent Skills as turning `agy` from a **Comprehension Debt** generator into a design partner (`/wayfinder`) and React-to-Flutter tutor (`/teach-code`) across a 4-part arc (Act 0 Hidden Variable + Acts 1–3).
+
 ## Not yet specified
 
 - **Trace & Cast Curation**: Once the **Terminal Casts** and **Session Traces** are captured, deciding which specific turns, tool-call diffs (`/agy-brain-explorer compare`), and generated artifacts (`GLOSSARY.md`, `map.md`, and `/teach-code`'s `tutorial/` HTML lessons/reference sheets) best illustrate the behavioral shift on slides.
