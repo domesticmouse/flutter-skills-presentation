@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PROTOTYPE — Ticket 05: Asciinema Stop Points & Slidev Chapter Navigation</title>
+  <style>
+    :root {
+      --bg-slide: #121317;
+      --bg-term: #1a1b26;
+      --bg-panel: #181a20;
+      --bg-card: #1e2029;
+      --border: rgba(255, 255, 255, 0.1);
+      --border-active: #7aa2f7;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #7aa2f7;
+      --accent-dim: rgba(122, 162, 247, 0.15);
+      --emerald: #34d399;
+      --emerald-dim: rgba(52, 211, 153, 0.15);
+      --amber: #fbbf24;
+      --amber-dim: rgba(251, 191, 36, 0.15);
+      --red: #f87171;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0 0 90px 0;
+      background: #0b0c0f;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+    }
+
+    /* Top Prototype Banner */
+    .proto-header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+    }
+    .proto-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .proto-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--amber-dim);
+      color: var(--amber);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      font-weight: 600;
+    }
+    .proto-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 4px 0;
+    }
+    .proto-question {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 4px 0 0 0;
+      max-width: 980px;
+    }
+
+    /* Main Workspace Grid: Left = Slidev Preview (UI Variants), Right = State & Walkthroughs (Logic) */
+    .workspace {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 20px;
+      padding: 20px 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    @media (max-width: 1150px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Slidev 16:9 Mock Viewport */
+    .slide-frame-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .frame-label-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+    .slidev-viewport {
+      background: var(--bg-slide);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      aspect-ratio: 16 / 9;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+
+    /* Simulated Terminal Output inside Slide */
+    .term-box {
+      background: var(--bg-term);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 8px;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      overflow: hidden;
+      position: relative;
+    }
+    .term-lines {
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .term-prompt { color: #7aa2f7; font-weight: 600; }
+    .term-cmd { color: #f3f4f6; }
+    .term-dim { color: #9aa5ce; }
+    .term-ok { color: #34d399; }
+    .term-marker-banner {
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(251, 191, 36, 0.12);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      color: var(--amber);
+      font-size: 11.5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Native asciinema progress bar simulation */
+    .ap-control-bar {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .ap-timeline {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+    }
+    .ap-progress {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.2s ease;
+    }
+    .ap-marker-dot {
+      position: absolute;
+      top: -3px;
+      width: 4px;
+      height: 12px;
+      background: var(--amber);
+      border-radius: 2px;
+      transform: translateX(-50%);
+      cursor: pointer;
+    }
+
+    /* VARIANT A: Header Chapter Stepper Bar */
+    .va-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 10px;
+    }
+    .va-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .va-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+    }
+    .va-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .va-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .chapter-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .chapter-pill:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      color: var(--text-main);
+    }
+    .chapter-pill.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    .chapter-pill.done {
+      border-color: rgba(52, 211, 153, 0.35);
+      color: var(--emerald);
+    }
+
+    /* VARIANT B: Side-Rail Workflow Timeline */
+    .vb-body {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 225px 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .vb-rail {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .vb-step {
+      padding: 6px 8px;
+      border-radius: 6px;
+      border-left: 3px solid transparent;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+    }
+    .vb-step.active {
+      background: var(--accent-dim);
+      border-left-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    .vb-step.done {
+      border-left-color: var(--emerald);
+      color: var(--emerald);
+    }
+
+    /* VARIANT C: Bottom Scrubber Dock */
+    .vc-dock {
+      margin-top: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .vc-segments {
+      display: flex;
+      flex: 1;
+      gap: 4px;
+    }
+    .vc-seg {
+      flex: 1;
+      padding: 4px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid transparent;
+      text-align: center;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-muted);
+    }
+    .vc-seg.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    .vc-seg.done {
+      background: var(--emerald-dim);
+      color: var(--emerald);
+    }
+
+    /* Right Column: State Machine & Walkthroughs */
+    .logic-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin: 0 0 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* State Inspection Grid */
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .state-field {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    .state-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: block;
+    }
+    .state-val {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .state-diff {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(122, 162, 247, 0.3);
+      font-size: 12px;
+      color: #dbeafe;
+    }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .btn {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 11px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn:hover {
+      border-color: var(--accent);
+      background: rgba(122, 162, 247, 0.12);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0b0c0f;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover {
+      background: #93b4f9;
+    }
+
+    /* Guided Walkthrough Tabs */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .tab-btn.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .walkthrough-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .step-btn {
+      text-align: left;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .step-btn.current-step {
+      border-color: var(--amber);
+      background: var(--amber-dim);
+    }
+    .step-btn.completed-step {
+      opacity: 0.6;
+      border-color: rgba(52, 211, 153, 0.3);
+    }
+
+    /* Floating Variant Switcher Bar (per UI.md) */
+    .variant-switcher {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111827;
+      border: 1px solid rgba(122, 162, 247, 0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75);
+      border-radius: 999px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999;
+      font-size: 13px;
+    }
+    .vs-arrow {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .vs-arrow:hover {
+      background: var(--accent);
+      color: #000;
+    }
+    .vs-label {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: #fff;
+      min-width: 260px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Intro & Question -->
+  <header class="proto-header">
+    <div class="proto-header-top">
+      <div>
+        <span class="proto-badge">Throwaway Prototype · Ticket 05</span>
+        <h1 class="proto-title">Asciinema Stop Points &amp; Slidev Chapter Navigation</h1>
+      </div>
+      <div style="font-family: var(--font-mono); font-size: 12px; color: var(--text-muted);">
+        Switch UI Variants with bottom bar or <code>?variant=A|B|C</code>
+      </div>
+    </div>
+    <p class="proto-question">
+      <strong>Question being prototyped:</strong> In the single-cast <strong>Skilled Run</strong> (spanning 6 Matt Pocock skill steps), how should chapter markers be injected into the <code>.cast</code> file, and how should <code>cast-full.vue</code> + <code>AsciinemaPlayer.vue</code> let the presenter pause at and jump between chapters on stage without accidentally triggering Slidev's slide-advance keys (<code>Space</code> / <code>→</code>)?
+    </p>
+  </header>
+
+  <main class="workspace">
+    <!-- LEFT: 16:9 Slidev Mock Viewport rendering Variant A, B, or C -->
+    <section class="slide-frame-container">
+      <div class="frame-label-bar">
+        <span id="viewport-variant-title">Slidev 16:9 Preview (`layout: cast-full`)</span>
+        <span id="viewport-slide-indicator">Slide 14 / 28 · Key Press Result: None</span>
+      </div>
+
+      <div class="slidev-viewport" id="slidev-root">
+        <!-- Rendered dynamically by renderSlideVariant() -->
+      </div>
+    </section>
+
+    <!-- RIGHT: State Inspector, Free-Play Controls, and Guided Walkthroughs -->
+    <section class="logic-column">
+      <!-- 1. Current State Panel -->
+      <div class="card">
+        <h2 class="card-title">
+          <span>Current Player &amp; Slide State</span>
+          <span style="font-family: var(--font-mono); font-size: 11px; color: var(--emerald);">Pure State Machine</span>
+        </h2>
+        <div class="state-grid" id="state-grid"></div>
+        <div class="state-diff" id="state-last-event"></div>
+      </div>
+
+      <!-- 2. Free-Play Controls -->
+      <div class="card">
+        <h2 class="card-title">Free-Play Controls (Test Any Action)</h2>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="dispatch({ type: 'TOGGLE_PLAY' })">▶ / ⏸ Play / Resume</button>
+          <button class="btn" onclick="dispatch({ type: 'ADVANCE_TO_NEXT_MARKER' })">⏭ Advance to Next MarkerHit</button>
+          <button class="btn" onclick="dispatch({ type: 'STEP_CHAPTER', delta: 1 })">Next Chapter (`]`)</button>
+          <button class="btn" onclick="dispatch({ type: 'STEP_CHAPTER', delta: -1 })">Prev Chapter (`[`)</button>
+          <button class="btn" onclick="dispatch({ type: 'TOGGLE_PAUSE_ON_MARKERS' })">Toggle `pauseOnMarkers`</button>
+          <button class="btn" onclick="dispatch({ type: 'CHANGE_MARKER_SOURCE' })">Cycle Marker Source</button>
+          <button class="btn" onclick="dispatch({ type: 'PRESS_SLIDEV_RIGHT_ARROW' })">Simulate `→` Key (Slidev)</button>
+        </div>
+      </div>
+
+      <!-- 3. Guided Walkthroughs -->
+      <div class="card">
+        <h2 class="card-title">Guided Walkthrough Scenarios</h2>
+        <div class="tabs" id="walkthrough-tabs"></div>
+        <div class="walkthrough-desc" id="walkthrough-desc"></div>
+        <div class="step-list" id="walkthrough-steps"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating Bottom Switcher Bar -->
+  <div class="variant-switcher" role="navigation" aria-label="Prototype Variant Switcher">
+    <button class="vs-arrow" onclick="cycleVariant(-1)" title="Previous Variant (←)">←</button>
+    <div class="vs-label" id="vs-label">Variant A (Header Chapter Pills)</div>
+    <button class="vs-arrow" onclick="cycleVariant(1)" title="Next Variant (→)">→</button>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PORTABLE LOGIC MODULE: Pure State Machine for Cast Chapter Stepping   -->
+  <!-- ===================================================================== -->
+  <script>
+    const SKILLED_RUN_CHAPTERS = [
+      {
+        index: 0,
+        time: 0.0,
+        shortLabel: "1. /setup-skills",
+        fullLabel: "1. /setup-matt-pocock-skills",
+        cmd: "agy",
+        prompt: "/setup-matt-pocock-skills",
+        output: [
+          "✔ Detected repo root: electronics-catalog-skilled",
+          "✔ Selected issue tracker: Local Markdown (.scratch/)",
+          "✔ Configured single-context GLOSSARY.md + docs/adr/",
+          "✔ Wrote AGENTS.md and docs/agents/wayfinding.md"
+        ]
+      },
+      {
+        index: 1,
+        time: 14.5,
+        shortLabel: "2. /wayfinder (Chart)",
+        fullLabel: "2. /wayfinder (Chart Map)",
+        cmd: "agy",
+        prompt: "/wayfinder I'd like to build a Flutter app for iOS that enables me to track my electronics parts",
+        output: [
+          "Calling skills: grilling, domain-modeling...",
+          "✔ Created GLOSSARY.md (Part, Category, Storage Location, Quantity on Hand)",
+          "✔ Created .scratch/electronics-catalog/map.md (Label: wayfinder:map)",
+          "✔ Created child decision tickets 01..04 and wired blocking edges"
+        ]
+      },
+      {
+        index: 2,
+        time: 38.0,
+        shortLabel: "3. /wayfinder (Resolve)",
+        fullLabel: "3. /wayfinder (Resolve Tickets)",
+        cmd: "agy",
+        prompt: "/wayfinder",
+        output: [
+          "Loaded map.md -> Claimed first frontier ticket: 01-part-schema-and-categories",
+          "Resolved decision -> Appended context pointer to Decisions so far",
+          "All decision tickets closed! Map route to destination is clear."
+        ]
+      },
+      {
+        index: 3,
+        time: 64.0,
+        shortLabel: "4. /to-spec",
+        fullLabel: "4. /to-spec",
+        cmd: "agy",
+        prompt: "/to-spec",
+        output: [
+          "Synthesizing map.md + GLOSSARY.md + closed tickets...",
+          "✔ Defined architecture & deep-module testing seams (PartRepository, CatalogController)",
+          "✔ Wrote .scratch/electronics-catalog/spec.md"
+        ]
+      },
+      {
+        index: 4,
+        time: 82.5,
+        shortLabel: "5. /to-tickets",
+        fullLabel: "5. /to-tickets",
+        cmd: "agy",
+        prompt: "/to-tickets",
+        output: [
+          "Breaking spec.md into vertical-slice tracer bullets...",
+          "✔ Created impl-01-seed-catalog-slice.md",
+          "✔ Created impl-02-search-and-category-filter.md",
+          "✔ Created impl-03-quantity-stepper-and-add-edit.md"
+        ]
+      },
+      {
+        index: 5,
+        time: 98.0,
+        shortLabel: "6. /implement",
+        fullLabel: "6. /implement",
+        cmd: "agy",
+        prompt: "/implement",
+        output: [
+          "Running RED-GREEN-REFACTOR (/tdd) + /code-review...",
+          "✔ flutter analyze: No issues found!",
+          "✔ flutter test: All 14 widget & repository tests passed!",
+          "✔ Intent Artifacts committed alongside working Flutter iOS app."
+        ]
+      }
+    ];
+
+    const MARKER_SOURCES = [
+      "Embedded .cast 'm' events (Ctrl+x + mark-cast.py labeler)",
+      "Auto-detected from agy command boundaries (mark-cast.py --auto)",
+      "Slide Frontmatter Override (markers: [[t, label], ...])"
+    ];
+
+    function createInitialState() {
+      return {
+        slideNumber: 14,
+        playerStatus: "paused-at-marker", // 'playing' | 'paused-at-marker' | 'paused-manual' | 'ended'
+        currentChapterIdx: 0,
+        currentTime: 0.0,
+        duration: 120.0,
+        speed: 2.0,
+        pauseOnMarkers: true,
+        markerSourceIdx: 0,
+        lastKeyInfo: "Ready — click any chapter pill or button",
+        lastTransitionReason: "Initialized at Chapter 1 (/setup-matt-pocock-skills)."
+      };
+    }
+
+    function reduceCastState(state, action) {
+      const next = { ...state };
+
+      switch (action.type) {
+        case "RESET": {
+          return {
+            ...createInitialState(),
+            ...(action.overrides || {}),
+            lastTransitionReason: action.reason || "Reset state machine for walkthrough."
+          };
+        }
+
+        case "TOGGLE_PLAY": {
+          if (next.playerStatus === "playing") {
+            next.playerStatus = "paused-manual";
+            next.lastTransitionReason = "Paused playback manually.";
+          } else {
+            next.playerStatus = "playing";
+            next.lastTransitionReason = `Resumed playback from ${next.currentTime.toFixed(1)}s (${SKILLED_RUN_CHAPTERS[next.currentChapterIdx].shortLabel}).`;
+          }
+          return next;
+        }
+
+        case "JUMP_TO_CHAPTER": {
+          const idx = Math.max(0, Math.min(SKILLED_RUN_CHAPTERS.length - 1, action.index));
+          const ch = SKILLED_RUN_CHAPTERS[idx];
+          next.currentChapterIdx = idx;
+          next.currentTime = ch.time;
+          next.playerStatus = action.autoPlayAfterJump ? "playing" : "paused-at-marker";
+          next.lastKeyInfo = `Seeked to ${ch.time.toFixed(1)}s (${ch.shortLabel})`;
+          next.lastTransitionReason = `Jumped directly to ${ch.fullLabel} via chapter pill (${ch.time.toFixed(1)}s). Slidev slide did NOT change.`;
+          return next;
+        }
+
+        case "STEP_CHAPTER": {
+          const targetIdx = Math.max(0, Math.min(SKILLED_RUN_CHAPTERS.length - 1, next.currentChapterIdx + action.delta));
+          const ch = SKILLED_RUN_CHAPTERS[targetIdx];
+          next.currentChapterIdx = targetIdx;
+          next.currentTime = ch.time;
+          next.playerStatus = "paused-at-marker";
+          next.lastKeyInfo = action.delta > 0 ? "Pressed `]` (Next Chapter)" : "Pressed `[` (Prev Chapter)";
+          next.lastTransitionReason = `Stepped to ${ch.fullLabel} (${ch.time.toFixed(1)}s) and paused at marker.`;
+          return next;
+        }
+
+        case "ADVANCE_TO_NEXT_MARKER": {
+          if (next.currentChapterIdx < SKILLED_RUN_CHAPTERS.length - 1) {
+            const nextIdx = next.currentChapterIdx + 1;
+            const ch = SKILLED_RUN_CHAPTERS[nextIdx];
+            next.currentChapterIdx = nextIdx;
+            next.currentTime = ch.time;
+            if (next.pauseOnMarkers) {
+              next.playerStatus = "paused-at-marker";
+              next.lastTransitionReason = `Playback reached marker "${ch.fullLabel}" at ${ch.time.toFixed(1)}s -> auto-paused because pauseOnMarkers=true.`;
+            } else {
+              next.playerStatus = "playing";
+              next.lastTransitionReason = `Playback passed marker "${ch.fullLabel}" at ${ch.time.toFixed(1)}s without pausing (pauseOnMarkers=false).`;
+            }
+          } else {
+            next.currentTime = next.duration;
+            next.playerStatus = "ended";
+            next.lastTransitionReason = "Reached end of recording (120.0s, held final frame for 3.0s).";
+          }
+          return next;
+        }
+
+        case "TOGGLE_PAUSE_ON_MARKERS": {
+          next.pauseOnMarkers = !next.pauseOnMarkers;
+          next.lastTransitionReason = `Set pauseOnMarkers = ${next.pauseOnMarkers}.`;
+          return next;
+        }
+
+        case "CHANGE_MARKER_SOURCE": {
+          next.markerSourceIdx = (next.markerSourceIdx + 1) % MARKER_SOURCES.length;
+          next.lastTransitionReason = `Switched marker source to: ${MARKER_SOURCES[next.markerSourceIdx]}`;
+          return next;
+        }
+
+        case "PRESS_SLIDEV_RIGHT_ARROW": {
+          next.slideNumber += 1;
+          next.lastKeyInfo = "Pressed `→` (Slidev Advance Slide)";
+          next.lastTransitionReason = `Slidev advanced to Slide ${next.slideNumber}! Because chapter navigation uses clickable pills or '[' / ']' (with stopPropagation), '→' and 'Space' remain clean Slidev slide-navigation keys.`;
+          return next;
+        }
+
+        default:
+          return next;
+      }
+    }
+  </script>
+
+  <!-- ===================================================================== -->
+  <!-- UI VARIANTS & WALKTHROUGH WIRING                                      -->
+  <!-- ===================================================================== -->
+  <script>
+    const VARIANTS = {
+      A: {
+        key: "A",
+        name: "Header Chapter Pills + Next Button",
+        summary: "Compact pill bar in the cast-full header; preserves 85% terminal height."
+      },
+      B: {
+        key: "B",
+        name: "Side-Rail Skill Chain Timeline",
+        summary: "Left vertical pipeline showing all 6 Matt Pocock skills with status & timestamps."
+      },
+      C: {
+        key: "C",
+        name: "Bottom Scrubber Dock + Hotkey Bar",
+        summary: "Full-width terminal with a segmented chapter dock below the player."
+      }
+    };
+
+    const WALKTHROUGHS = [
+      {
+        id: "pipeline",
+        title: "1. Marker Capture Pipeline",
+        desc: "Compare how chapter stop-points get into the Skilled Run .cast file: live Ctrl+x + post-recording label script vs. frontmatter markers.",
+        steps: [
+          {
+            label: "Step 1: Start with embedded .cast 'm' markers (Ctrl+x during recording + mark-cast.py)",
+            action: { type: "RESET", reason: "Loaded Skilled Run cast using native asciicast v3 'm' marker events." }
+          },
+          {
+            label: "Step 2: Cycle to auto-detected agy prompt boundaries (zero hotkeys needed while recording)",
+            action: { type: "CHANGE_MARKER_SOURCE" }
+          },
+          {
+            label: "Step 3: Cycle to Slide Frontmatter override (markers: [[t, label]] in slides/acts/*.md)",
+            action: { type: "CHANGE_MARKER_SOURCE" }
+          }
+        ]
+      },
+      {
+        id: "stepping",
+        title: "2. Live Stage Auto-Pause",
+        desc: "Walk through the single-cast Skilled Run on stage: play a chapter, watch it auto-pause at the next skill marker, talk to the audience, then resume.",
+        steps: [
+          {
+            label: "Step 1: Resume playback from Chapter 1 (/setup-matt-pocock-skills)",
+            action: { type: "TOGGLE_PLAY" }
+          },
+          {
+            label: "Step 2: Playback hits Chapter 2 (/wayfinder Chart) -> Auto-pauses for speaker commentary",
+            action: { type: "ADVANCE_TO_NEXT_MARKER" }
+          },
+          {
+            label: "Step 3: Skip ahead directly to Chapter 4 (/to-spec) via chapter pill click",
+            action: { type: "JUMP_TO_CHAPTER", index: 3 }
+          },
+          {
+            label: "Step 4: Jump to Chapter 6 (/implement) and run to completion",
+            action: { type: "JUMP_TO_CHAPTER", index: 5, autoPlayAfterJump: true }
+          }
+        ]
+      },
+      {
+        id: "keyboard",
+        title: "3. Slidev Key Conflict Check",
+        desc: "Verify that stepping through chapters inside a cast never accidentally advances the Slidev slide, and pressing → advances the slide when done.",
+        steps: [
+          {
+            label: "Step 1: Press `]` (Next Chapter shortcut captured by AsciinemaPlayer with stopPropagation)",
+            action: { type: "STEP_CHAPTER", delta: 1 }
+          },
+          {
+            label: "Step 2: Press `[` (Prev Chapter shortcut — stays on Slide 14)",
+            action: { type: "STEP_CHAPTER", delta: -1 }
+          },
+          {
+            label: "Step 3: Press `→` (Slidev native Next Slide key — advances Slide 14 -> Slide 15)",
+            action: { type: "PRESS_SLIDEV_RIGHT_ARROW" }
+          }
+        ]
+      }
+    ];
+
+    let appState = createInitialState();
+    let activeWalkthroughIdx = 0;
+    let activeStepIdx = 0;
+
+    function getCurrentVariantKey() {
+      const params = new URLSearchParams(window.location.search);
+      const v = (params.get("variant") || "A").toUpperCase();
+      return VARIANTS[v] ? v : "A";
+    }
+
+    function setVariantKey(key) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("variant", key);
+      window.history.replaceState({}, "", url);
+      renderAll();
+    }
+
+    function cycleVariant(delta) {
+      const keys = Object.keys(VARIANTS);
+      const current = getCurrentVariantKey();
+      const nextIdx = (keys.indexOf(current) + delta + keys.length) % keys.length;
+      setVariantKey(keys[nextIdx]);
+    }
+
+    function dispatch(action) {
+      appState = reduceCastState(appState, action);
+      renderAll();
+    }
+
+    function selectWalkthrough(idx) {
+      activeWalkthroughIdx = idx;
+      activeStepIdx = 0;
+      appState = reduceCastState(appState, {
+        type: "RESET",
+        reason: `Started walkthrough: ${WALKTHROUGHS[idx].title}`
+      });
+      renderAll();
+    }
+
+    function runWalkthroughStep(stepIdx) {
+      const wt = WALKTHROUGHS[activeWalkthroughIdx];
+      const step = wt.steps[stepIdx];
+      if (!step) return;
+      activeStepIdx = stepIdx + 1;
+      dispatch(step.action);
+    }
+
+    function renderTerminalBox(ch) {
+      const statusBadge =
+        appState.playerStatus === "playing"
+          ? `<span style="color: var(--emerald);">● PLAYING (${appState.speed}x)</span>`
+          : appState.playerStatus === "paused-at-marker"
+          ? `<span style="color: var(--amber);">⏸ AUTO-PAUSED AT MARKER</span>`
+          : `<span style="color: var(--text-muted);">⏸ PAUSED</span>`;
+
+      const pct = Math.min(100, Math.round((appState.currentTime / appState.duration) * 100));
+      const markerDots = SKILLED_RUN_CHAPTERS.map((m) => {
+        const leftPct = Math.round((m.time / appState.duration) * 100);
+        return `<div class="ap-marker-dot" style="left: ${leftPct}%;" title="${m.fullLabel} (${m.time}s)" onclick="dispatch({ type: 'JUMP_TO_CHAPTER', index: ${m.index} })"></div>`;
+      }).join("");
+
+      return `
+        <div class="term-box">
+          <div class="term-lines">
+<span class="term-dim"># Skilled Run — Single Cast with 6 Chapter Stop Points (${MARKER_SOURCES[appState.markerSourceIdx]})</span>
+<span class="term-prompt">~/electronics-catalog-skilled $</span> <span class="term-cmd">${ch.cmd} "${ch.prompt}"</span>
+${ch.output.map((line) => `<span class="term-ok">${line}</span>`).join("\n")}
+          </div>
+
+          <div>
+            ${
+              appState.playerStatus === "paused-at-marker"
+                ? `<div class="term-marker-banner">
+                    <span><strong>Stop Point #${ch.index + 1}:</strong> ${ch.fullLabel} (${ch.time.toFixed(1)}s) — Ready for live commentary</span>
+                    <button class="btn btn-primary" style="padding: 3px 9px; font-size: 11px;" onclick="dispatch({ type: 'TOGGLE_PLAY' })">▶ Resume Playback</button>
+                  </div>`
+                : ""
+            }
+            <div class="ap-control-bar">
+              <span style="cursor: pointer;" onclick="dispatch({ type: 'TOGGLE_PLAY' })">${statusBadge}</span>
+              <span>${appState.currentTime.toFixed(1)}s / ${appState.duration.toFixed(1)}s</span>
+              <div class="ap-timeline">
+                <div class="ap-progress" style="width: ${pct}%;"></div>
+                ${markerDots}
+              </div>
+              <span>Playback speed: ${appState.speed}x</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSlideVariant() {
+      const vKey = getCurrentVariantKey();
+      const ch = SKILLED_RUN_CHAPTERS[appState.currentChapterIdx];
+      const root = document.getElementById("slidev-root");
+
+      document.getElementById("viewport-variant-title").textContent =
+        `Slidev 16:9 Preview — Variant ${vKey}: ${VARIANTS[vKey].name}`;
+      document.getElementById("viewport-slide-indicator").textContent =
+        `Slide ${appState.slideNumber} / 28 · Last Key: ${appState.lastKeyInfo}`;
+      document.getElementById("vs-label").textContent =
+        `Variant ${vKey} (${VARIANTS[vKey].name})`;
+
+      if (vKey === "A") {
+        // Variant A: Header Chapter Stepper Bar
+        const pillsHtml = SKILLED_RUN_CHAPTERS.map((item) => {
+          const cls =
+            item.index === appState.currentChapterIdx
+              ? "chapter-pill active"
+              : item.index < appState.currentChapterIdx
+              ? "chapter-pill done"
+              : "chapter-pill";
+          return `<button class="${cls}" onclick="dispatch({ type: 'JUMP_TO_CHAPTER', index: ${item.index} })">
+            <span>${item.shortLabel}</span>
+          </button>`;
+        }).join("");
+
+        root.innerHTML = `
+          <div class="va-header">
+            <div class="va-top-row">
+              <h2 class="va-title">Skilled Run: Full Matt Pocock Skill Chain</h2>
+              <div class="va-controls">
+                <button class="btn" style="padding: 3px 8px; font-size: 11px;" onclick="dispatch({ type: 'STEP_CHAPTER', delta: -1 })">◀ Prev</button>
+                <button class="btn btn-primary" style="padding: 3px 10px; font-size: 11px;" onclick="dispatch({ type: 'TOGGLE_PLAY' })">
+                  ${appState.playerStatus === "playing" ? "⏸ Pause" : "▶ Resume"}
+                </button>
+                <button class="btn" style="padding: 3px 8px; font-size: 11px;" onclick="dispatch({ type: 'STEP_CHAPTER', delta: 1 })">Next ▶</button>
+              </div>
+            </div>
+            <div class="va-pills">${pillsHtml}</div>
+          </div>
+          ${renderTerminalBox(ch)}
+        `;
+      } else if (vKey === "B") {
+        // Variant B: Side-Rail Workflow Timeline
+        const railSteps = SKILLED_RUN_CHAPTERS.map((item) => {
+          const cls =
+            item.index === appState.currentChapterIdx
+              ? "vb-step active"
+              : item.index < appState.currentChapterIdx
+              ? "vb-step done"
+              : "vb-step";
+          return `<div class="${cls}" onclick="dispatch({ type: 'JUMP_TO_CHAPTER', index: ${item.index} })">
+            <span>${item.shortLabel}</span>
+            <span style="opacity: 0.7;">${item.time.toFixed(0)}s</span>
+          </div>`;
+        }).join("");
+
+        root.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+            <h2 class="va-title">Skilled Run: Full Matt Pocock Skill Chain</h2>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">pauseOnMarkers: ${appState.pauseOnMarkers}</span>
+          </div>
+          <div class="vb-body">
+            <aside class="vb-rail">
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); margin-bottom:4px;">Skill Pipeline Chapters</div>
+                ${railSteps}
+              </div>
+              <div style="display:flex; gap:6px; margin-top:8px;">
+                <button class="btn btn-primary" style="flex:1; font-size:11px; padding:4px;" onclick="dispatch({ type: 'TOGGLE_PLAY' })">
+                  ${appState.playerStatus === "playing" ? "⏸ Pause" : "▶ Resume"}
+                </button>
+                <button class="btn" style="font-size:11px; padding:4px 8px;" onclick="dispatch({ type: 'STEP_CHAPTER', delta: 1 })">⏭</button>
+              </div>
+            </aside>
+            ${renderTerminalBox(ch)}
+          </div>
+        `;
+      } else {
+        // Variant C: Bottom Scrubber Dock
+        const segs = SKILLED_RUN_CHAPTERS.map((item) => {
+          const cls =
+            item.index === appState.currentChapterIdx
+              ? "vc-seg active"
+              : item.index < appState.currentChapterIdx
+              ? "vc-seg done"
+              : "vc-seg";
+          return `<div class="${cls}" onclick="dispatch({ type: 'JUMP_TO_CHAPTER', index: ${item.index} })" title="${item.fullLabel}">
+            ${item.shortLabel}
+          </div>`;
+        }).join("");
+
+        root.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+            <h2 class="va-title">Skilled Run: Full Matt Pocock Skill Chain</h2>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Keys: [ Prev · ] Next · P Play/Pause</span>
+          </div>
+          ${renderTerminalBox(ch)}
+          <div class="vc-dock">
+            <button class="btn" style="padding: 3px 8px; font-size: 11px;" onclick="dispatch({ type: 'STEP_CHAPTER', delta: -1 })">[</button>
+            <div class="vc-segments">${segs}</div>
+            <button class="btn" style="padding: 3px 8px; font-size: 11px;" onclick="dispatch({ type: 'STEP_CHAPTER', delta: 1 })">]</button>
+          </div>
+        `;
+      }
+    }
+
+    function renderStatePanel() {
+      const ch = SKILLED_RUN_CHAPTERS[appState.currentChapterIdx];
+      const grid = document.getElementById("state-grid");
+      grid.innerHTML = `
+        <div class="state-field">
+          <span class="state-label">Active Chapter Stop-Point</span>
+          <span class="state-val">${ch.fullLabel} (${ch.time.toFixed(1)}s)</span>
+        </div>
+        <div class="state-field">
+          <span class="state-label">Player State</span>
+          <span class="state-val">${appState.playerStatus}</span>
+        </div>
+        <div class="state-field">
+          <span class="state-label">pauseOnMarkers Prop</span>
+          <span class="state-val">${appState.pauseOnMarkers ? "true (Auto-Pause)" : "false (Continuous)"}</span>
+        </div>
+        <div class="state-field">
+          <span class="state-label">Marker Injection Source</span>
+          <span class="state-val">${MARKER_SOURCES[appState.markerSourceIdx]}</span>
+        </div>
+      `;
+      document.getElementById("state-last-event").innerHTML =
+        `<strong>What just happened:</strong> ${appState.lastTransitionReason}`;
+    }
+
+    function renderWalkthroughs() {
+      const tabsEl = document.getElementById("walkthrough-tabs");
+      tabsEl.innerHTML = WALKTHROUGHS.map((wt, i) => {
+        const cls = i === activeWalkthroughIdx ? "tab-btn active" : "tab-btn";
+        return `<button class="${cls}" onclick="selectWalkthrough(${i})">${wt.title}</button>`;
+      }).join("");
+
+      const currentWt = WALKTHROUGHS[activeWalkthroughIdx];
+      document.getElementById("walkthrough-desc").textContent = currentWt.desc;
+
+      const stepsEl = document.getElementById("walkthrough-steps");
+      stepsEl.innerHTML = currentWt.steps.map((st, idx) => {
+        const cls =
+          idx === activeStepIdx
+            ? "step-btn current-step"
+            : idx < activeStepIdx
+            ? "step-btn completed-step"
+            : "step-btn";
+        const badge = idx < activeStepIdx ? "✔ Done" : idx === activeStepIdx ? "👉 Click next" : "Step";
+        return `<button class="${cls}" onclick="runWalkthroughStep(${idx})">
+          <span>${st.label}</span>
+          <span style="font-family: var(--font-mono); font-size: 11px;">${badge}</span>
+        </button>`;
+      }).join("");
+    }
+
+    function renderAll() {
+      renderSlideVariant();
+      renderStatePanel();
+      renderWalkthroughs();
+    }
+
+    // Keyboard listeners: Left/Right cycle UI variants; [ and ] step chapters
+    window.addEventListener("keydown", (e) => {
+      const tag = (e.target && e.target.tagName) || "";
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target && e.target.isContentEditable)) return;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        cycleVariant(-1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        cycleVariant(1);
+      } else if (e.key === "]") {
+        e.preventDefault();
+        e.stopPropagation();
+        dispatch({ type: "STEP_CHAPTER", delta: 1 });
+      } else if (e.key === "[") {
+        e.preventDefault();
+        e.stopPropagation();
+        dispatch({ type: "STEP_CHAPTER", delta: -1 });
+      }
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>

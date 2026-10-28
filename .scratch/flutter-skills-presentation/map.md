@@ -25,6 +25,7 @@ A complete **Presentation Script & Slidev Deck Specification** demonstrating the
 
 - [Audience, Talk Duration, and Core Thesis](./issues/01-audience-and-talk-thesis.md): 45–50 min university lecture for React mobile dev students; thesis frames rules and Agent Skills as turning `agy` from a **Comprehension Debt** generator into a design partner (`/wayfinder`) and React-to-Flutter tutor (`/teach-code`) across a 4-part arc (Act 0 Hidden Variable + Acts 1–3).
 - [Demo Prompts, Q&A Script, and Run Boundaries](./issues/02-demo-prompts-and-run-boundaries.md): Fixed terse initial prompt (`"I'd like to build a Flutter app for iOS that enables me to track my electronics parts"`) + canonical Q&A script; **Baseline Run** builds app (revealing missing **Intent Artifacts**); **Skilled Run** walks full chain (`/setup-matt-pocock-skills` → `/wayfinder` → `/to-spec` → `/to-tickets` → `/implement`) in a single cast; **Comprehension Run** runs `/teach-code` on the **Baseline Run** app through Lesson 0001 HTML build.
+- [Asciinema Stop Points and Slidev Chapter Navigation](./issues/05-asciinema-stop-points-and-slidev-navigation.md): Hybrid embedded `.cast` `"m"` markers (`Ctrl+x` or `mark-cast.py` command-boundary labeler) auto-parsed by `AsciinemaPlayer.vue` (with optional frontmatter `markers:` override); Variant A compact header chapter pills in `cast-full.vue` with `pauseOnMarkers: true` default and conflict-free `[` / `]` / `p` stage hotkeys (`stopPropagation`).
 
 ## Not yet specified
 
