@@ -9,8 +9,12 @@ The first recorded `agy` CLI session building the electronics component catalog 
 _Avoid_: Vanilla run, unassisted run, first app
 
 **Skilled Run**:
-The second recorded `agy` CLI session designing the electronics component catalog Flutter iOS app with Matt Pocock's skills installed, starting with `/wayfinder`.
+The multi-session `agy` CLI workflow building the electronics component catalog Flutter iOS app with Matt Pocock's skills installed—walking `/wayfinder` across multiple conversations from initial map charting through decision tickets to a working app and its **Intent Artifacts**.
 _Avoid_: Enhanced run, second app, v2 run
+
+**Intent Artifacts**:
+The durable, repo-committed documents (`GLOSSARY.md`, ADRs, Wayfinder `map.md`, and resolved decision tickets) produced during the **Skilled Run** that preserve domain language and design decisions which remain trapped in ephemeral conversation history during the **Baseline Run**.
+_Avoid_: Ancillary docs, planning files, extra markdown
 
 **Comprehension Run**:
 The third `agy` CLI session invoking `/teach-code` to generate an interactive learning pathway (HTML lessons, reference sheets, and verification exercises) that digs a developer out of Comprehension Debt on an AI-generated codebase.

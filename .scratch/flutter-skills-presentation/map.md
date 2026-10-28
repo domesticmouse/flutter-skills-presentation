@@ -5,9 +5,9 @@ Label: `wayfinder:map`
 ## Destination
 
 A complete **Presentation Script & Slidev Deck Specification** demonstrating the value of Agent Skills in Flutter iOS app development—backed by hand-recorded `asciinema` **Terminal Casts** and `/agy-brain-explorer` **Session Traces** across three runs:
-1. **Baseline Run**: Building a Flutter iOS electronics component catalog app with no project skills (highlighting the effect of the user's **Global Rule**).
-2. **Skilled Run**: Designing the same app in the presence of Matt Pocock's skills using `/wayfinder` (`grilling` + `domain-modeling`).
-3. **Comprehension Run**: Using `/teach-code` against the generated codebase to dig out of **Comprehension Debt** and build a pathway to understanding.
+1. **Baseline Run**: Building a Flutter iOS electronics component catalog app with no project skills (highlighting the effect of the user's **Global Rule**, and contrasting the generated Flutter code against the missing **Intent Artifacts** trapped in chat history).
+2. **Skilled Run**: Building the same app across the full Matt Pocock skill chain (`/setup-matt-pocock-skills` → `/wayfinder` → `/to-spec` → `/to-tickets` → `/implement`) to produce both a working Flutter app and repo-committed **Intent Artifacts** (`GLOSSARY.md`, `map.md`, decision tickets, spec).
+3. **Comprehension Run**: Using `/teach-code` against the **Baseline Run**'s generated codebase to dig out of **Comprehension Debt** and build a React-to-Flutter pathway to understanding.
 
 ## Notes
 
@@ -24,6 +24,7 @@ A complete **Presentation Script & Slidev Deck Specification** demonstrating the
 <!-- the index: one line per closed ticket, enough to judge relevance, then zoom the link for the detail the ticket holds -->
 
 - [Audience, Talk Duration, and Core Thesis](./issues/01-audience-and-talk-thesis.md): 45–50 min university lecture for React mobile dev students; thesis frames rules and Agent Skills as turning `agy` from a **Comprehension Debt** generator into a design partner (`/wayfinder`) and React-to-Flutter tutor (`/teach-code`) across a 4-part arc (Act 0 Hidden Variable + Acts 1–3).
+- [Demo Prompts, Q&A Script, and Run Boundaries](./issues/02-demo-prompts-and-run-boundaries.md): Fixed terse initial prompt (`"I'd like to build a Flutter app for iOS that enables me to track my electronics parts"`) + canonical Q&A script; **Baseline Run** builds app (revealing missing **Intent Artifacts**); **Skilled Run** walks full chain (`/setup-matt-pocock-skills` → `/wayfinder` → `/to-spec` → `/to-tickets` → `/implement`) in a single cast; **Comprehension Run** runs `/teach-code` on the **Baseline Run** app through Lesson 0001 HTML build.
 
 ## Not yet specified
 

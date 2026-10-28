@@ -3,7 +3,7 @@
 Type: prototype
 Label: `wayfinder:prototype`
 Status: open
-Blocked by: 02
+Blocked by: 02, 05
 
 ## Question
 
