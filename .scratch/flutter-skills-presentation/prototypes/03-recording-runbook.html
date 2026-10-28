@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototype 03 — Recording Runbook &amp; Workspace Setup State Model</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --panel: #161922;
+      --panel-alt: #1c202c;
+      --border: #2a3042;
+      --text: #e6edf3;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.14);
+      --ok: #34d399;
+      --ok-soft: rgba(52, 211, 153, 0.14);
+      --warn: #fbbf24;
+      --warn-soft: rgba(251, 191, 36, 0.14);
+      --err: #f87171;
+      --err-soft: rgba(248, 113, 113, 0.14);
+      --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 28px 32px 60px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+    .proto-banner {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+    }
+    .question-box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .question-box strong { color: var(--text); }
+
+    /* Last transition callout */
+    .transition-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13.5px;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+    }
+    .transition-banner.ok { border-color: rgba(52, 211, 153, 0.45); background: var(--ok-soft); }
+    .transition-banner.warn { border-color: rgba(251, 191, 36, 0.45); background: var(--warn-soft); }
+    .transition-banner.err { border-color: rgba(248, 113, 113, 0.45); background: var(--err-soft); }
+
+    /* Grid layouts */
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel-alt);
+      color: var(--muted);
+    }
+    .badge.ok { color: var(--ok); background: var(--ok-soft); border-color: rgba(52, 211, 153, 0.35); }
+    .badge.warn { color: var(--warn); background: var(--warn-soft); border-color: rgba(251, 191, 36, 0.35); }
+    .badge.err { color: var(--err); background: var(--err-soft); border-color: rgba(248, 113, 113, 0.35); }
+    .badge.info { color: var(--accent); background: var(--accent-soft); border-color: rgba(56, 189, 248, 0.35); }
+
+    .kv-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 12.5px;
+    }
+    .kv-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 4px 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+    }
+    .kv-list li:last-child { border-bottom: none; }
+    .kv-label { color: var(--muted); }
+    .kv-val { font-family: var(--mono); color: var(--text); text-align: right; }
+
+    /* Operator Live Cheat Sheet & Command Panel */
+    .operator-split {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .code-box {
+      position: relative;
+      background: #0a0c10;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #e2e8f0;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      margin-top: 8px;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: var(--panel-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Walkthrough Tabs */
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 22px 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      background: var(--panel);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      color: var(--text);
+      background: var(--accent-soft);
+      border-color: var(--accent);
+    }
+    .walkthrough-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 22px;
+    }
+    .walkthrough-desc {
+      font-size: 13.5px;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+    .step-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .step-btn {
+      background: var(--panel-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 12.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .step-btn.current {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: #fff;
+      font-weight: 600;
+    }
+    .step-btn.done {
+      border-color: rgba(52, 211, 153, 0.4);
+      color: var(--ok);
+    }
+
+    /* Free play buttons */
+    .freeplay-groups {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .fp-group {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .fp-group h4 {
+      margin: 0 0 8px;
+      font-size: 12.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .fp-btn {
+      width: 100%;
+      text-align: left;
+      background: var(--panel-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+    .fp-btn:hover { border-color: var(--accent); }
+    .marker-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .marker-pill {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="proto-banner">PROTOTYPE 03 • THROWAWAY LOGIC &amp; OPERATOR RUNBOOK MODEL</div>
+    <h1>Recording Runbook, Workspace Setup Script &amp; Trace Extraction Pipeline</h1>
+    <div class="question-box">
+      <strong>Question being prototyped (Ticket 03):</strong> Does our step-by-step operator workflow and helper script suite
+      (<code>setup-workspaces.sh</code> + <code>mark-cast.py</code> + <code>sanitize-cast.py</code> + <code>trim-cast.py</code> + <code>agy-brain-explorer.py</code>)
+      cleanly isolate the 3 workspaces (<code>parts-tracker-baseline</code>, <code>parts-tracker-skilled</code>, <code>parts-tracker-comprehension</code>),
+      enforce the dependency that <strong>Comprehension Run</strong> clones the finished <strong>Baseline Run</strong> app, recover chapter markers if
+      <code>Ctrl+x</code> is missed during the 6-step <strong>Skilled Run</strong>, and partition <code>~/.gemini/**/brain/</code> <strong>Session Traces</strong> by project name?
+    </div>
+
+    <div id="transition-banner" class="transition-banner"></div>
+
+    <!-- Guided Walkthroughs -->
+    <div class="section-title">
+      <span>Guided Walkthroughs (Click a scenario tab, then step through in order)</span>
+      <button class="tab-btn" onclick="dispatchAction({ type: 'RESET_ALL' })">↺ Reset All State</button>
+    </div>
+    <div class="tabs" id="scenario-tabs"></div>
+    <div class="walkthrough-panel" id="walkthrough-panel"></div>
+
+    <!-- Current State: 3 Workspaces -->
+    <div class="section-title"><span>1. Isolated Demo Workspaces (<code>~/Demos/flutter-parts-experiment/</code>)</span></div>
+    <div class="state-grid" id="workspaces-grid"></div>
+
+    <!-- Current State: 3 Terminal Casts + Session Traces -->
+    <div class="section-title"><span>2. Asciinema Terminal Casts (<code>120x32</code>, <code>idleTimeLimit: 2.0s</code>) &amp; Session Traces</span></div>
+    <div class="state-grid" id="casts-grid"></div>
+
+    <!-- Operator Command + Canonical Prompt Cheat Sheet -->
+    <div class="section-title"><span>3. Active Step Command &amp; Copyable Operator Prompt / Q&amp;A Cheat Sheet</span></div>
+    <div class="operator-split" id="operator-panel"></div>
+
+    <!-- Free-Play Action Buttons -->
+    <div class="section-title"><span>4. Free-Play Operator Actions (Test any transition in any order)</span></div>
+    <div class="freeplay-groups" id="freeplay-groups"></div>
+  </div>
+
+  <!-- PORTABLE PURE STATE MACHINE MODULE (No DOM access) -->
+  <script id="runbook-engine">
+    const SKILLED_CHAPTERS = [
+      "1. /setup-matt-pocock-skills",
+      "2. /wayfinder (Chart)",
+      "3. /wayfinder (Resolve)",
+      "4. /to-spec",
+      "5. /to-tickets",
+      "6. /implement"
+    ];
+
+    const CANONICAL_QA = [
+      "Prompt: \"I'd like to build a Flutter app for iOS that enables me to track my electronics parts\"",
+      "Q1 (Categories): Resistors, capacitors, ICs/microcontrollers, sensors, LEDs, and breakout boards.",
+      "Q2 (Attributes): Part name/number, category, quantity on hand, storage location (bin/drawer), freeform specs/notes.",
+      "Q3 (Workflows): Browse/search parts, filter by category, quick +/- quantity, add/edit parts (no barcode/BOM/cloud).",
+      "Q4 (Persistence & UI): Local on-device storage pre-populated with sample parts; clean iOS look (Cupertino / adaptive M3)."
+    ];
+
+    function createInitialState() {
+      return {
+        lastEvent: {
+          status: "info",
+          title: "Ready to initialize experiment workspaces",
+          detail: "Run `setup-workspaces.sh init-all` to create clean Baseline and Skilled git repositories."
+        },
+        activeOperatorGuide: "init",
+        workspaces: {
+          baseline: {
+            name: "parts-tracker-baseline",
+            initialized: false,
+            skillsInstalled: [],
+            globalRuleActive: true,
+            flutterAppBuilt: false,
+            intentArtifacts: []
+          },
+          skilled: {
+            name: "parts-tracker-skilled",
+            initialized: false,
+            skillsInstalled: [],
+            globalRuleActive: true,
+            currentChainStep: 0,
+            flutterAppBuilt: false,
+            intentArtifacts: []
+          },
+          comprehension: {
+            name: "parts-tracker-comprehension",
+            initialized: false,
+            clonedFromBaseline: false,
+            skillsInstalled: [],
+            globalRuleActive: true,
+            flutterAppBuilt: false,
+            intentArtifacts: []
+          }
+        },
+        casts: {
+          baseline: {
+            file: "01-baseline.cast",
+            recorded: false,
+            dims: "120x32",
+            idleLimit: 2.0,
+            markers: [],
+            sanitized: false,
+            trimmed: false
+          },
+          skilled: {
+            file: "02-skilled.cast",
+            recorded: false,
+            dims: "120x32",
+            idleLimit: 2.0,
+            markers: [],
+            rawMarkersCount: 0,
+            sanitized: false,
+            trimmed: false
+          },
+          comprehension: {
+            file: "03-comprehension.cast",
+            recorded: false,
+            dims: "120x32",
+            idleLimit: 2.0,
+            markers: [],
+            sanitized: false,
+            trimmed: false
+          }
+        },
+        traces: {
+          baselineSessions: 0,
+          skilledSessions: 0,
+          comprehensionSessions: 0,
+          exportedMarkdown: false,
+          comparedDiff: false
+        }
+      };
+    }
+
+    function runbookReducer(state, action) {
+      const next = JSON.parse(JSON.stringify(state));
+
+      switch (action.type) {
+        case "RESET_ALL":
+          return createInitialState();
+
+        case "INIT_BASELINE_AND_SKILLED": {
+          next.workspaces.baseline = {
+            name: "parts-tracker-baseline",
+            initialized: true,
+            skillsInstalled: [],
+            globalRuleActive: true,
+            flutterAppBuilt: false,
+            intentArtifacts: []
+          };
+          next.workspaces.skilled = {
+            name: "parts-tracker-skilled",
+            initialized: true,
+            skillsInstalled: ["setup-matt-pocock-skills", "wayfinder", "grilling", "domain-modeling", "prototype", "to-spec", "to-tickets", "implement", "tdd", "code-review (+5 more)"],
+            globalRuleActive: true,
+            currentChainStep: 0,
+            flutterAppBuilt: false,
+            intentArtifacts: []
+          };
+          next.activeOperatorGuide = "record_baseline";
+          next.lastEvent = {
+            status: "ok",
+            title: "Initialized Baseline & Skilled workspaces",
+            detail: "parts-tracker-baseline has 0 project skills (Global Rule only); parts-tracker-skilled has 15 Matt Pocock skills."
+          };
+          return next;
+        }
+
+        case "RECORD_BASELINE_RUN": {
+          if (!next.workspaces.baseline.initialized) {
+            next.lastEvent = {
+              status: "err",
+              title: "Blocked: Baseline workspace not initialized",
+              detail: "Run `setup-workspaces.sh init-baseline` (or `init-all`) before recording Run 1."
+            };
+            return next;
+          }
+          next.workspaces.baseline.flutterAppBuilt = true;
+          next.workspaces.baseline.intentArtifacts = []; // Zero Intent Artifacts!
+          next.casts.baseline.recorded = true;
+          next.casts.baseline.sanitized = false;
+          next.casts.baseline.trimmed = false;
+          next.traces.baselineSessions = 1;
+          next.activeOperatorGuide = "clone_comprehension";
+          next.lastEvent = {
+            status: "ok",
+            title: "Recorded 01-baseline.cast (1 agy session)",
+            detail: "Flutter iOS app built in parts-tracker-baseline/lib, but ZERO Intent Artifacts exist on disk (all decisions trapped in ~/.gemini/**/brain/)."
+          };
+          return next;
+        }
+
+        case "RESET_BASELINE_FOR_RETAKE": {
+          next.workspaces.baseline = {
+            name: "parts-tracker-baseline",
+            initialized: true,
+            skillsInstalled: [],
+            globalRuleActive: true,
+            flutterAppBuilt: false,
+            intentArtifacts: []
+          };
+          next.casts.baseline.recorded = false;
+          next.casts.baseline.sanitized = false;
+          next.casts.baseline.trimmed = false;
+          next.activeOperatorGuide = "record_baseline";
+          next.lastEvent = {
+            status: "warn",
+            title: "Reset Baseline workspace & cast for retake",
+            detail: "Cleaned parts-tracker-baseline without touching parts-tracker-skilled."
+          };
+          return next;
+        }
+
+        case "CLONE_COMPREHENSION_WORKSPACE": {
+          if (!next.workspaces.baseline.flutterAppBuilt) {
+            next.lastEvent = {
+              status: "err",
+              title: "Guardrail triggered: Baseline Run app not built yet!",
+              detail: "`setup-workspaces.sh clone-comprehension` refuses to run because `parts-tracker-baseline/lib` does not exist yet."
+            };
+            return next;
+          }
+          next.workspaces.comprehension = {
+            name: "parts-tracker-comprehension",
+            initialized: true,
+            clonedFromBaseline: true,
+            skillsInstalled: ["teach-code", "teach"],
+            globalRuleActive: true,
+            flutterAppBuilt: true,
+            intentArtifacts: []
+          };
+          next.activeOperatorGuide = "record_skilled";
+          next.lastEvent = {
+            status: "ok",
+            title: "Cloned Baseline app into parts-tracker-comprehension + installed /teach-code",
+            detail: "Comprehension workspace now holds the exact AI-generated Flutter app from Run 1 plus `/teach-code`."
+          };
+          return next;
+        }
+
+        case "RECORD_SKILLED_WITH_LIVE_CTRL_X": {
+          if (!next.workspaces.skilled.initialized) {
+            next.lastEvent = {
+              status: "err",
+              title: "Blocked: Skilled workspace not initialized",
+              detail: "Run `setup-workspaces.sh init-skilled` before recording Run 2."
+            };
+            return next;
+          }
+          next.workspaces.skilled.currentChainStep = 6;
+          next.workspaces.skilled.flutterAppBuilt = true;
+          next.workspaces.skilled.intentArtifacts = [
+            "AGENTS.md",
+            "GLOSSARY.md",
+            ".scratch/parts-tracker/map.md",
+            ".scratch/parts-tracker/issues/*.md",
+            "docs/spec.md"
+          ];
+          next.casts.skilled.recorded = true;
+          next.casts.skilled.rawMarkersCount = 6;
+          next.casts.skilled.markers = ["(unlabeled m #1)", "(unlabeled m #2)", "(unlabeled m #3)", "(unlabeled m #4)", "(unlabeled m #5)", "(unlabeled m #6)"];
+          next.casts.skilled.sanitized = false;
+          next.casts.skilled.trimmed = false;
+          next.traces.skilledSessions = 6;
+          next.activeOperatorGuide = "record_comprehension";
+          next.lastEvent = {
+            status: "ok",
+            title: "Recorded 02-skilled.cast with 6 live Ctrl+x markers",
+            detail: "Walked all 6 steps (/setup-matt-pocock-skills → /wayfinder → /to-spec → /to-tickets → /implement). Produced working app + 5 durable Intent Artifacts."
+          };
+          return next;
+        }
+
+        case "RECORD_SKILLED_WITHOUT_MARKERS": {
+          if (!next.workspaces.skilled.initialized) {
+            next.lastEvent = {
+              status: "err",
+              title: "Blocked: Skilled workspace not initialized",
+              detail: "Run `setup-workspaces.sh init-skilled` first."
+            };
+            return next;
+          }
+          next.workspaces.skilled.currentChainStep = 6;
+          next.workspaces.skilled.flutterAppBuilt = true;
+          next.workspaces.skilled.intentArtifacts = [
+            "AGENTS.md",
+            "GLOSSARY.md",
+            ".scratch/parts-tracker/map.md",
+            ".scratch/parts-tracker/issues/*.md",
+            "docs/spec.md"
+          ];
+          next.casts.skilled.recorded = true;
+          next.casts.skilled.rawMarkersCount = 0;
+          next.casts.skilled.markers = [];
+          next.casts.skilled.sanitized = false;
+          next.casts.skilled.trimmed = false;
+          next.traces.skilledSessions = 6;
+          next.activeOperatorGuide = "postprocess_casts";
+          next.lastEvent = {
+            status: "warn",
+            title: "Recorded 02-skilled.cast WITHOUT pressing Ctrl+x",
+            detail: "0 embedded 'm' markers in raw recording! Run `mark-cast.py --auto-skilled` during post-processing to auto-detect the 6 slash-command boundaries."
+          };
+          return next;
+        }
+
+        case "RECORD_COMPREHENSION_RUN": {
+          if (!next.workspaces.comprehension.clonedFromBaseline) {
+            next.lastEvent = {
+              status: "err",
+              title: "Blocked: Comprehension workspace does not have the Baseline app yet",
+              detail: "Run `setup-workspaces.sh clone-comprehension` after finishing Run 1."
+            };
+            return next;
+          }
+          next.workspaces.comprehension.intentArtifacts = [
+            "tutorial/MISSION.md",
+            "tutorial/reference/GLOSSARY.md",
+            "tutorial/lessons/0001-widgets-for-react-devs.html",
+            "tutorial/apps/0001-counter-to-parts/"
+          ];
+          next.casts.comprehension.recorded = true;
+          next.casts.comprehension.sanitized = false;
+          next.casts.comprehension.trimmed = false;
+          next.traces.comprehensionSessions = 1;
+          next.activeOperatorGuide = "postprocess_casts";
+          next.lastEvent = {
+            status: "ok",
+            title: "Recorded 03-comprehension.cast (/teach-code through Lesson 0001 HTML)",
+            detail: "Scaffolded ./tutorial/, verified companion project, and compiled Lesson 0001 via `build.py --check`."
+          };
+          return next;
+        }
+
+        case "RUN_MARK_CAST_AUTO_SKILLED": {
+          if (!next.casts.skilled.recorded) {
+            next.lastEvent = {
+              status: "err",
+              title: "Blocked: 02-skilled.cast has not been recorded yet",
+              detail: "Record 02-skilled.cast before running `mark-cast.py --auto-skilled`."
+            };
+            return next;
+          }
+          const hadRaw = next.casts.skilled.rawMarkersCount > 0;
+          next.casts.skilled.markers = SKILLED_CHAPTERS.slice();
+          next.lastEvent = {
+            status: "ok",
+            title: hadRaw
+              ? "mark-cast.py relabeled 6 Ctrl+x 'm' events with canonical chapter titles"
+              : "mark-cast.py scanned stdout ('o') and injected 6 canonical 'm' chapter markers",
+            detail: "02-skilled.cast now has all 6 Slidev chapter stop points embedded."
+          };
+          return next;
+        }
+
+        case "POSTPROCESS_ALL_CASTS": {
+          const anyRecorded = next.casts.baseline.recorded || next.casts.skilled.recorded || next.casts.comprehension.recorded;
+          if (!anyRecorded) {
+            next.lastEvent = {
+              status: "err",
+              title: "No .cast recordings found to post-process",
+              detail: "Record at least one session in `recordings/raw/` before running `setup-workspaces.sh postprocess-casts`."
+            };
+            return next;
+          }
+          ["baseline", "skilled", "comprehension"].forEach((k) => {
+            if (next.casts[k].recorded) {
+              next.casts[k].sanitized = true;
+              next.casts[k].trimmed = true;
+              if (k === "skilled") {
+                next.casts[k].markers = SKILLED_CHAPTERS.slice();
+              }
+            }
+          });
+          next.activeOperatorGuide = "extract_traces";
+          next.lastEvent = {
+            status: "ok",
+            title: "Post-processed casts → recordings/final/*.cast",
+            detail: "Ran sanitize-cast.py (stripped stdin/secrets), mark-cast.py --auto-skilled (6 chapter labels), and trim-cast.py --hold 3.0 (stripped trailing Ctrl+D exit prompts)."
+          };
+          return next;
+        }
+
+        case "EXTRACT_AND_COMPARE_TRACES": {
+          if (next.traces.baselineSessions === 0 && next.traces.skilledSessions === 0) {
+            next.lastEvent = {
+              status: "err",
+              title: "Blocked: No agy sessions recorded yet",
+              detail: "Complete at least the Baseline and Skilled runs before extracting and comparing Session Traces."
+            };
+            return next;
+          }
+          next.traces.exportedMarkdown = true;
+          next.traces.comparedDiff = next.traces.baselineSessions > 0 && next.traces.skilledSessions > 0;
+          next.activeOperatorGuide = "done";
+          next.lastEvent = {
+            status: "ok",
+            title: "Exported Session Traces & side-by-side comparison via agy-brain-explorer.py",
+            detail: "Partitioned sessions by project name (`parts-tracker-baseline`, `parts-tracker-skilled`, `parts-tracker-comprehension`) into `artifacts/traces/`."
+          };
+          return next;
+        }
+
+        default:
+          return next;
+      }
+    }
+
+    function getOperatorGuide(state) {
+      const guides = {
+        init: {
+          title: "Step 1: Initialize Clean Baseline & Skilled Workspaces",
+          command: `.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh init-all`,
+          notes: [
+            "Creates ~/Demos/flutter-parts-experiment/parts-tracker-baseline (git init, 0 project skills).",
+            "Creates ~/Demos/flutter-parts-experiment/parts-tracker-skilled (git init, 15 Matt Pocock skills copied offline from .agents/skills/).",
+            "Distinct directory names ensure `agy-brain-explorer.py --by-project` partitions every Session Trace automatically."
+          ]
+        },
+        record_baseline: {
+          title: "Step 2: Record Run 1 — Baseline Run (01-baseline.cast)",
+          command: `cd ~/Demos/flutter-parts-experiment/parts-tracker-baseline\nasciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite \\\n  "$OLDPWD/recordings/raw/01-baseline.cast"`,
+          notes: CANONICAL_QA
+        },
+        clone_comprehension: {
+          title: "Step 3: Clone Baseline App into Comprehension Run Workspace",
+          command: `.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh clone-comprehension`,
+          notes: [
+            "Verifies `parts-tracker-baseline/lib` exists (guardrail against cloning an empty workspace).",
+            "Copies the finished Baseline Run Flutter app into `parts-tracker-comprehension`.",
+            "Installs `/teach-code` and `/teach` into `parts-tracker-comprehension/.agents/skills/`."
+          ]
+        },
+        record_skilled: {
+          title: "Step 4: Record Run 2 — Skilled Run 6-Step Chain (02-skilled.cast)",
+          command: `cd ~/Demos/flutter-parts-experiment/parts-tracker-skilled\nasciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite \\\n  "$OLDPWD/recordings/raw/02-skilled.cast"\n# Tip: Press Ctrl+x before each agy step (or use --append between sessions; mark-cast.py labels all 6 chapters)`,
+          notes: [
+            "Chapter 1: agy → /setup-matt-pocock-skills (Local Markdown tracker in .scratch/, single-context GLOSSARY.md)",
+            "Chapter 2: agy → /wayfinder \"I'd like to build a Flutter app for iOS that enables me to track my electronics parts\" (feed same 4 canonical answers)",
+            "Chapter 3: agy → /wayfinder (resolve open decision tickets on the frontier)",
+            "Chapter 4: agy → /to-spec (synthesize map + GLOSSARY.md into spec)",
+            "Chapter 5: agy → /to-tickets (break spec into vertical-slice tickets)",
+            "Chapter 6: agy → /implement (build via /tdd + /code-review)"
+          ]
+        },
+        record_comprehension: {
+          title: "Step 5: Record Run 3 — Comprehension Run with /teach-code (03-comprehension.cast)",
+          command: `cd ~/Demos/flutter-parts-experiment/parts-tracker-comprehension\nasciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite \\\n  "$OLDPWD/recordings/raw/03-comprehension.cast"`,
+          notes: [
+            "Prompt: \"/teach-code I know React for mobile development, and I just had AI generate this Flutter iOS electronics parts tracker app for me. Help me understand how this codebase works and teach me the Flutter and Dart concepts behind it.\"",
+            "Q1 (Background): Comfortable with React mobile dev (components, props, useState, JSX), new to Dart/Flutter widget trees.",
+            "Q2 (Goal): Confidently understand and modify every file in this electronics parts catalog app.",
+            "Stop Boundary: Once ./tutorial/ is scaffolded and Lesson 0001 HTML compiles cleanly via `python3 tutorial/build.py --check`."
+          ]
+        },
+        postprocess_casts: {
+          title: "Step 6: Post-Process Casts (Sanitize + Auto-Label 6 Chapters + Trim Exit Sequences)",
+          command: `.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh postprocess-casts`,
+          notes: [
+            "1. Runs `sanitize-cast.py` to strip accidental stdin events and clean env metadata.",
+            "2. Runs `mark-cast.py --auto-skilled --in-place` on `02-skilled.cast` to label Ctrl+x markers or auto-inject all 6 chapter markers.",
+            "3. Runs `trim-cast.py --in-place --hold 3.0` to strip trailing Ctrl+D exit prompts and hold the final frame for 3.0s."
+          ]
+        },
+        extract_traces: {
+          title: "Step 7: Extract & Compare Session Traces via /agy-brain-explorer",
+          command: `.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh extract-traces\nuv run .agents/skills/agy-brain-explorer/scripts/agy-brain-explorer.py compare <BASELINE_UUID> <SKILLED_UUID>`,
+          notes: [
+            "Exports per-conversation Markdown logs (`artifacts/traces/parts-tracker-{baseline,skilled,comprehension}/`).",
+            "Generates side-by-side session comparison table (duration, user turns, tool calls, files written)."
+          ]
+        },
+        done: {
+          title: "All 3 Runs Recorded, Casts Trimmed & Session Traces Exported!",
+          command: `.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh status`,
+          notes: [
+            "Ready for Ticket 04 (executing the live recordings) and Ticket 06+ (curating traces & authoring the Slidev deck)."
+          ]
+        }
+      };
+      return guides[state.activeOperatorGuide] || guides.init;
+    }
+  </script>
+
+  <!-- UI SHELL AROUND THE PURE MODULE -->
+  <script>
+    const SCENARIOS = [
+      {
+        id: "happy",
+        name: "Scenario 1: Full 3-Run Happy Path (7 Steps)",
+        description: "Walk the complete operator workflow from clean workspace initialization through all 3 recordings, chapter marker labeling, exit trimming, and Session Trace extraction.",
+        steps: [
+          { label: "1. Init Workspaces", action: { type: "INIT_BASELINE_AND_SKILLED" } },
+          { label: "2. Record Baseline Run", action: { type: "RECORD_BASELINE_RUN" } },
+          { label: "3. Clone Baseline → Comprehension", action: { type: "CLONE_COMPREHENSION_WORKSPACE" } },
+          { label: "4. Record Skilled Run (6 Chapters)", action: { type: "RECORD_SKILLED_WITH_LIVE_CTRL_X" } },
+          { label: "5. Record Comprehension Run", action: { type: "RECORD_COMPREHENSION_RUN" } },
+          { label: "6. Post-Process Casts (Mark + Sanitize + Trim)", action: { type: "POSTPROCESS_ALL_CASTS" } },
+          { label: "7. Extract & Compare Brain Traces", action: { type: "EXTRACT_AND_COMPARE_TRACES" } }
+        ]
+      },
+      {
+        id: "guardrails",
+        name: "Scenario 2: Guardrail & Retake Recovery",
+        description: "What happens if the operator tries to set up the Comprehension Run before finishing the Baseline Run, or needs to wipe and retake Run 1 without disturbing the Skilled workspace?",
+        steps: [
+          { label: "1. Init Workspaces", action: { type: "INIT_BASELINE_AND_SKILLED" } },
+          { label: "2. Attempt Premature Clone (Blocked!)", action: { type: "CLONE_COMPREHENSION_WORKSPACE" } },
+          { label: "3. Record Baseline Run", action: { type: "RECORD_BASELINE_RUN" } },
+          { label: "4. Wipe & Retake Baseline Only", action: { type: "RESET_BASELINE_FOR_RETAKE" } },
+          { label: "5. Re-Record Clean Baseline Run", action: { type: "RECORD_BASELINE_RUN" } },
+          { label: "6. Clone Baseline → Comprehension (Succeeds)", action: { type: "CLONE_COMPREHENSION_WORKSPACE" } }
+        ]
+      },
+      {
+        id: "marker_recovery",
+        name: "Scenario 3: Forgot Ctrl+x During Skilled Run (mark-cast.py Recovery)",
+        description: "What happens if the operator records all 6 Matt Pocock steps in 02-skilled.cast without pressing Ctrl+x once? `mark-cast.py --auto-skilled` scans the stdout stream for the 6 slash commands and injects the canonical `'m'` chapter markers automatically.",
+        steps: [
+          { label: "1. Init Workspaces", action: { type: "INIT_BASELINE_AND_SKILLED" } },
+          { label: "2. Record Skilled Run (Forgot Ctrl+x!)", action: { type: "RECORD_SKILLED_WITHOUT_MARKERS" } },
+          { label: "3. Run mark-cast.py --auto-skilled", action: { type: "RUN_MARK_CAST_AUTO_SKILLED" } },
+          { label: "4. Sanitize & Trim All Casts", action: { type: "POSTPROCESS_ALL_CASTS" } }
+        ]
+      }
+    ];
+
+    let appState = createInitialState();
+    let currentScenarioIdx = 0;
+    let currentStepIdx = 0;
+
+    function dispatchAction(action) {
+      appState = runbookReducer(appState, action);
+      render();
+    }
+
+    function selectScenario(idx) {
+      currentScenarioIdx = idx;
+      currentStepIdx = 0;
+      appState = createInitialState();
+      render();
+    }
+
+    function runScenarioStep(stepIdx) {
+      const scenario = SCENARIOS[currentScenarioIdx];
+      const step = scenario.steps[stepIdx];
+      if (!step) return;
+      currentStepIdx = stepIdx + 1;
+      dispatchAction(step.action);
+    }
+
+    function copyText(btn, text) {
+      navigator.clipboard.writeText(text);
+      const prev = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(() => { btn.textContent = prev; }, 1200);
+    }
+
+    function render() {
+      // Banner
+      const banner = document.getElementById("transition-banner");
+      banner.className = `transition-banner ${appState.lastEvent.status}`;
+      banner.innerHTML = `
+        <div>
+          <strong>${appState.lastEvent.title}</strong> —
+          <span>${appState.lastEvent.detail}</span>
+        </div>
+        <span class="badge ${appState.lastEvent.status}">${appState.lastEvent.status.toUpperCase()}</span>
+      `;
+
+      // Scenario tabs
+      const tabsEl = document.getElementById("scenario-tabs");
+      tabsEl.innerHTML = SCENARIOS.map((sc, i) => `
+        <button class="tab-btn ${i === currentScenarioIdx ? 'active' : ''}" onclick="selectScenario(${i})">
+          ${sc.name}
+        </button>
+      `).join("");
+
+      // Walkthrough steps
+      const sc = SCENARIOS[currentScenarioIdx];
+      const wtEl = document.getElementById("walkthrough-panel");
+      wtEl.innerHTML = `
+        <p class="walkthrough-desc">${sc.description}</p>
+        <div class="step-buttons">
+          ${sc.steps.map((st, idx) => {
+            const cls = idx < currentStepIdx ? "done" : (idx === currentStepIdx ? "current" : "");
+            return `<button class="step-btn ${cls}" onclick="runScenarioStep(${idx})">
+              ${idx < currentStepIdx ? "✓" : "▶"} ${st.label}
+            </button>`;
+          }).join("")}
+        </div>
+      `;
+
+      // Workspaces Grid
+      const wsGrid = document.getElementById("workspaces-grid");
+      const wsEntries = [
+        { key: "baseline", label: "Run 1: Baseline Workspace", sub: "No project skills (Global Rule only)" },
+        { key: "skilled", label: "Run 2: Skilled Workspace", sub: "Matt Pocock Skill Pack (6 chapters)" },
+        { key: "comprehension", label: "Run 3: Comprehension Workspace", sub: "Cloned Baseline App + /teach-code" }
+      ];
+      wsGrid.innerHTML = wsEntries.map(({ key, label, sub }) => {
+        const w = appState.workspaces[key];
+        const statusBadge = w.flutterAppBuilt
+          ? `<span class="badge ok">APP READY</span>`
+          : (w.initialized ? `<span class="badge info">INITIALIZED</span>` : `<span class="badge">NOT CREATED</span>`);
+        const artifactsText = w.intentArtifacts.length
+          ? w.intentArtifacts.join(", ")
+          : (w.flutterAppBuilt ? `<span style="color:var(--err)">NONE (Comprehension Debt!)</span>` : "—");
+        return `
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">${label}</div>
+                <div style="font-size:11.5px;color:var(--muted)">${sub}</div>
+              </div>
+              ${statusBadge}
+            </div>
+            <ul class="kv-list">
+              <li><span class="kv-label">Directory</span><span class="kv-val">${w.name}</span></li>
+              <li><span class="kv-label">Global Rule</span><span class="kv-val">Active (1 Q at a time)</span></li>
+              <li><span class="kv-label">Installed Skills</span><span class="kv-val">${w.skillsInstalled.length ? w.skillsInstalled.length + " skills" : "0 (none)"}</span></li>
+              <li><span class="kv-label">Flutter iOS App</span><span class="kv-val">${w.flutterAppBuilt ? "lib/ built & verified" : "not built"}</span></li>
+              <li><span class="kv-label">Intent Artifacts</span><span class="kv-val">${artifactsText}</span></li>
+            </ul>
+          </div>
+        `;
+      }).join("");
+
+      // Casts & Traces Grid
+      const castsGrid = document.getElementById("casts-grid");
+      const castEntries = [
+        { key: "baseline", title: "01-baseline.cast" },
+        { key: "skilled", title: "02-skilled.cast (Multi-Session)" },
+        { key: "comprehension", title: "03-comprehension.cast" }
+      ];
+      castsGrid.innerHTML = castEntries.map(({ key, title }) => {
+        const c = appState.casts[key];
+        const badge = c.trimmed
+          ? `<span class="badge ok">FINAL READY</span>`
+          : (c.recorded ? `<span class="badge warn">RAW RECORDED</span>` : `<span class="badge">UNRECORDED</span>`);
+        const markersHtml = c.markers.length
+          ? `<div class="marker-pills">${c.markers.map(m => `<span class="marker-pill">${m}</span>`).join("")}</div>`
+          : `<span class="kv-val">${c.recorded && key === 'skilled' ? '<span style="color:var(--warn)">0 markers (needs mark-cast.py)</span>' : 'None'}</span>`;
+        return `
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">${title}</div>
+              ${badge}
+            </div>
+            <ul class="kv-list">
+              <li><span class="kv-label">Dimensions / Idle Cap</span><span class="kv-val">${c.dims} / ${c.idleLimit}s</span></li>
+              <li><span class="kv-label">Sanitized (sanitize-cast.py)</span><span class="kv-val">${c.sanitized ? "✓ Clean" : "Pending"}</span></li>
+              <li><span class="kv-label">Trimmed (trim-cast.py)</span><span class="kv-val">${c.trimmed ? "✓ 3.0s final hold" : "Pending"}</span></li>
+              <li><span class="kv-label">Session Traces in ~/.gemini</span><span class="kv-val">${appState.traces[key + "Sessions"]} session(s) ${appState.traces.exportedMarkdown ? "(Exported)" : ""}</span></li>
+            </ul>
+            <div style="margin-top:8px;font-size:12px;color:var(--muted)">Embedded <code>"m"</code> Chapter Markers:</div>
+            ${markersHtml}
+          </div>
+        `;
+      }).join("");
+
+      // Operator Panel
+      const guide = getOperatorGuide(appState);
+      const opPanel = document.getElementById("operator-panel");
+      opPanel.innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">${guide.title}</div>
+            <span class="badge info">TERMINAL COMMAND</span>
+          </div>
+          <div class="code-box" id="active-cmd-box">${guide.command}<button class="copy-btn" onclick="copyText(this, ${JSON.stringify(guide.command).replace(/"/g, '&quot;')})">Copy</button></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Operator Prompt &amp; Canonical Q&amp;A Script</div>
+            <span class="badge">CHEAT SHEET</span>
+          </div>
+          <ul class="kv-list">
+            ${guide.notes.map(n => `<li style="display:block;padding:5px 0;">• ${n}</li>`).join("")}
+          </ul>
+        </div>
+      `;
+
+      // Free-Play Buttons
+      const fpGroups = [
+        {
+          title: "1. Workspace Setup",
+          actions: [
+            { label: "setup-workspaces.sh init-all", action: { type: "INIT_BASELINE_AND_SKILLED" } },
+            { label: "setup-workspaces.sh clone-comprehension", action: { type: "CLONE_COMPREHENSION_WORKSPACE" } },
+            { label: "Reset Baseline for Retake", action: { type: "RESET_BASELINE_FOR_RETAKE" } }
+          ]
+        },
+        {
+          title: "2. Asciinema Capture",
+          actions: [
+            { label: "Record 01-baseline.cast", action: { type: "RECORD_BASELINE_RUN" } },
+            { label: "Record 02-skilled.cast (with Ctrl+x)", action: { type: "RECORD_SKILLED_WITH_LIVE_CTRL_X" } },
+            { label: "Record 02-skilled.cast (forgot Ctrl+x)", action: { type: "RECORD_SKILLED_WITHOUT_MARKERS" } },
+            { label: "Record 03-comprehension.cast", action: { type: "RECORD_COMPREHENSION_RUN" } }
+          ]
+        },
+        {
+          title: "3. Cast Post-Processing",
+          actions: [
+            { label: "mark-cast.py --auto-skilled", action: { type: "RUN_MARK_CAST_AUTO_SKILLED" } },
+            { label: "setup-workspaces.sh postprocess-casts", action: { type: "POSTPROCESS_ALL_CASTS" } }
+          ]
+        },
+        {
+          title: "4. Brain Trace Extraction",
+          actions: [
+            { label: "setup-workspaces.sh extract-traces", action: { type: "EXTRACT_AND_COMPARE_TRACES" } }
+          ]
+        }
+      ];
+      document.getElementById("freeplay-groups").innerHTML = fpGroups.map(g => `
+        <div class="fp-group">
+          <h4>${g.title}</h4>
+          ${g.actions.map(a => `
+            <button class="fp-btn" onclick='dispatchAction(${JSON.stringify(a.action)})'>${a.label}</button>
+          `).join("")}
+        </div>
+      `).join("");
+    }
+
+    render();
+  </script>
+</body>
+</html>
