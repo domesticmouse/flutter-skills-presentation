@@ -15,11 +15,13 @@ Specifically:
 
 ## Resolution
 
-Validated via interactive prototype: [05-stop-points.html](../prototypes/05-stop-points.html).
+Validated via interactive prototypes:
+- [05-stop-points.html](../prototypes/05-stop-points.html) (UI variant & state machine prototype)
+- [06-baseline-cast-player.html](../prototypes/06-baseline-cast-player.html) (self-contained live browser test-drive harness for `01-baseline.cast`)
 
 ### 1. Hybrid Embedded `.cast` `"m"` Markers + Post-Process Labeler (`mark-cast.py`)
-- **Recording & Post-Processing**: Stop points are stored directly inside the `.cast` file as native asciicast `"m"` marker events (`[dt, "m", "1. /setup-matt-pocock-skills"]`, etc.). During `asciinema rec`, the operator can press `Ctrl+x` before each new `agy` invocation or run a post-processing script (`mark-cast.py` in `/asciinema`) that detects `agy` command boundaries (or labels existing unlabeled `"m"` events) and writes canonical chapter labels (`1. /setup-matt-pocock-skills`, `2. /wayfinder (Chart)`, `3. /wayfinder (Resolve)`, `4. /to-spec`, `5. /to-tickets`, `6. /implement`).
-- **Auto-Discovery in `AsciinemaPlayer.vue`**: On mount, `AsciinemaPlayer.vue` parses embedded `"m"` marker events directly from the `.cast` file (computing effective playback timestamps respecting `idleTimeLimit`) so recordings are self-contained and resilient to trimming. Slide frontmatter `markers: [[timestamp, label], ...]` remains supported as an optional override.
+- **Recording & Post-Processing**: Stop points are stored directly inside the `.cast` file as native asciicast `"m"` marker events. During `asciinema rec`, the operator can press `Ctrl+x` at stop points or run [mark-cast.py](../prototypes/mark-cast.py) (`--auto-baseline` for the 7 Baseline Run milestones; `--auto-skilled` for the 6 Skilled Run skill invocations), which detects stdout frame boundaries (inserting `[0.0, "m", "<label>"]` immediately after the frame-completing `"o"` event before user pauses so `pauseOnMarkers` pauses with the prompt/question already drawn on screen).
+- **Auto-Discovery & `asciicast v3` → `v2` Normalization in `AsciinemaPlayer.vue`**: On mount, `AsciinemaPlayer.vue` and [06-baseline-cast-player.html](../prototypes/06-baseline-cast-player.html) parse the `.cast` stream, normalize `asciicast v3` headers/relative-`dt` events (and `"x"` exit holds) into `asciicast v2` in memory (`{ data: v2Text }`) so `asciinema-player` `< 3.10.0` (`^3.8.0`/`3.9.0`) never fails with the `💥` parser error, and extract embedded `"m"` markers with idle-capped playback timestamps. Slide frontmatter `markers: [[timestamp, label], ...]` remains supported as an optional override.
 
 ### 2. Slidev Chapter UI (Variant A: Compact Header Chapter Pills) & Conflict-Free Stage Controls
 - **Header Chapter Stepper Bar (`cast-full.vue` / `AsciinemaPlayer.vue`)**: When a recording has chapter markers, `cast-full.vue` renders a compact row of clickable chapter pills (`1. /setup-skills`, `2. /wayfinder (Chart)`, …) and `◀ Prev` / `▶ Resume` / `Next ▶` buttons in the header bar, preserving ~85% viewport height and 100% terminal width.

@@ -24,9 +24,12 @@ Designed for a 45–50 minute university lecture for mobile development students
 | Path | Description |
 | :--- | :--- |
 | [`GLOSSARY.md`](./GLOSSARY.md) | Canonical domain terminology (**Baseline Run**, **Skilled Run**, **Comprehension Run**, **Intent Artifacts**, **Comprehension Debt**, **Global Rule**, **Session Trace**, **Terminal Cast**). |
+| [`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md) | Step-by-step operator runbook for recording the three `asciinema` **Terminal Casts**, processing stop points, and exporting **Session Traces**. |
+| [`recordings/`](./recordings/) | Captured raw (`recordings/raw/`) and sanitized/marked/trimmed (`recordings/final/`) `.cast` terminal recordings (`01-baseline.cast` captured & verified). |
+| [`artifacts/traces/`](./artifacts/traces/) | Exported per-session Antigravity Markdown **Session Traces** (`artifacts/traces/parts_tracker_baseline/` captured & verified). |
 | [`.scratch/flutter-skills-presentation/map.md`](./.scratch/flutter-skills-presentation/map.md) | Wayfinder map tracking the presentation specification, resolved decisions, and remaining open questions. |
-| [`.scratch/flutter-skills-presentation/issues/`](./.scratch/flutter-skills-presentation/issues/) | Resolved and open Wayfinder tickets covering talk thesis, canonical Q&A script, asciinema stop-points, and operator runbook. |
-| [`.scratch/flutter-skills-presentation/prototypes/`](./.scratch/flutter-skills-presentation/prototypes/) | Interactive HTML prototypes ([`03-recording-runbook.html`](./.scratch/flutter-skills-presentation/prototypes/03-recording-runbook.html), [`05-stop-points.html`](./.scratch/flutter-skills-presentation/prototypes/05-stop-points.html)) and recording helpers ([`setup-workspaces.sh`](./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh), [`mark-cast.py`](./.scratch/flutter-skills-presentation/prototypes/mark-cast.py)). |
+| [`.scratch/flutter-skills-presentation/issues/`](./.scratch/flutter-skills-presentation/issues/) | Resolved and open Wayfinder tickets covering talk thesis, canonical Q&A script, asciinema stop-points, operator runbook, and recording progress. |
+| [`.scratch/flutter-skills-presentation/prototypes/`](./.scratch/flutter-skills-presentation/prototypes/) | Interactive HTML prototypes ([`03-recording-runbook.html`](./.scratch/flutter-skills-presentation/prototypes/03-recording-runbook.html), [`05-stop-points.html`](./.scratch/flutter-skills-presentation/prototypes/05-stop-points.html), [`06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html)) and recording helpers ([`setup-workspaces.sh`](./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh), [`mark-cast.py`](./.scratch/flutter-skills-presentation/prototypes/mark-cast.py)). |
 | [`.agents/skills/`](./.agents/skills/) | Installed project Agent Skills for planning (`/wayfinder`, `/grilling`, `/domain-modeling`, `/prototype`), recording & trace analysis (`/asciinema`, `/agy-brain-explorer`), teaching (`/teach-code`), and deck authoring (`/bjm-voice`, `/slidev-deck`). |
 | [`skills-lock.json`](./skills-lock.json) | Lockfile pinning installed Agent Skills. |
 
@@ -34,29 +37,24 @@ Designed for a 45–50 minute university lecture for mobile development students
 
 ## Reproducing the Demo Workspaces & Recordings
 
-The operator runbook and workspace setup script initialize isolated demo directories under `~/Demos/flutter-parts-experiment/` (`parts-tracker-baseline`, `parts-tracker-skilled`, and `parts-tracker-comprehension`), post-process `asciinema` **Terminal Casts**, and extract `/agy-brain-explorer` **Session Traces**.
+The operator runbook ([`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md)) and workspace helper script ([`setup-workspaces.sh`](./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh)) walk through recording isolated demo directories under `~/Demos/flutter-parts-experiment/` (`parts_tracker_baseline`, `parts_tracker_skilled`, and `parts_tracker_comprehension`), post-processing `asciinema` **Terminal Casts** (with embedded stop points and adaptive per-segment playback speeds), and extracting `/agy-brain-explorer` **Session Traces**.
 
-1. **Open the Interactive Runbook**:
-   Open [`.scratch/flutter-skills-presentation/prototypes/03-recording-runbook.html`](./.scratch/flutter-skills-presentation/prototypes/03-recording-runbook.html) in a browser for the step-by-step operator checklist and copyable prompts.
+1. **Follow the Operator Runbook**:
+   See [`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md) (or open [`.scratch/flutter-skills-presentation/prototypes/03-recording-runbook.html`](./.scratch/flutter-skills-presentation/prototypes/03-recording-runbook.html)) for the step-by-step commands and copyable canonical Q&A prompts.
 
-2. **Initialize the Baseline & Skilled Workspaces**:
+2. **Process & Verify Each Run Immediately After Recording**:
    ```bash
-   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh init
+   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh process-run 01-baseline.cast parts_tracker_baseline
+   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh process-run 02-skilled.cast parts_tracker_skilled
+   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh process-run 03-comprehension.cast parts_tracker_comprehension
    ```
 
-3. **Clone the Baseline App for the Comprehension Run** *(after completing the Baseline Run)*:
-   ```bash
-   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh clone-comprehension
-   ```
+3. **Test Drive `01-baseline.cast` in a Browser**:
+   Open [`.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html) to preview the 16:9 Slidev `cast-full` player with 7 embedded stop points, adaptive per-segment speeds (`2x`–`25x`), and `[` / `]` / `p` stage controls.
 
-4. **Sanitize, Mark, and Trim Terminal Casts**:
+4. **Check Overall Experiment Status**:
    ```bash
-   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh postprocess-casts
-   ```
-
-5. **Extract and Compare Session Traces**:
-   ```bash
-   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh extract-traces
+   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh status
    ```
 
 ---
