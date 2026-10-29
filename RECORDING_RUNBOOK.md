@@ -130,7 +130,11 @@ Inside the recorded shell:
    ```
 5. Answer `agy`'s one-at-a-time clarifying questions using the **Canonical Q&A Answers** table above.
 6. Let `agy` build the Flutter iOS app and verify `flutter analyze` / `flutter test`.
-7. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
+7. **Ask `agy` to run the app**
+   ```text
+   Please run the app.
+   ```
+8. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
 
 ### 2.3 Process, Inspect & Decide: Good Capture or Redo Run 1?
 Immediately after exiting the recording shell, run `process-run` to sanitize/trim `01-baseline.cast` and export the Antigravity session logs for `parts_tracker_baseline`:
