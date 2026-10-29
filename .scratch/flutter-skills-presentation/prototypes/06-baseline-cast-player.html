@@ -184,6 +184,30 @@
       color: var(--emerald);
       font-weight: 600;
     }
+    .speed-badge-live {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(122, 162, 247, 0.45);
+      background: var(--accent-dim);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+    .speed-badge-live.boosted {
+      border-color: rgba(251, 191, 36, 0.55);
+      background: var(--amber-dim);
+      color: var(--amber);
+    }
+    .speed-badge-live.turbo {
+      border-color: rgba(244, 63, 94, 0.65);
+      background: rgba(244, 63, 94, 0.18);
+      color: #fda4af;
+    }
 
     /* Chapter Pills Row */
     .chapter-pills {
@@ -194,8 +218,8 @@
     }
     .chapter-pill {
       font-family: var(--font-mono);
-      font-size: 11.5px;
-      padding: 4px 10px;
+      font-size: 11px;
+      padding: 4px 9px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: rgba(255, 255, 255, 0.03);
@@ -203,7 +227,7 @@
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       transition: all 0.15s ease;
     }
     .chapter-pill:hover {
@@ -223,25 +247,46 @@
       color: var(--amber);
       font-weight: 700;
     }
+    .chapter-speed-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 999px;
+      background: rgba(122, 162, 247, 0.16);
+      color: var(--accent);
+      border: 1px solid rgba(122, 162, 247, 0.3);
+    }
+    .chapter-speed-tag.boosted {
+      background: var(--amber-dim);
+      color: var(--amber);
+      border-color: rgba(251, 191, 36, 0.4);
+    }
+    .chapter-speed-tag.turbo {
+      background: rgba(244, 63, 94, 0.2);
+      color: #fda4af;
+      border-color: rgba(244, 63, 94, 0.5);
+    }
     .chapter-time {
       opacity: 0.65;
-      font-size: 10.5px;
+      font-size: 10px;
     }
 
     /* Player Viewport */
     .player-stage {
       flex: 1;
       min-height: 0;
-      padding-top: 10px;
+      padding-top: 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       position: relative;
+      gap: 6px;
     }
     #player-container {
       width: 100%;
-      height: 100%;
+      flex: 1;
+      min-height: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -255,10 +300,33 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     }
+    .speed-hud-pill {
+      flex-shrink: 0;
+      padding: 3px 12px;
+      border-radius: 9999px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #d1d5db;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .speed-hud-pill strong {
+      color: var(--accent);
+    }
+    .speed-hud-pill.boosted strong {
+      color: var(--amber);
+    }
+    .speed-hud-pill.turbo strong {
+      color: #fda4af;
+    }
 
     /* Footer Bar inside Slide */
     .slide-footer {
-      margin-top: 8px;
+      margin-top: 6px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -283,18 +351,28 @@
   <header class="top-bar">
     <div class="top-left">
       <span class="badge">Live Recording Test Drive</span>
-      <h1 class="top-title">recordings/final/01-baseline.cast · 7 Embedded Stop Points</h1>
+      <h1 class="top-title">recordings/final/01-baseline.cast · Adaptive Breakpoint Speeds</h1>
     </div>
 
     <div class="top-controls">
       <label class="ctrl-group">
-        <span>Speed:</span>
-        <select id="speed-select">
+        <span>Min Speed:</span>
+        <select id="min-speed-select">
           <option value="1">1.0x</option>
           <option value="1.5">1.5x</option>
           <option value="2" selected>2.0x (Default)</option>
           <option value="3">3.0x</option>
-          <option value="4">4.0x</option>
+        </select>
+      </label>
+
+      <label class="ctrl-group">
+        <span>Target Max Segment:</span>
+        <select id="max-seg-select">
+          <option value="15">15s max</option>
+          <option value="20">20s max</option>
+          <option value="30" selected>30s max (Default)</option>
+          <option value="45">45s max</option>
+          <option value="9999">No cap (Fixed speed)</option>
         </select>
       </label>
 
@@ -337,6 +415,7 @@
         <div class="slide-header-top">
           <h2 class="slide-title">Act 1 — Baseline Run: Building the Flutter iOS Parts Tracker</h2>
           <div class="header-actions">
+            <span id="live-speed-badge" class="speed-badge-live" title="Current segment playback speed">⚡ Speed: 2x</span>
             <span id="status-badge" class="status-pill">Ready (Paused)</span>
             <button class="btn" id="prev-btn" title="Previous Stop Point ([)">◀ Prev</button>
             <button class="btn btn-primary" id="play-btn" title="Play / Pause (p)">▶ Play</button>
@@ -346,9 +425,14 @@
         <div class="chapter-pills" id="chapter-pills"></div>
       </div>
 
-      <!-- Main Asciinema Player Container -->
+      <!-- Main Asciinema Player Container + Prominent Speed HUD -->
       <div class="player-stage">
         <div id="player-container"></div>
+        <div id="speed-hud-pill" class="speed-hud-pill">
+          <span>Playback speed: <strong>2x</strong></span>
+          <span>·</span>
+          <span id="speed-hud-segment">Segment 1/8: Start → 1. Project Created (2.6s)</span>
+        </div>
       </div>
 
       <!-- Slide Footer Hints -->
@@ -382,6 +466,51 @@
       return `${String(m).padStart(2, "0")}:${String(rem).padStart(2, "0")}`;
     }
 
+    let segments = [];
+    let currentSegmentIdx = 0;
+    let speedPollTimer = null;
+
+    function getSpeedTierClass(speed, minSpeed = 2) {
+      if (speed >= 10) return "turbo";
+      if (speed > minSpeed) return "boosted";
+      return "";
+    }
+
+    function updateSpeedIndicators(segIdx, contextNote = "") {
+      if (!segments.length) return;
+      const clampedIdx = Math.max(0, Math.min(segments.length - 1, segIdx));
+      currentSegmentIdx = clampedIdx;
+      const seg = segments[clampedIdx];
+      const minSpeed = Number(document.getElementById("min-speed-select").value) || 2;
+      const tier = getSpeedTierClass(seg.speed, minSpeed);
+
+      const liveBadge = document.getElementById("live-speed-badge");
+      if (liveBadge) {
+        liveBadge.textContent = `⚡ Speed: ${seg.speed}x`;
+        liveBadge.className = "speed-badge-live" + (tier ? " " + tier : "");
+      }
+
+      const hudPill = document.getElementById("speed-hud-pill");
+      if (hudPill) {
+        hudPill.className = "speed-hud-pill" + (tier ? " " + tier : "");
+        const suffix = contextNote ? ` · ${contextNote}` : "";
+        hudPill.innerHTML =
+          `<span>Playback speed: <strong>${seg.speed}x</strong></span>` +
+          `<span>·</span>` +
+          `<span>Segment ${seg.index + 1}/${segments.length}: ${seg.fromLabel} → ${seg.toLabel} (${seg.warpedDuration.toFixed(1)}s @ ${seg.speed}x, 1x=${formatTime(seg.cappedDuration)})${suffix}</span>`;
+      }
+    }
+
+    function findSegmentIndexAtTime(playTimeSec) {
+      if (!segments.length) return 0;
+      for (let i = 0; i < segments.length; i++) {
+        if (playTimeSec < segments[i].endTime - 0.02) {
+          return i;
+        }
+      }
+      return segments.length - 1;
+    }
+
     async function decompressBase64Gzip(b64) {
       const binStr = atob(b64);
       const bytes = new Uint8Array(binStr.length);
@@ -396,33 +525,28 @@
     }
 
     /**
-     * Converts an asciicast v3 (or v2) stream into an asciicast v2 NDJSON string
-     * and extracts chapter markers with both raw and idle-capped playback timestamps.
-     * Why: asciinema-player <3.10 only parses asciicast v1/v2 headers and throws an
-     * error (rendering the 💥 emoji) if handed a raw {"version": 3} header or a file:// blob URL.
+     * Two-pass adaptive segment speed compiler:
+     * 1. Splits the cast into breakpoint-bounded segments and computes each segment's
+     *    1x idle-capped duration.
+     * 2. Assigns each segment a speed: max(minSpeed, ceil(cappedDuration / maxSegmentSec)),
+     *    guaranteeing >= 2x minimum speed and <= 30s playback per segment.
+     * 3. Emits an asciicast v2 stream with per-segment warped timestamps so asciinema-player
+     *    plays every segment at its exact target speed without re-instantiation.
      */
-    function prepareCastForPlayer(castText, idleTimeLimitOverride) {
+    function prepareCastForPlayer(castText, idleTimeLimitOverride, minSpeed = 2.0, maxSegmentSec = 30.0) {
       const lines = castText.split(/\r?\n/).filter((l) => l.trim() && !l.trim().startsWith("#"));
-      if (!lines.length) return { v2Text: "", foundChapters: [] };
+      if (!lines.length) return { v2Text: "", foundChapters: [], computedSegments: [] };
 
       const header = JSON.parse(lines[0]);
       const version = Number(header.version || 2);
       const idleCap = Number(idleTimeLimitOverride || header.idle_time_limit || 2.0);
 
-      const v2Header = {
-        version: 2,
-        width: (header.term && header.term.cols) || header.width || 120,
-        height: (header.term && header.term.rows) || header.height || 32,
-        timestamp: header.timestamp,
-        idle_time_limit: idleCap,
-        env: header.env || { SHELL: "/bin/zsh" }
-      };
-
-      const v2Lines = [JSON.stringify(v2Header)];
-      const foundChapters = [];
-      let rawAbs = 0.0;
-      let effAbs = 0.0;
+      // Pass 1: Parse events and group into segments between "m" markers
+      const rawSegments = [];
+      let currentEvents = [];
       let prevRaw = 0.0;
+      let rawAbs = 0.0;
+      let fromLabel = "0. Start";
 
       for (let i = 1; i < lines.length; i++) {
         const ev = JSON.parse(lines[i]);
@@ -436,45 +560,174 @@
           rawAbs += dt;
         } else {
           rawAbs = tVal;
-          dt = rawAbs - prevRaw;
+          dt = Math.max(0.0, rawAbs - prevRaw);
           prevRaw = rawAbs;
         }
-        effAbs += Math.min(dt, idleCap);
+        const cappedDt = code === "x" ? dt : Math.min(dt, idleCap);
 
-        const absTime = Number(rawAbs.toFixed(6));
         if (code === "m") {
-          foundChapters.push({
-            index: foundChapters.length,
-            rawTime: rawAbs,
-            playTime: effAbs,
-            label: payload || `Marker ${foundChapters.length + 1}`
+          const markerLabel = payload || `Marker ${rawSegments.length + 1}`;
+          rawSegments.push({
+            fromLabel,
+            toLabel: markerLabel,
+            markerLabel,
+            isMarkerEnd: true,
+            rawEndTime: rawAbs,
+            events: currentEvents
           });
-          v2Lines.push(JSON.stringify([absTime, "m", payload]));
-        } else if (code === "x") {
-          // Preserve trailing hold duration in v2 as a no-op stdout frame
-          v2Lines.push(JSON.stringify([absTime, "o", ""]));
+          currentEvents = [];
+          fromLabel = markerLabel;
         } else {
-          v2Lines.push(JSON.stringify([absTime, code, payload]));
+          currentEvents.push({ dt, cappedDt, code, payload, rawAbs });
         }
       }
 
+      if (currentEvents.length > 0) {
+        rawSegments.push({
+          fromLabel,
+          toLabel: "End (Run App)",
+          markerLabel: null,
+          isMarkerEnd: false,
+          rawEndTime: rawAbs,
+          events: currentEvents
+        });
+      }
+
+      // Compute per-segment speeds and warped v2 timestamps
+      const computedSegments = [];
+      const foundChapters = [];
+      let warpedAbs = 0.0;
+      let unwarpedCappedAbs = 0.0;
+      const bodyLines = [];
+
+      rawSegments.forEach((seg, segIdx) => {
+        let segRawDur = 0.0;
+        let segCappedDur = 0.0;
+        seg.events.forEach((e) => {
+          if (e.code !== "x") {
+            segRawDur += e.dt;
+            segCappedDur += e.cappedDt;
+          }
+        });
+
+        let segSpeed = minSpeed;
+        if (maxSegmentSec > 0 && segCappedDur / minSpeed > maxSegmentSec) {
+          segSpeed = Math.max(minSpeed, Math.ceil(segCappedDur / maxSegmentSec));
+        }
+
+        const startTime = warpedAbs;
+        seg.events.forEach((e) => {
+          if (e.code === "x") {
+            // Keep final frame hold unscaled so the ending screen stays visible
+            warpedAbs += e.cappedDt;
+            bodyLines.push(JSON.stringify([Number(warpedAbs.toFixed(6)), "o", ""]));
+          } else {
+            warpedAbs += e.cappedDt / segSpeed;
+            unwarpedCappedAbs += e.cappedDt;
+            bodyLines.push(JSON.stringify([Number(warpedAbs.toFixed(6)), e.code, e.payload]));
+          }
+        });
+
+        const endTime = warpedAbs;
+        const computedSeg = {
+          index: segIdx,
+          fromLabel: seg.fromLabel,
+          toLabel: seg.toLabel,
+          speed: segSpeed,
+          rawDuration: segRawDur,
+          cappedDuration: segCappedDur,
+          warpedDuration: endTime - startTime,
+          startTime,
+          endTime
+        };
+        computedSegments.push(computedSeg);
+
+        if (seg.isMarkerEnd) {
+          const markerTime = Number(warpedAbs.toFixed(6));
+          bodyLines.push(JSON.stringify([markerTime, "m", seg.markerLabel]));
+          foundChapters.push({
+            index: foundChapters.length,
+            rawTime: seg.rawEndTime,
+            unwarpedPlayTime: unwarpedCappedAbs,
+            playTime: warpedAbs,
+            label: seg.markerLabel,
+            inSpeed: segSpeed,
+            inDuration: computedSeg.warpedDuration,
+            segmentIndex: segIdx
+          });
+        }
+      });
+
+      // Attach nextSpeed to each chapter marker so we know the speed when resuming from that marker
+      foundChapters.forEach((ch, idx) => {
+        const nextSeg = computedSegments[idx + 1] || computedSegments[idx];
+        ch.nextSpeed = nextSeg ? nextSeg.speed : minSpeed;
+        ch.nextDuration = nextSeg ? nextSeg.warpedDuration : 0;
+      });
+
+      const v2Header = {
+        version: 2,
+        width: (header.term && header.term.cols) || header.width || 120,
+        height: (header.term && header.term.rows) || header.height || 32,
+        duration: Number(warpedAbs.toFixed(3)),
+        timestamp: header.timestamp,
+        env: header.env || { SHELL: "/bin/zsh" }
+      };
+
       return {
-        v2Text: v2Lines.join("\n") + "\n",
-        foundChapters
+        v2Text: [JSON.stringify(v2Header), ...bodyLines].join("\n") + "\n",
+        foundChapters,
+        computedSegments
       };
     }
 
     function renderChapterPills(hitIdx = -1) {
       const container = document.getElementById("chapter-pills");
       container.innerHTML = "";
+      const minSpeed = Number(document.getElementById("min-speed-select").value) || 2;
+
+      // Add a 0:00 Start pill so user can restart from beginning easily
+      const startBtn = document.createElement("button");
+      startBtn.className = "chapter-pill" + (activeChapterIdx === -1 && hitIdx === -1 ? " active" : "");
+      startBtn.title = "Jump to beginning of recording (0:00)";
+      startBtn.innerHTML = `<span>↺ 0. Start</span><span class="chapter-time">00:00</span>`;
+      startBtn.onclick = async () => {
+        if (!player) return;
+        activeChapterIdx = -1;
+        renderChapterPills(-1);
+        await player.seek(0);
+        updateSpeedIndicators(0);
+      };
+      container.appendChild(startBtn);
+
       chapters.forEach((ch, idx) => {
         const btn = document.createElement("button");
         btn.className = "chapter-pill" +
           (idx === hitIdx ? " hit" : idx === activeChapterIdx ? " active" : "");
-        btn.innerHTML = `<span>${ch.label}</span><span class="chapter-time">${formatTime(ch.playTime)}</span>`;
+        const tier = getSpeedTierClass(ch.inSpeed, minSpeed);
+        btn.title = `Segment ${idx + 1} plays at ${ch.inSpeed}x (${ch.inDuration.toFixed(1)}s) → stops at ${ch.label}. Next segment plays at ${ch.nextSpeed}x.`;
+        btn.innerHTML =
+          `<span>${ch.label}</span>` +
+          `<span class="chapter-speed-tag ${tier}">${ch.inSpeed}x</span>` +
+          `<span class="chapter-time">${formatTime(ch.playTime)}</span>`;
         btn.onclick = () => jumpToChapter(idx);
         container.appendChild(btn);
       });
+
+      // If there is a trailing segment after the last marker, show an info pill for the final segment speed
+      if (segments.length > chapters.length) {
+        const tailSeg = segments[segments.length - 1];
+        const tier = getSpeedTierClass(tailSeg.speed, minSpeed);
+        const tailSpan = document.createElement("span");
+        tailSpan.className = "chapter-pill";
+        tailSpan.style.cursor = "default";
+        tailSpan.title = `Final segment after ${chapters[chapters.length - 1]?.label || "last marker"} plays at ${tailSeg.speed}x (${tailSeg.warpedDuration.toFixed(1)}s)`;
+        tailSpan.innerHTML =
+          `<span>→ Run App</span>` +
+          `<span class="chapter-speed-tag ${tier}">${tailSeg.speed}x</span>` +
+          `<span class="chapter-time">${formatTime(tailSeg.endTime)}</span>`;
+        container.appendChild(tailSpan);
+      }
     }
 
     function setStatus(text, mode = "") {
@@ -490,34 +743,66 @@
       activeChapterIdx = idx;
       const ch = chapters[idx];
       renderChapterPills();
+      // Jumping to marker idx positions playback at the start of segment idx + 1
+      const nextSegIdx = Math.min(segments.length - 1, idx + 1);
+      updateSpeedIndicators(nextSegIdx, `Ready at "${ch.label}"`);
       document.getElementById("marker-detail").textContent =
-        `Jumped to Stop Point ${idx + 1}/${chapters.length}: "${ch.label}" (playback ${formatTime(ch.playTime)} / raw ${formatTime(ch.rawTime)})`;
+        `Jumped to Stop Point ${idx + 1}/${chapters.length}: "${ch.label}" (${formatTime(ch.playTime)} warped / ${formatTime(ch.rawTime)} raw) — next segment runs at ${ch.nextSpeed}x`;
       await player.seek(ch.playTime);
+    }
+
+    async function syncLiveSpeedFromPlayer() {
+      if (!player || typeof player.getCurrentTime !== "function") return;
+      try {
+        const t = await player.getCurrentTime();
+        if (typeof t === "number" && !Number.isNaN(t)) {
+          const segIdx = findSegmentIndexAtTime(t);
+          updateSpeedIndicators(segIdx);
+          if (isPlaying && segments[segIdx]) {
+            setStatus(`Playing (${segments[segIdx].speed}x)`, "playing");
+          }
+        }
+      } catch (_) {
+        // Ignore transient player state queries
+      }
     }
 
     async function initPlayer() {
       const container = document.getElementById("player-container");
+      if (speedPollTimer) {
+        clearInterval(speedPollTimer);
+        speedPollTimer = null;
+      }
       if (player && typeof player.dispose === "function") {
         player.dispose();
       }
       container.innerHTML = "";
 
-      const speed = Number(document.getElementById("speed-select").value);
-      const idleTimeLimit = Number(document.getElementById("idle-select").value);
+      const minSpeed = Number(document.getElementById("min-speed-select").value) || 2;
+      const maxSegmentSec = Number(document.getElementById("max-seg-select").value) || 30;
+      const idleTimeLimit = Number(document.getElementById("idle-select").value) || 2;
       const theme = document.getElementById("theme-select").value;
       const pauseOnMarkers = document.getElementById("pause-markers-chk").checked;
 
-      const { v2Text, foundChapters } = prepareCastForPlayer(rawCastText, idleTimeLimit);
+      const { v2Text, foundChapters, computedSegments } = prepareCastForPlayer(
+        rawCastText,
+        idleTimeLimit,
+        minSpeed,
+        maxSegmentSec
+      );
       chapters = foundChapters;
+      segments = computedSegments;
+      activeChapterIdx = -1;
       renderChapterPills();
+      updateSpeedIndicators(0);
 
-      // Pass { data: v2Text } directly in memory (no fetch/blob CORS issues on file://)
+      // Pass { data: v2Text } with speed: 1 because per-segment speeds & idleCap are baked into v2Text
       player = AsciinemaPlayer.create(
         { data: v2Text },
         container,
         {
-          speed,
-          idleTimeLimit,
+          speed: 1,
+          idleTimeLimit: 999999,
           theme,
           pauseOnMarkers,
           fit: "both",
@@ -526,9 +811,21 @@
         }
       );
 
+      speedPollTimer = setInterval(() => {
+        if (isPlaying) {
+          syncLiveSpeedFromPlayer();
+        }
+      }, 100);
+
       player.addEventListener("play", () => {
         isPlaying = true;
-        setStatus(`Playing (${speed}x)`, "playing");
+        // If resuming from a marker pause, show the upcoming segment's speed immediately
+        const targetSegIdx = activeChapterIdx >= 0
+          ? Math.min(segments.length - 1, activeChapterIdx + 1)
+          : currentSegmentIdx;
+        updateSpeedIndicators(targetSegIdx);
+        const activeSpeed = segments[targetSegIdx] ? segments[targetSegIdx].speed : minSpeed;
+        setStatus(`Playing (${activeSpeed}x)`, "playing");
         renderChapterPills(-1);
       });
 
@@ -539,15 +836,22 @@
 
       player.addEventListener("marker", ({ index, time, label }) => {
         activeChapterIdx = index;
+        const finishedSeg = segments[index];
+        const nextSeg = segments[Math.min(segments.length - 1, index + 1)];
         if (pauseOnMarkers) {
           isPlaying = false;
-          setStatus(`⏸ Auto-Paused: ${label}`, "paused-marker");
+          const nextSpeedStr = nextSeg ? ` · Next: ${nextSeg.speed}x` : "";
+          setStatus(`⏸ Auto-Paused: ${label}${nextSpeedStr}`, "paused-marker");
           renderChapterPills(index);
+          if (nextSeg) {
+            updateSpeedIndicators(nextSeg.index, `Paused at "${label}" (finished @ ${finishedSeg ? finishedSeg.speed : minSpeed}x)`);
+          }
         } else {
           renderChapterPills(-1);
+          if (nextSeg) updateSpeedIndicators(nextSeg.index);
         }
         document.getElementById("marker-detail").textContent =
-          `Reached Stop Point ${index + 1}/${chapters.length}: "${label}" at ${formatTime(time)} — press p or click ▶ Resume to continue.`;
+          `Reached Stop Point ${index + 1}/${chapters.length}: "${label}" at ${formatTime(time)} — next segment plays at ${nextSeg ? nextSeg.speed : minSpeed}x (${nextSeg ? nextSeg.warpedDuration.toFixed(1) : 0}s). Press p or ▶ Resume.`;
       });
 
       player.addEventListener("ended", () => {
@@ -573,7 +877,7 @@
       jumpToChapter(target);
     });
 
-    ["speed-select", "idle-select", "theme-select", "pause-markers-chk"].forEach((id) => {
+    ["min-speed-select", "max-seg-select", "idle-select", "theme-select", "pause-markers-chk"].forEach((id) => {
       document.getElementById(id).addEventListener("change", () => initPlayer());
     });
 

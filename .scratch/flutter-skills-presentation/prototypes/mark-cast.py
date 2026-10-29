@@ -14,6 +14,7 @@ Supports:
 
 import argparse
 import json
+import math
 import re
 import sys
 from typing import Any, Dict, List, Tuple
@@ -89,15 +90,45 @@ def compute_timings(
     return result
 
 
-def list_markers(header: Dict[str, Any], events: List[List[Any]], version: int) -> None:
+def list_markers(
+    header: Dict[str, Any],
+    events: List[List[Any]],
+    version: int,
+    min_speed: float = 2.0,
+    max_segment_sec: float = 30.0,
+) -> None:
     timings = compute_timings(header, events, version)
     markers = [row for row in timings if row[3] == "m"]
     print(f"Format: asciicast-v{version} | Total events: {len(events)} | Markers: {len(markers)}")
     if not markers:
         print("  (no 'm' marker events found)")
         return
+    prev_eff = 0.0
+    warped_abs = 0.0
+    prev_label = "0. Start"
     for num, (idx, raw_t, eff_t, _, label) in enumerate(markers, start=1):
-        print(f"  [{num}] event #{idx:04d} | raw={raw_t:6.2f}s | playback={eff_t:6.2f}s | label={label!r}")
+        seg_dur = max(0.0, eff_t - prev_eff)
+        spd = max(min_speed, float(math.ceil(seg_dur / max_segment_sec))) if seg_dur / min_speed > max_segment_sec else min_speed
+        warped_dur = seg_dur / spd
+        warped_abs += warped_dur
+        print(
+            f"  [{num}] event #{idx:04d} | raw={raw_t:6.2f}s | 1x={eff_t:6.2f}s | "
+            f"seg={warped_dur:4.1f}s @ {spd:g}x | warped={warped_abs:5.1f}s | label={label!r}"
+        )
+        prev_eff = eff_t
+        prev_label = str(label)
+    # Check trailing segment after last marker (excluding final 'x' hold)
+    non_exit = [row for row in timings if row[3] != "x"]
+    if non_exit and non_exit[-1][2] > prev_eff + 0.05:
+        tail_eff = non_exit[-1][2]
+        seg_dur = max(0.0, tail_eff - prev_eff)
+        spd = max(min_speed, float(math.ceil(seg_dur / max_segment_sec))) if seg_dur / min_speed > max_segment_sec else min_speed
+        warped_dur = seg_dur / spd
+        warped_abs += warped_dur
+        print(
+            f"  [End] after {prev_label!r} | 1x_seg={seg_dur:6.2f}s | "
+            f"seg={warped_dur:4.1f}s @ {spd:g}x | total_warped={warped_abs:5.1f}s"
+        )
 
 
 def relabel_markers(events: List[List[Any]], labels: List[str]) -> int:
