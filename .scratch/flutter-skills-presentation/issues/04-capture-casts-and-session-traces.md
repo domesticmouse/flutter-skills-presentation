@@ -3,6 +3,7 @@
 Type: task
 Label: `wayfinder:task`
 Status: open
+Assignee: brett
 Blocked by: 03
 
 ## Question

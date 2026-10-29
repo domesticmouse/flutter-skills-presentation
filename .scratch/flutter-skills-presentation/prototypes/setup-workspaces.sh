@@ -5,7 +5,13 @@
 set -euo pipefail
 
 PRESENTATION_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-DEMOS_ROOT="${DEMOS_ROOT:-$HOME/Demos/flutter-parts-experiment}"
+if [[ -z "${DEMOS_ROOT:-}" ]]; then
+  if [[ -d "$PRESENTATION_ROOT/experiments" ]]; then
+    DEMOS_ROOT="$PRESENTATION_ROOT/experiments"
+  else
+    DEMOS_ROOT="$HOME/Demos/flutter-parts-experiment"
+  fi
+fi
 BASELINE_DIR="$DEMOS_ROOT/parts-tracker-baseline"
 SKILLED_DIR="$DEMOS_ROOT/parts-tracker-skilled"
 COMPREHENSION_DIR="$DEMOS_ROOT/parts-tracker-comprehension"
@@ -94,7 +100,7 @@ clone_comprehension() {
 }
 
 postprocess_casts() {
-  init_dirs
+  mkdir -p "$RECORDINGS_RAW" "$RECORDINGS_FINAL"
   local mark_script="$PRESENTATION_ROOT/.scratch/flutter-skills-presentation/prototypes/mark-cast.py"
   local sanitize_script="$PRESENTATION_ROOT/.agents/skills/asciinema/scripts/sanitize-cast.py"
   local trim_script="$PRESENTATION_ROOT/.agents/skills/asciinema/scripts/trim-cast.py"
@@ -117,7 +123,7 @@ postprocess_casts() {
 }
 
 extract_traces() {
-  init_dirs
+  mkdir -p "$TRACES_DIR"
   local explorer="$PRESENTATION_ROOT/.agents/skills/agy-brain-explorer/scripts/agy-brain-explorer.py"
   echo "=== Discovering Sessions Across Experiment Projects ==="
   uv run "$explorer" --by-project
