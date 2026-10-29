@@ -15,42 +15,21 @@ Everything runs inside a single standalone directory outside this repo (`~/Demos
 │       ├── 01-baseline.cast
 │       ├── 02-skilled.cast
 │       └── 03-comprehension.cast
-├── parts-tracker-baseline/        # Run 1: No project skills (Global Rule only)
-├── parts-tracker-skilled/         # Run 2: Matt Pocock skill chain
-└── parts-tracker-comprehension/   # Run 3: Cloned from Baseline + /teach-code
+├── parts_tracker_baseline/        # Run 1: Created via flutter create --platforms=ios (no skills)
+├── parts_tracker_skilled/         # Run 2: Created via flutter create --platforms=ios + npx skills@latest add mattpocock/skills
+└── parts_tracker_comprehension/   # Run 3: Cloned from Baseline + npx skills@latest add domesticmouse/skills
 ```
-
-Once all three runs are recorded, you copy `~/Demos/flutter-parts-experiment` back into this repo (under `./experiment/` and `./recordings/raw/`) so all post-processing, trace extraction, and slide authoring can happen in-tree.
 
 ---
 
-## Step 1: Initialize the Standalone Directory & Workspaces
+## Step 1: Create the Standalone Experiment Directory
 
-Run the following in your terminal to create the standalone directory, initialize the `parts-tracker-baseline` and `parts-tracker-skilled` git repositories, and copy the project skills from this repo into `parts-tracker-skilled`:
+Run the following in your terminal to create the standalone root directory and raw recordings folder:
 
 ```bash
-export REPO_ROOT="/Users/brett/Documents/GitHub/flutter-skills-presentation"
 export EXP_DIR="$HOME/Demos/flutter-parts-experiment"
-
-# 1. Create root and raw recordings folder
 mkdir -p "$EXP_DIR/recordings/raw"
-
-# 2. Initialize Run 1 workspace: Baseline Run (zero project skills)
-rm -rf "$EXP_DIR/parts-tracker-baseline"
-mkdir -p "$EXP_DIR/parts-tracker-baseline"
-git -C "$EXP_DIR/parts-tracker-baseline" init -q
-
-# 3. Initialize Run 2 workspace: Skilled Run (Matt Pocock skill pack)
-rm -rf "$EXP_DIR/parts-tracker-skilled"
-mkdir -p "$EXP_DIR/parts-tracker-skilled/.agents/skills"
-git -C "$EXP_DIR/parts-tracker-skilled" init -q
-
-for skill in \
-  setup-matt-pocock-skills wayfinder grilling domain-modeling prototype \
-  research to-spec to-tickets implement tdd code-review codebase-design \
-  diagnosing-bugs triage wizard; do
-  cp -R "$REPO_ROOT/.agents/skills/$skill" "$EXP_DIR/parts-tracker-skilled/.agents/skills/$skill"
-done
+cd "$EXP_DIR"
 ```
 
 ---
@@ -73,15 +52,17 @@ Keep these answers handy so both the **Baseline Run** and **Skilled Run** receiv
 
 ## Step 2: Record Run 1 — Baseline Run (`01-baseline.cast`)
 
-### 2.1 Start Recording
+### 2.1 Start Recording in `$EXP_DIR`
 ```bash
-cd "$EXP_DIR/parts-tracker-baseline"
+cd "$EXP_DIR"
 asciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite "$EXP_DIR/recordings/raw/01-baseline.cast"
 ```
 
-### 2.2 Launch `agy` & Run Prompt
+### 2.2 Create the Flutter Project & Launch `agy`
 Inside the recorded shell:
 ```bash
+flutter create --platforms=ios parts_tracker_baseline
+cd parts_tracker_baseline
 agy
 ```
 
@@ -91,105 +72,99 @@ I'd like to build a Flutter app for iOS that enables me to track my electronics 
 ```
 
 1. Answer `agy`'s one-at-a-time clarifying questions using the **Canonical Q&A Answers** table above.
-2. Let `agy` scaffold the Flutter iOS app and run `flutter analyze` / `flutter test`.
+2. Let `agy` build the Flutter iOS app and verify `flutter analyze` / `flutter test`.
 3. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
 
 ---
 
 ## Step 3: Record Run 2 — Skilled Run (`02-skilled.cast`)
 
-> **Tip on Chapter Markers**: While recording `02-skilled.cast`, you can press **`Ctrl+x`** before starting each of the 6 slash-command stages to insert an embedded `"m"` marker in the `.cast` file (or let `mark-cast.py --auto-skilled` detect and label the command boundaries automatically afterwards).
->
-> You can either run all 6 stages inside one continuous `asciinema rec` session (starting a fresh `agy` conversation for each stage), or exit `asciinema` between stages and resume with `--append`.
+> **Adding Asciinema Stop Points**: Press **`Ctrl+x`** at each stop-point instruction below to insert an embedded `"m"` marker into `02-skilled.cast`.
 
-### 3.1 Start Recording
+### 3.1 Start Recording in `$EXP_DIR`
 ```bash
-cd "$EXP_DIR/parts-tracker-skilled"
+cd "$EXP_DIR"
 asciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite "$EXP_DIR/recordings/raw/02-skilled.cast"
 ```
 
-*(If resuming after exiting `asciinema` between stages, replace `--overwrite` with `--append`.)*
+### 3.2 Execute the Skilled Run Sequence Inside the Recording
 
-### 3.2 Run the 6-Stage Skill Chain
-
-#### Stage 1: `/setup-matt-pocock-skills`
-Launch `agy` and enter:
-```text
-/setup-matt-pocock-skills
-```
-- Choose **Local Markdown (`.scratch/`)** for the issue tracker.
-- Choose **Single context (`GLOSSARY.md` + `docs/adr/`)** for domain modeling.
-- Exit `agy` once `AGENTS.md` and `docs/agents/` are written.
-
-#### Stage 2: `/wayfinder` (Chart the Map)
-Launch a fresh `agy` session and enter:
-```text
-/wayfinder I'd like to build a Flutter app for iOS that enables me to track my electronics parts
-```
-- Answer the grilling and domain-modeling questions using the **Canonical Q&A Answers**.
-- Exit `agy` once `GLOSSARY.md`, `.scratch/<app>/map.md`, and the child decision tickets are created.
-
-#### Stage 3: `/wayfinder` (Resolve Decision Tickets)
-For each open decision ticket on the map, launch a fresh `agy` session and enter:
-```text
-/wayfinder
-```
-- Resolve the claimed ticket using the canonical answers.
-- Repeat in a fresh `agy` session until all decision tickets on `.scratch/<app>/map.md` are closed.
-
-#### Stage 4: `/to-spec`
-Launch a fresh `agy` session and enter:
-```text
-/to-spec
-```
-- Confirm the synthesized specification and testing seams once written to `.scratch/<app>/`.
-
-#### Stage 5: `/to-tickets`
-Launch a fresh `agy` session and enter:
-```text
-/to-tickets
-```
-- Let `agy` break the specification into vertical-slice implementation tickets.
-
-#### Stage 6: `/implement`
-Launch a fresh `agy` session and enter:
-```text
-/implement
-```
-- Let `agy` work through the implementation tickets (via `/tdd` and `/code-review`) until the Flutter app passes `flutter analyze` and `flutter test`.
-- Exit `agy` and press `Ctrl+D` (or `exit`) to save `02-skilled.cast`.
+1. **Create the Flutter project**:
+   ```bash
+   flutter create --platforms=ios parts_tracker_skilled
+   ```
+2. **Move into the project**:
+   ```bash
+   cd parts_tracker_skilled
+   ```
+3. **Add asciinema stop point**: Press **`Ctrl+x`**.
+4. **Install all of Matt Pocock's skills**:
+   ```bash
+   npx skills@latest add mattpocock/skills
+   ```
+5. **Add asciinema stop point**: Press **`Ctrl+x`**.
+6. **Start Antigravity in the Flutter project**:
+   ```bash
+   agy
+   ```
+7. **Add asciinema stop point**: Press **`Ctrl+x`**.
+8. **Prompt Antigravity with `/wayfinder`**:
+   ```text
+   /wayfinder I'd like to build a Flutter app for iOS that enables me to track my electronics parts
+   ```
+9. **Answer questions** using the **Canonical Q&A Answers** table above until the map and initial decision tickets are created.
+10. **Issue `/clear` in `agy`** to start a new conversation:
+    ```text
+    /clear
+    ```
+11. **Issue `/wayfinder`** to start the next round of questions on the next open decision ticket:
+    ```text
+    /wayfinder
+    ```
+12. **Answer questions** to resolve the decision ticket.
+13. **Issue `/clear`** to start a new conversation:
+    ```text
+    /clear
+    ```
+14. **Add asciinema stop point**: Press **`Ctrl+x`**.
+15. **Repeat steps 11 through 14** (`/wayfinder` → answer questions → `/clear` → **`Ctrl+x`**) until all `/wayfinder` decision tickets are complete.
+16. **Complete the build of the app** (e.g., `/to-spec` → `/to-tickets` → `/implement`, with `/clear` and **`Ctrl+x`** between stages as appropriate) until the Flutter app is built and verified.
+17. Exit `agy` and press `Ctrl+D` (or `exit`) to save `02-skilled.cast`.
 
 ---
 
 ## Step 4: Clone Baseline App & Record Run 3 — Comprehension Run (`03-comprehension.cast`)
 
-### 4.1 Clone the Finished Baseline App and Add `/teach-code`
+### 4.1 Clone the Finished Baseline App
+Before starting the recording, make a clean copy of the finished Baseline Run app:
 ```bash
-rm -rf "$EXP_DIR/parts-tracker-comprehension"
-cp -R "$EXP_DIR/parts-tracker-baseline" "$EXP_DIR/parts-tracker-comprehension"
-mkdir -p "$EXP_DIR/parts-tracker-comprehension/.agents/skills"
-
-for skill in teach-code teach; do
-  cp -R "$REPO_ROOT/.agents/skills/$skill" "$EXP_DIR/parts-tracker-comprehension/.agents/skills/$skill"
-done
+cd "$EXP_DIR"
+rm -rf "$EXP_DIR/parts_tracker_comprehension"
+cp -R "$EXP_DIR/parts_tracker_baseline" "$EXP_DIR/parts_tracker_comprehension"
 ```
 
 ### 4.2 Start Recording
 ```bash
-cd "$EXP_DIR/parts-tracker-comprehension"
+cd "$EXP_DIR/parts_tracker_comprehension"
 asciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite "$EXP_DIR/recordings/raw/03-comprehension.cast"
 ```
 
-### 4.3 Launch `agy` & Run `/teach-code`
-Inside the recorded shell:
-```bash
-agy
-```
+### 4.3 Install Skills & Run `/teach-code` Inside the Recording
 
-Paste the prompt:
-```text
-/teach-code I know React for mobile development, and I just had AI generate this Flutter iOS electronics parts tracker app for me. Help me understand how this codebase works and teach me the Flutter and Dart concepts behind it.
-```
+1. **Install skills live in the recording**:
+   ```bash
+   npx skills@latest add domesticmouse/skills
+   ```
+2. **Add asciinema stop point**: Press **`Ctrl+x`**.
+3. **Launch `agy`**:
+   ```bash
+   agy
+   ```
+4. **Add asciinema stop point**: Press **`Ctrl+x`**.
+5. **Paste the `/teach-code` prompt**:
+   ```text
+   /teach-code I know React for mobile development, and I just had AI generate this Flutter iOS electronics parts tracker app for me. Help me understand how this codebase works and teach me the Flutter and Dart concepts behind it.
+   ```
 
 Use these responses when `/teach-code` interviews you:
 - **Prior Background**: `Comfortable with React mobile development (components, props, hooks/useState, JSX), brand new to Dart and Flutter widget trees and state management.`
@@ -203,7 +178,7 @@ Exit `agy` and press `Ctrl+D` (or `exit`) to save `03-comprehension.cast`.
 
 ## Step 5: Copy the Resulting Directory Back into This Repo
 
-Once your recordings are complete, copy the entire standalone directory back into this repository so the raw `.cast` files and the three generated project directories are inside the workspace:
+Once your recordings are complete, copy the standalone directory back into this repository:
 
 ```bash
 export REPO_ROOT="/Users/brett/Documents/GitHub/flutter-skills-presentation"
@@ -213,23 +188,23 @@ export EXP_DIR="$HOME/Demos/flutter-parts-experiment"
 mkdir -p "$REPO_ROOT/recordings/raw" "$REPO_ROOT/recordings/final"
 cp -R "$EXP_DIR/recordings/raw/"*.cast "$REPO_ROOT/recordings/raw/"
 
-# Copy the 3 completed workspaces into repo experiments/
+# Copy the completed project directories into repo experiments/
 mkdir -p "$REPO_ROOT/experiments"
-cp -R "$EXP_DIR/parts-tracker-baseline" "$REPO_ROOT/experiments/"
-cp -R "$EXP_DIR/parts-tracker-skilled" "$REPO_ROOT/experiments/"
-cp -R "$EXP_DIR/parts-tracker-comprehension" "$REPO_ROOT/experiments/"
+cp -R "$EXP_DIR/parts_tracker_baseline" "$REPO_ROOT/experiments/"
+cp -R "$EXP_DIR/parts_tracker_skilled" "$REPO_ROOT/experiments/"
+cp -R "$EXP_DIR/parts_tracker_comprehension" "$REPO_ROOT/experiments/"
 ```
 
 ---
 
 ## Step 6: Post-Process Casts & Extract Session Traces
 
-After copying the directory back into this repo, either run these two commands yourself or tell the agent in this session (`"Done recording, I've copied the directory back"`) to run them and close Ticket 04:
+After copying the directory back into this repo, either run these commands or tell the agent in this session that the files have been copied back:
 
 ```bash
 cd "$REPO_ROOT"
 
-# 1. Sanitize, inject/label 02-skilled chapter markers, and trim trailing exit sequences
+# 1. Sanitize casts, inspect/label Ctrl+x stop points, and trim trailing exit sequences
 ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh postprocess-casts
 
 # 2. Export per-conversation Markdown logs and compare Session Traces from ~/.gemini/**/brain/

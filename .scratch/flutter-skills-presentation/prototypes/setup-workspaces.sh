@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# setup-workspaces.sh — Operator workspace initializer, cast post-processor, and trace extractor
+# setup-workspaces.sh — Cast post-processor and trace extractor
 # for the Flutter Skills Presentation 3-run experiment.
 
 set -euo pipefail
@@ -12,91 +12,23 @@ if [[ -z "${DEMOS_ROOT:-}" ]]; then
     DEMOS_ROOT="$HOME/Demos/flutter-parts-experiment"
   fi
 fi
-BASELINE_DIR="$DEMOS_ROOT/parts-tracker-baseline"
-SKILLED_DIR="$DEMOS_ROOT/parts-tracker-skilled"
-COMPREHENSION_DIR="$DEMOS_ROOT/parts-tracker-comprehension"
+
+BASELINE_DIR="$DEMOS_ROOT/parts_tracker_baseline"
+SKILLED_DIR="$DEMOS_ROOT/parts_tracker_skilled"
+COMPREHENSION_DIR="$DEMOS_ROOT/parts_tracker_comprehension"
 RECORDINGS_RAW="$PRESENTATION_ROOT/recordings/raw"
 RECORDINGS_FINAL="$PRESENTATION_ROOT/recordings/final"
 TRACES_DIR="$PRESENTATION_ROOT/artifacts/traces"
-
-MATT_POCOCK_SKILLS=(
-  setup-matt-pocock-skills
-  wayfinder
-  grilling
-  domain-modeling
-  prototype
-  research
-  to-spec
-  to-tickets
-  implement
-  tdd
-  code-review
-  codebase-design
-  diagnosing-bugs
-  triage
-  wizard
-)
-
-TEACH_SKILLS=(
-  teach-code
-  teach
-)
 
 usage() {
   cat <<EOF
 Usage: $(basename "$0") <subcommand>
 
 Subcommands:
-  init-all            Initialize clean Baseline and Skilled workspaces + recordings directories
-  init-baseline       Reset and initialize clean Baseline Run workspace (no project skills)
-  init-skilled        Reset and initialize clean Skilled Run workspace (Matt Pocock skill pack)
-  clone-comprehension Copy finished Baseline Run app into Comprehension Run workspace + install /teach-code
-  postprocess-casts   Run mark-cast.py, sanitize-cast.py, and trim-cast.py across captured .cast files
+  postprocess-casts   Run sanitize-cast.py, mark-cast.py --list, and trim-cast.py across captured .cast files
   extract-traces      Export and compare Session Traces from ~/.gemini/**/brain/ via agy-brain-explorer
   status              Print current state of all 3 workspaces, .cast recordings, and extracted traces
 EOF
-}
-
-init_dirs() {
-  mkdir -p "$DEMOS_ROOT" "$RECORDINGS_RAW" "$RECORDINGS_FINAL" "$TRACES_DIR"
-}
-
-init_baseline() {
-  init_dirs
-  rm -rf "$BASELINE_DIR"
-  mkdir -p "$BASELINE_DIR"
-  git -C "$BASELINE_DIR" init -q
-  echo "[OK] Initialized Baseline Run workspace (zero project skills): $BASELINE_DIR"
-}
-
-init_skilled() {
-  init_dirs
-  rm -rf "$SKILLED_DIR"
-  mkdir -p "$SKILLED_DIR/.agents/skills"
-  git -C "$SKILLED_DIR" init -q
-  for skill in "${MATT_POCOCK_SKILLS[@]}"; do
-    if [[ -d "$PRESENTATION_ROOT/.agents/skills/$skill" ]]; then
-      cp -R "$PRESENTATION_ROOT/.agents/skills/$skill" "$SKILLED_DIR/.agents/skills/$skill"
-    fi
-  done
-  echo "[OK] Initialized Skilled Run workspace (${#MATT_POCOCK_SKILLS[@]} Matt Pocock skills): $SKILLED_DIR"
-}
-
-clone_comprehension() {
-  init_dirs
-  if [[ ! -d "$BASELINE_DIR/lib" ]]; then
-    echo "[ERROR] Baseline Run app ($BASELINE_DIR/lib) not found! Complete Run 1 (Baseline Run) first." >&2
-    exit 1
-  fi
-  rm -rf "$COMPREHENSION_DIR"
-  cp -R "$BASELINE_DIR" "$COMPREHENSION_DIR"
-  mkdir -p "$COMPREHENSION_DIR/.agents/skills"
-  for skill in "${TEACH_SKILLS[@]}"; do
-    if [[ -d "$PRESENTATION_ROOT/.agents/skills/$skill" ]]; then
-      cp -R "$PRESENTATION_ROOT/.agents/skills/$skill" "$COMPREHENSION_DIR/.agents/skills/$skill"
-    fi
-  done
-  echo "[OK] Cloned Baseline Run app into Comprehension Run workspace + installed /teach-code: $COMPREHENSION_DIR"
 }
 
 postprocess_casts() {
@@ -114,10 +46,8 @@ postprocess_casts() {
     fi
     echo "=== Processing $cast_name ==="
     python3 "$sanitize_script" "$raw_file" "$final_file"
-    if [[ "$cast_name" == "02-skilled.cast" ]]; then
-      python3 "$mark_script" "$final_file" --auto-skilled --in-place
-    fi
     python3 "$trim_script" "$final_file" --in-place --hold 3.0
+    python3 "$mark_script" "$final_file" --list
     python3 "$trim_script" "$final_file" --info
   done
 }
@@ -127,7 +57,7 @@ extract_traces() {
   local explorer="$PRESENTATION_ROOT/.agents/skills/agy-brain-explorer/scripts/agy-brain-explorer.py"
   echo "=== Discovering Sessions Across Experiment Projects ==="
   uv run "$explorer" --by-project
-  for proj in parts-tracker-baseline parts-tracker-skilled parts-tracker-comprehension; do
+  for proj in parts_tracker_baseline parts_tracker_skilled parts_tracker_comprehension; do
     mkdir -p "$TRACES_DIR/$proj"
     uv run "$explorer" export --project "$proj" -o "$TRACES_DIR/$proj" || true
   done
@@ -157,19 +87,6 @@ show_status() {
 
 cmd="${1:-status}"
 case "$cmd" in
-  init-all)
-    init_baseline
-    init_skilled
-    ;;
-  init-baseline)
-    init_baseline
-    ;;
-  init-skilled)
-    init_skilled
-    ;;
-  clone-comprehension)
-    clone_comprehension
-    ;;
   postprocess-casts)
     postprocess_casts
     ;;
