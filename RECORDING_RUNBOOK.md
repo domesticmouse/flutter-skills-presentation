@@ -111,20 +111,26 @@ asciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite "$EXP_DIR/r
 
 ### 2.2 Create the Flutter Project & Launch `agy`
 Inside the recorded shell:
-```bash
-flutter create --platforms=ios parts_tracker_baseline
-cd parts_tracker_baseline
-agy
-```
 
-Paste the initial prompt:
-```text
-I'd like to build a Flutter app for iOS that enables me to track my electronics parts
-```
-
-1. Answer `agy`'s one-at-a-time clarifying questions using the **Canonical Q&A Answers** table above.
-2. Let `agy` build the Flutter iOS app and verify `flutter analyze` / `flutter test`.
-3. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
+1. **Create the Flutter project**:
+   ```bash
+   flutter create --platforms=ios parts_tracker_baseline
+   ```
+2. **Move into the project**:
+   ```bash
+   cd parts_tracker_baseline
+   ```
+3. **Start Antigravity in the Flutter project**:
+   ```bash
+   agy
+   ```
+4. **Paste the initial prompt**:
+   ```text
+   I'd like to build a Flutter app for iOS that enables me to track my electronics parts
+   ```
+5. Answer `agy`'s one-at-a-time clarifying questions using the **Canonical Q&A Answers** table above.
+6. Let `agy` build the Flutter iOS app and verify `flutter analyze` / `flutter test`.
+7. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
 
 ---
 
