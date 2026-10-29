@@ -146,9 +146,9 @@ Immediately after exiting the recording shell, run `process-run` to sanitize/tri
 **Verify the capture:**
 1. **Check the Asciinema cast**:
    - Confirm `recordings/final/01-baseline.cast` has non-zero stdout events and expected playback duration.
-   - Quick visual replay at 2x speed:
+   - Quick visual replay in marker-pause mode at 2x speed (`Space` to resume after each stop point, `]` to jump to next marker):
      ```bash
-     asciinema play -s 2.0 -i 1.0 "$REPO_ROOT/recordings/final/01-baseline.cast"
+     asciinema play -m -s 2.0 -i 1.0 "$REPO_ROOT/recordings/final/01-baseline.cast"
      ```
 2. **Check the exported Agy Markdown logs**:
    - Inspect the session summary and exported Markdown trace:

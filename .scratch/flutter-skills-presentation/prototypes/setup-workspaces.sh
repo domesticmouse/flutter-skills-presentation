@@ -52,6 +52,11 @@ process_single_cast() {
   fi
   echo "=== Processing $cast_name ==="
   python3 "$sanitize_script" "$raw_file" "$final_file"
+  if [[ "$cast_name" == "01-baseline.cast" ]]; then
+    python3 "$mark_script" "$final_file" --auto-baseline --in-place
+  elif [[ "$cast_name" == "02-skilled.cast" ]]; then
+    python3 "$mark_script" "$final_file" --auto-skilled --in-place
+  fi
   python3 "$trim_script" "$final_file" --in-place --hold 3.0 || true
   python3 "$mark_script" "$final_file" --list
   python3 "$trim_script" "$final_file" --info

@@ -18,6 +18,16 @@ import re
 import sys
 from typing import Any, Dict, List, Tuple
 
+CANONICAL_BASELINE_MARKERS: List[Tuple[str, re.Pattern[str]]] = [
+    ("1. Project Created", re.compile(r"All done!.*flutter-parts-experiment", re.DOTALL)),
+    ("2. Launch agy", re.compile(r"Antigravity CLI.*?\? for shortcuts", re.DOTALL)),
+    ("3. Q1: Data Storage", re.compile(r"Where would you like to store.*?enter Select", re.DOTALL)),
+    ("4. Q2: Features", re.compile(r"Which additional features.*?enter Submit", re.DOTALL)),
+    ("5. Q3: UI Style", re.compile(r"What UI style would you prefer.*?enter Select", re.DOTALL)),
+    ("6. Implementation Plan", re.compile(r"1 artifact · /artifact to review.*?\? for shortcutsGemini", re.DOTALL)),
+    ("7. Build Complete", re.compile(r"Verified build completed successfully\..*?\? for shortcuts", re.DOTALL)),
+]
+
 CANONICAL_SKILLED_MARKERS: List[Tuple[str, re.Pattern[str]]] = [
     ("1. /setup-matt-pocock-skills", re.compile(r"/setup-matt-pocock-skills")),
     ("2. /wayfinder (Chart)", re.compile(r"/wayfinder\b")),
@@ -101,20 +111,28 @@ def relabel_markers(events: List[List[Any]], labels: List[str]) -> int:
     return updated
 
 
-def auto_inject_skilled_markers(
-    header: Dict[str, Any], events: List[List[Any]], version: int
+def auto_inject_markers(
+    header: Dict[str, Any],
+    events: List[List[Any]],
+    version: int,
+    marker_specs: List[Tuple[str, re.Pattern[str]]],
+    insert_after: bool = False,
 ) -> Tuple[List[List[Any]], List[str]]:
     """
-    If existing 'm' markers exist, relabel up to 6 of them with CANONICAL_SKILLED_MARKERS.
-    Otherwise, scan stdout ('o') events for the 6 slash commands and insert 'm' markers
-    with dt=0.0 (v3) or same timestamp (v2) right before the command appears.
+    If existing 'm' markers exist, relabel them with marker_specs.
+    Otherwise, scan stdout ('o') events for the patterns and insert 'm' markers
+    with dt=0.0 (v3) or same timestamp (v2).
     """
     existing_m = [ev for ev in events if len(ev) >= 3 and ev[1] == "m"]
-    canonical_labels = [label for label, _ in CANONICAL_SKILLED_MARKERS]
+    canonical_labels = [label for label, _ in marker_specs]
+    unlabeled_m = [ev for ev in existing_m if ev[2] not in canonical_labels]
 
-    if existing_m:
+    if unlabeled_m:
         count = relabel_markers(events, canonical_labels)
         return events, [f"Relabeled {count} existing 'm' marker(s)"]
+
+    # Strip previously auto-injected canonical markers so re-running is idempotent
+    events = [ev for ev in events if not (len(ev) >= 3 and ev[1] == "m" and ev[2] in canonical_labels)]
 
     new_events: List[List[Any]] = []
     target_idx = 0
@@ -122,17 +140,20 @@ def auto_inject_skilled_markers(
     rolling_window = ""
 
     for ev in events:
-        if target_idx < len(CANONICAL_SKILLED_MARKERS) and len(ev) >= 3 and ev[1] == "o":
+        if insert_after:
+            new_events.append(ev)
+        if target_idx < len(marker_specs) and len(ev) >= 3 and ev[1] == "o":
             clean_chunk = strip_ansi(str(ev[2]))
-            rolling_window = (rolling_window + clean_chunk)[-400:]
-            label, pattern = CANONICAL_SKILLED_MARKERS[target_idx]
+            rolling_window = (rolling_window + clean_chunk)[-1200:]
+            label, pattern = marker_specs[target_idx]
             if pattern.search(rolling_window):
                 marker_time = 0.0 if version == 3 else ev[0]
                 new_events.append([marker_time, "m", label])
                 injected.append(label)
                 target_idx += 1
                 rolling_window = ""
-        new_events.append(ev)
+        if not insert_after:
+            new_events.append(ev)
 
     return new_events, injected
 
@@ -152,6 +173,11 @@ def main() -> int:
     parser.add_argument("--list", action="store_true", help="List existing 'm' markers and timestamps")
     parser.add_argument("--relabel", nargs="+", help="Relabel existing 'm' markers in sequence")
     parser.add_argument(
+        "--auto-baseline",
+        action="store_true",
+        help="Auto-label or inject the 7 canonical Baseline Run chapter markers",
+    )
+    parser.add_argument(
         "--auto-skilled",
         action="store_true",
         help="Auto-label or inject the 6 canonical Skilled Run chapter markers",
@@ -160,7 +186,7 @@ def main() -> int:
 
     header, events, version = load_cast(args.input)
 
-    if args.list and not (args.relabel or args.auto_skilled):
+    if args.list and not (args.relabel or args.auto_baseline or args.auto_skilled):
         list_markers(header, events, version)
         return 0
 
@@ -168,8 +194,17 @@ def main() -> int:
         count = relabel_markers(events, args.relabel)
         print(f"Relabeled {count} marker(s).")
 
+    if args.auto_baseline:
+        events, notes = auto_inject_markers(
+            header, events, version, CANONICAL_BASELINE_MARKERS, insert_after=True
+        )
+        for note in notes:
+            print(f"[auto-baseline] {note}")
+
     if args.auto_skilled:
-        events, notes = auto_inject_skilled_markers(header, events, version)
+        events, notes = auto_inject_markers(
+            header, events, version, CANONICAL_SKILLED_MARKERS, insert_after=False
+        )
         for note in notes:
             print(f"[auto-skilled] {note}")
 
