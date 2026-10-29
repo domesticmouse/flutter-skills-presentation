@@ -17,7 +17,7 @@ Everything runs inside a single standalone directory outside this repo (`~/Demos
 │       └── 03-comprehension.cast
 ├── parts_tracker_baseline/        # Run 1: Created via flutter create --platforms=ios (no skills)
 ├── parts_tracker_skilled/         # Run 2: Created via flutter create --platforms=ios + npx skills@latest add mattpocock/skills
-└── parts_tracker_comprehension/   # Run 3: Cloned from Baseline + npx skills@latest add domesticmouse/skills
+└── parts_tracker_comprehension/   # Run 3: Cloned from Skilled Run + npx skills@latest add domesticmouse/skills
 ```
 
 ---
@@ -133,14 +133,14 @@ asciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite "$EXP_DIR/r
 
 ---
 
-## Step 4: Clone Baseline App & Record Run 3 — Comprehension Run (`03-comprehension.cast`)
+## Step 4: Clone Skilled Run App & Record Run 3 — Comprehension Run (`03-comprehension.cast`)
 
-### 4.1 Clone the Finished Baseline App
-Before starting the recording, make a clean copy of the finished Baseline Run app:
+### 4.1 Clone the Finished Skilled Run App
+Before starting the recording, make a clean copy of the finished Skilled Run directory (`parts_tracker_skilled`) as the starting point:
 ```bash
 cd "$EXP_DIR"
 rm -rf "$EXP_DIR/parts_tracker_comprehension"
-cp -R "$EXP_DIR/parts_tracker_baseline" "$EXP_DIR/parts_tracker_comprehension"
+cp -R "$EXP_DIR/parts_tracker_skilled" "$EXP_DIR/parts_tracker_comprehension"
 ```
 
 ### 4.2 Start Recording

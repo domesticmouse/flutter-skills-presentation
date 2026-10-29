@@ -37,8 +37,8 @@ Specifically:
   5. `/to-tickets` — Break the spec into vertical-slice tracer-bullet tickets.
   6. `/implement` — Implement the tickets via `/tdd` and `/code-review` until the working Flutter iOS app is built and verified alongside its durable **Intent Artifacts**.
 
-### 3. Comprehension Run (`/teach-code` against the Baseline Run App)
-- **Target Workspace**: A copy of the **Baseline Run**'s generated Flutter app with `/teach-code` installed in `.agents/skills/` (dramatizing how a React mobile developer digs out of raw **Comprehension Debt** when handed unfamiliar AI-generated Flutter code).
+### 3. Comprehension Run (`/teach-code` against the Skilled Run App)
+- **Target Workspace**: A copy of the **Skilled Run**'s generated Flutter app (`parts_tracker_skilled` → `parts_tracker_comprehension`) with `npx skills@latest add domesticmouse/skills` executed inside the recording to install `/teach-code`.
 - **Initial Prompt**:
   > `"/teach-code I know React for mobile development, and I just had AI generate this Flutter iOS electronics parts tracker app for me. Help me understand how this codebase works and teach me the Flutter and Dart concepts behind it."`
 - **Clarifying Answers to `/teach-code`**:
