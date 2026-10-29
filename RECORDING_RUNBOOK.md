@@ -22,6 +22,57 @@ Everything runs inside a single standalone directory outside this repo (`~/Demos
 
 ---
 
+## Step 0: Pre-Flight Tool & Environment Check
+
+Because you are running this on another machine, run these checks before starting the recordings to confirm every required CLI tool, SDK, and configuration is present and working:
+
+### 0.1 Verify Flutter & iOS Toolchain (`flutter doctor`)
+```bash
+flutter --version
+flutter doctor
+```
+- Confirm **Flutter**, **Xcode** (for iOS development), and **CocoaPods** show `[✓]`.
+- Optional quick smoke test that `flutter create --platforms=ios` succeeds cleanly without first-run analytics prompts:
+  ```bash
+  flutter create --platforms=ios /tmp/flutter_preflight_test && rm -rf /tmp/flutter_preflight_test
+  ```
+
+### 0.2 Verify `asciinema` Version & `--window-size` Flag (`>= 3.0`)
+The runbook uses `asciinema 3.x` flags (`--window-size 120x32`) and live `Ctrl+x` markers (`"m"` events). Verify the installed version and run a 1-second non-interactive smoke test:
+```bash
+asciinema --version
+asciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite -c "echo 'asciinema pre-flight OK'" /tmp/preflight.cast && rm -f /tmp/preflight.cast
+```
+- If `asciinema` is missing or still on `2.x` (where `--window-size` is not recognized and `Ctrl+x` markers aren't supported), upgrade via Homebrew:
+  ```bash
+  brew install asciinema   # or: brew upgrade asciinema
+  ```
+
+### 0.3 Verify Node.js, `npx`, and `skills` CLI
+Run 2 and Run 3 invoke `npx skills@latest add ...` live on camera. Check `node`/`npx` and pre-warm the `skills` package cache so it doesn't prompt to install `skills@latest` during the recording:
+```bash
+node --version
+npx --version
+npx --yes skills@latest --version
+```
+
+### 0.4 Verify Antigravity CLI (`agy`) & Your Global Rule
+Confirm `agy` is on `PATH` and authenticated, and verify your **Global Rule** (`When something is unclear, please ask clarifying questions, one at a time.`) is present on this machine so Run 1 (**Baseline Run**) exhibits the expected one-at-a-time questioning behavior:
+```bash
+which agy
+agy --version
+find ~/.gemini -maxdepth 3 -iname "*rule*" -o -iname "GEMINI.md" 2>/dev/null
+```
+
+### 0.5 Verify `git` and `python3`
+`git` is used by `/wayfinder` and `/implement`, and `python3` is used by `/teach-code` (`build.py --check`) to compile the HTML lessons in Run 3:
+```bash
+git --version
+python3 --version
+```
+
+---
+
 ## Step 1: Create the Standalone Experiment Directory
 
 Run the following in your terminal to create the standalone root directory and raw recordings folder:
@@ -176,9 +227,27 @@ Exit `agy` and press `Ctrl+D` (or `exit`) to save `03-comprehension.cast`.
 
 ---
 
-## Step 5: Copy the Resulting Directory Back into This Repo
+## Step 5: Bundle Brain Traces (on Recording Machine) & Copy Back into This Repo
 
-Once your recordings are complete, copy the standalone directory back into this repository:
+### 5.1 On the Recording Machine: Copy Brain Session Traces into `$EXP_DIR`
+Because `agy` stores its **Session Traces** (`transcript.jsonl` / `transcript_full.jsonl`) under `~/.gemini/**/brain/`, run this on the recording machine before transferring `$EXP_DIR` so the session traces travel with the folder:
+
+```bash
+export EXP_DIR="$HOME/Demos/flutter-parts-experiment"
+mkdir -p "$EXP_DIR/brain-traces"
+
+# Copy any ~/.gemini brain directories modified during the experiment into $EXP_DIR/brain-traces
+for bdir in ~/.gemini/*/brain ~/.gemini/brain; do
+  if [ -d "$bdir" ]; then
+    parent_name="$(basename "$(dirname "$bdir")")"
+    mkdir -p "$EXP_DIR/brain-traces/$parent_name"
+    cp -R "$bdir" "$EXP_DIR/brain-traces/$parent_name/"
+  fi
+done
+```
+
+### 5.2 On This Machine: Copy the Resulting Directory into This Repo
+Once you transfer `$EXP_DIR` back to this machine, copy its contents into this repository:
 
 ```bash
 export REPO_ROOT="/Users/brett/Documents/GitHub/flutter-skills-presentation"
@@ -193,6 +262,12 @@ mkdir -p "$REPO_ROOT/experiments"
 cp -R "$EXP_DIR/parts_tracker_baseline" "$REPO_ROOT/experiments/"
 cp -R "$EXP_DIR/parts_tracker_skilled" "$REPO_ROOT/experiments/"
 cp -R "$EXP_DIR/parts_tracker_comprehension" "$REPO_ROOT/experiments/"
+
+# If brain-traces were bundled from another machine, copy them into artifacts/brain-traces/
+if [ -d "$EXP_DIR/brain-traces" ]; then
+  mkdir -p "$REPO_ROOT/artifacts"
+  cp -R "$EXP_DIR/brain-traces" "$REPO_ROOT/artifacts/"
+fi
 ```
 
 ---
