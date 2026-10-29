@@ -57,11 +57,11 @@ npx --yes skills@latest --version
 ```
 
 ### 0.4 Verify Antigravity CLI (`agy`) & Your Global Rule
-Confirm `agy` is on `PATH` and authenticated, and verify your **Global Rule** (`When something is unclear, please ask clarifying questions, one at a time.`) is present on this machine so Run 1 (**Baseline Run**) exhibits the expected one-at-a-time questioning behavior:
+Confirm `agy` is on `PATH` and authenticated, and verify your **Global Rule** (`When something is unclear, please ask clarifying questions, one at a time.`) is present in `$HOME/.gemini/config/AGENTS.md` on this machine so Run 1 (**Baseline Run**) exhibits the expected one-at-a-time questioning behavior:
 ```bash
 which agy
 agy --version
-find ~/.gemini -maxdepth 3 -iname "*rule*" -o -iname "GEMINI.md" 2>/dev/null
+cat "$HOME/.gemini/config/AGENTS.md"
 ```
 
 ### 0.5 Verify `git` and `python3`

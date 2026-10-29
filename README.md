@@ -12,7 +12,7 @@ Designed for a 45–50 minute university lecture for mobile development students
 
 > `"I'd like to build a Flutter app for iOS that enables me to track my electronics parts"`
 
-1. **Act 0 — The Hidden Variable**: Exposes the user-level **Global Rule** (`You are a helpful assistant. When something is unclear, please ask clarifying questions, one at a time.`) and explains how it alters baseline agent behavior before any project skills are introduced.
+1. **Act 0 — The Hidden Variable**: Exposes the user-level **Global Rule** in `$HOME/.gemini/config/AGENTS.md` (`You are a helpful assistant. When something is unclear, please ask clarifying questions, one at a time.`) and explains how it alters baseline agent behavior before any project skills are introduced.
 2. **Act 1 — Baseline Run**: Building the electronics component catalog app with only the **Global Rule** active and no project-level Agent Skills installed. Produces a working Flutter app, but leaves domain vocabulary and architectural decisions trapped in ephemeral chat history rather than durable **Intent Artifacts**.
 3. **Act 2 — Skilled Run**: Building the same app across the Matt Pocock skill chain (`/setup-matt-pocock-skills` → `/wayfinder` → `/to-spec` → `/to-tickets` → `/implement`), producing both a working Flutter app and repo-committed **Intent Artifacts** (`GLOSSARY.md`, `map.md`, resolved decision tickets, and spec).
 4. **Act 3 — Comprehension Run**: Running `/teach-code` against the **Skilled Run** codebase to dig out of **Comprehension Debt** via generated HTML lessons, printable reference sheets, and verification exercises tailored to bridge React concepts to Flutter/Dart.

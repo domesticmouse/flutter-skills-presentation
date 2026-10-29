@@ -25,7 +25,7 @@ The form of technical debt created when an AI agent generates a working codebase
 _Avoid_: AI technical debt, code unfamiliarity
 
 **Global Rule**:
-The user-level instruction (`You are a helpful assistant. When something is unclear, please ask clarifying questions, one at a time.`) active across all `agy` sessions, which alters baseline agent behavior even when no project skills are present.
+The user-level instruction in `$HOME/.gemini/config/AGENTS.md` (`You are a helpful assistant. When something is unclear, please ask clarifying questions, one at a time.`) active across all `agy` sessions, which alters baseline agent behavior even when no project skills are present.
 _Avoid_: System prompt, global prompt, custom instructions
 
 **Session Trace**:

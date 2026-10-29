@@ -12,7 +12,7 @@ A complete **Presentation Script & Slidev Deck Specification** demonstrating the
 ## Notes
 
 - **Domain & Glossary**: Consult [GLOSSARY.md](../../GLOSSARY.md) in every session and maintain terms via `/domain-modeling`.
-- **Mandatory Slide Requirement**: Explicitly include a slide showing the user's **Global Rule** (`You are a helpful assistant. When something is unclear, please ask clarifying questions, one at a time.`) and explaining how it alters the **Baseline Run** compared to another developer running the same Flutter prompt without that rule.
+- **Mandatory Slide Requirement**: Explicitly include a slide showing the user's **Global Rule** in `$HOME/.gemini/config/AGENTS.md` (`You are a helpful assistant. When something is unclear, please ask clarifying questions, one at a time.`) and explaining how it alters the **Baseline Run** compared to another developer running the same Flutter prompt without that rule.
 - **Skills to Consult**:
   - Planning & Interviewing: `/wayfinder`, `/grilling`, `/domain-modeling`, `/prototype`, `/wizard`
   - Recording & Trace Extraction: `/asciinema`, `/agy-brain-explorer`, `/crop-image`
