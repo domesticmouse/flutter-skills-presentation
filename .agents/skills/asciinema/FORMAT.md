@@ -119,3 +119,8 @@ Lines starting with `#` are treated as comments and ignored by parsers:
 - `asciinema` CLI 3.x records in `asciicast v3` (`"version": 3`) by default.
 - **`asciinema-player` versions `< 3.10.0` (including `3.8.x` and `3.9.x`) only parse `asciicast v1` and `v2`** and fail with the explosion emoji (`💥`) if fed a `{"version": 3}` header.
 - Convert v3 recordings to v2 (`trim-cast.py --to-v2`, `asciinema convert -f asciicast-v2`, or an in-memory JS normalizer passed via `{ data: v2Text }`) whenever targeting `asciinema-player` `< 3.10.0`.
+
+### 6. Chapter Marker (`"m"`) Timestamp & Cursor-Line Semantics
+- When `asciinema-player` auto-pauses on a marker (`pauseOnMarkers: true`) or seeks to a marker (`player.seek(T_m)`), it evaluates all `"o"` events whose timestamp satisfies `t <= T_m`.
+- Any `"o"` event placed **after** an `"m"` marker with `dt = 0.0` shares the exact same `asciicast v2` timestamp `T_m` and will be rendered as part of the marker frame.
+- In `zsh` with bracketed paste (`\x1b[?2004h`), pressing `Enter` after pasting a command emits an `[UNREV]` redraw frame (`\x1b[A\x1b[...C\x1b[27m...`) that ends with a cursor-down sequence (`\x1b[1B\r\x1b[K`). To pause with the command in normal video and the cursor resting at the end of the command on the **same line**, split `\x1b[1B\r\x1b[K` into a separate `"o"` event after the `"m"` marker with `dt = 0.02s` (`mark-cast.py` performs this split automatically).

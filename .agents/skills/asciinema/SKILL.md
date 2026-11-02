@@ -207,14 +207,14 @@ python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast --inspect 0:2
 
 #### C. Placement Rules: Command-Entry Hold vs. Command-Completion Hold vs. Prompt Hold
 Always place `"m"` markers (`[0.0, "m", "<label>"]` in v3, `[abs_time, "m", "<label>"]` in v2) **immediately after** the `"o"` stdout event that finishes drawing the target frame (default behavior of `mark-cast.py`):
-- **Command-Entry Hold (pause after command is entered and reverse video is cleared, *before* command output)**: Match the command text (e.g. `--set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project"`). In `zsh` with bracketed paste (`\x1b[?2004h`), pasting and running a command emits `[REV]` (reverse-video paste) → `[UNREV]` (`Enter` redraw removing reverse video) → zero-`dt` mode resets (`\x1b>`, `\x1b[?2004l`) → `[OSC]` (`preexec` title `2;<cmd>`), followed by the command's first stdout event. By default, `mark-cast.py` automatically advances past `[REV]` → `[UNREV]` → `[OSC]` so the marker lands cleanly after reverse video is removed and before command output begins (pass `--raw-match` only if you explicitly want the raw `[REV]` paste frame).
+- **Command-Entry Hold (pause after command is entered and reverse video is cleared, with the cursor still on the command line, *before* command output)**: Match the command text (e.g. `--set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project"`). In `zsh` with bracketed paste (`\x1b[?2004h`), pasting and running a command emits `[REV]` (reverse-video paste) → `[UNREV]` (`Enter` redraw removing reverse video `\x1b[A...\x1b[27m...` plus a trailing cursor-down `\x1b[1B\r\x1b[K`) → mode resets (`\x1b>`, `\x1b[?2004l\r\r\n`) → `[OSC]` (`preexec` title `2;<cmd>`). By default, `mark-cast.py` advances from `[REV]` to `[UNREV]` and splits any trailing `\x1b[1B\r\x1b[K` cursor-down sequence into a follow-up `"o"` event (`dt=0.02s`) after the marker. Giving the split post-marker `"o"` event a positive `dt` (`0.02s`) ensures its `asciicast-v2` timestamp is strictly greater than the marker timestamp `T_m`, preventing `asciinema-player` (`pauseOnMarkers` or `player.seek(T_m)`) from executing the cursor-down sequence while paused at the stop point (pass `--raw-match` only if you explicitly want the raw `[REV]` paste frame).
 - **Command-Completion Hold (pause *after* a command finishes running)**: Match the final stdout frame of the command's output (e.g. `"All done!"` or `"root-commit.*Initial scaffold"`).
 - **Interactive Prompt / Question Hold**: Match the bottom status/footer of the TUI prompt frame (e.g. `"Which features.*?enter Submit"` or `"How should your parts.*?enter Select"`), right before the user's thinking/selection pause (`dt`).
 
 #### D. Move/Replace, Add, or Remove Markers
 ```bash
 # Move/replace an existing marker (by 1-based number or label substring) to a command/pattern, @event:IDX, @time:SEC, or @1x:SEC
-# (Automatically advances past [REV] bracketed-paste highlight to the clean [UNREV]/[OSC] pre-output boundary)
+# (Automatically advances from [REV] bracketed-paste highlight to [UNREV] and splits trailing cursor-down so the cursor stays on the command line)
 python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
   --set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project" \
   --set 2 'git init && git add . && git commit -m "Initial scaffold"' "2. Initial Git Commit" \
@@ -237,7 +237,7 @@ python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
   --in-place --embed-html player.html
 ```
 
-- **Checkable Completion Criterion**: Run `python3 .agents/skills/asciinema/scripts/mark-cast.py <file> --list` and `--inspect <idx>` around modified markers to confirm every command-entry marker sits after `[UNREV]`/`[OSC]` (reverse video cleared) and immediately before the first command output frame.
+- **Checkable Completion Criterion**: Run `python3 .agents/skills/asciinema/scripts/mark-cast.py <file> --list` and `--inspect <idx>` around modified markers to confirm every command-entry marker sits immediately after `[UNREV]` (reverse video cleared, cursor on the same line as the command) and before the split `\x1b[1B\r\x1b[K` cursor-down and command output frames.
 
 ---
 

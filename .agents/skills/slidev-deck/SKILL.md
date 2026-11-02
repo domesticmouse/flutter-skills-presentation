@@ -128,7 +128,8 @@ Follow the slide design conventions below. For copy-pasteable HTML/Markdown temp
 Consult [`references/ASCIINEMA-INTEGRATION.md`](references/ASCIINEMA-INTEGRATION.md) for component props, Vite SSR rules, and base-path normalization details.
 
 1. **Prepare & Embed `.cast` Recordings**:
-   - Use `/asciinema` to sanitize secrets (`sanitize-cast.py`) and strip trailing shell exit prompts (`trim-cast.py --in-place`) before copying `.cast` files into `slides/public/casts/`.
+   - Use `/asciinema` to sanitize secrets (`sanitize-cast.py`), strip trailing shell exit prompts (`trim-cast.py --in-place`), and place/verify `"m"` chapter stop points (`mark-cast.py --list` / `--set`) before copying `.cast` files into `slides/public/casts/`.
+   - For command-entry stop points in `zsh`, `mark-cast.py` automatically advances past bracketed-paste reverse video (`[REV]`) to the un-reversed redraw (`[UNREV]`) and splits trailing `\x1b[1B\r\x1b[K` cursor-down sequences into a post-marker `"o"` event (`dt=0.02s`) so the cursor stays on the same line at the end of the command.
    - Reference recordings with root-relative paths in slide frontmatter:
      ```yaml
      ---
@@ -137,11 +138,11 @@ Consult [`references/ASCIINEMA-INTEGRATION.md`](references/ASCIINEMA-INTEGRATION
      cast: /casts/demo.cast
      autoPlay: false
      speed: 2.0
-     idleTimeLimit: 1.0
+     idleTimeLimit: 2.0
      fit: both
      ---
      ```
-   - When `speed` is set to a value other than `1`, `AsciinemaPlayer.vue` automatically renders a subtle `Playback speed: Nx` badge below the terminal.
+   - `AsciinemaPlayer.vue` compiles each breakpoint-bounded segment to run at `>= speed` (default `2.0x`) and complete in `<= maxSegmentDuration` (default `30s`), rendering chapter stepper pills and a live segment speed HUD pill beneath the terminal.
 2. **Prepare & Embed Images**:
    - Use `/crop-image` (`crop.py --inspect` / `--autocrop`) to remove excess transparent margins or solid borders before placing images in `slides/public/images/`.
    - Reference images via `image: /images/<filename>` in `hardware-callout` slides.

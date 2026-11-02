@@ -134,16 +134,20 @@ def describe_ansi_tags(code: str, data: Any) -> str:
     return f"[{','.join(tags)}] " if tags else ""
 
 
+UNREV_CURSOR_DOWN_RE = re.compile(r"(\x1b\[\d*B\r\x1b\[K)$")
+
+
 def advance_past_paste_redraw(
     events: list[list[Any]], match_idx: int, version: int
 ) -> int:
     """
     When a stdout pattern matches a shell bracketed-paste frame in reverse video (\\x1b[7m)
-    or its immediate Enter un-reverse redraw (\\x1b[27m), advance the insertion index past:
-      1. The Enter un-reverse redraw frame (\\x1b[A...\\x1b[27m...)
-      2. The immediate pre-exec mode teardown frames (\\x1b[?1l\\x1b>, \\x1b[?2004l\\r\\r\\n)
-      3. The immediate pre-exec OSC window title frame (\\x1b]2;...\\x07)
-    so the chapter marker lands after reverse video is removed and before command stdout begins.
+    or its immediate Enter un-reverse redraw (\\x1b[27m):
+      1. Advance from the [REV] paste frame to the [UNREV] redraw frame (\\x1b[A...\\x1b[27m...).
+      2. If the [UNREV] frame ends with a cursor-down newline sequence (\\x1b[1B\\r\\x1b[K),
+         split that trailing cursor-down sequence into a follow-up 'o' event (dt=0.02s)
+         so that at the 'm' marker the command is in normal video with the cursor still on
+         the same line at the end of the command.
     """
     if match_idx < 0 or match_idx >= len(events):
         return match_idx
@@ -170,26 +174,28 @@ def advance_past_paste_redraw(
         ):
             idx += 1
 
-    # Step 2: Advance across immediate pre-exec control/title frames (dt <= 0.05s) before command stdout
-    while idx + 1 < len(events) and idx + 1 <= match_idx + 6:
-        next_ev = events[idx + 1]
-        if len(next_ev) < 3 or next_ev[1] != "o":
-            break
-        dt = (
-            float(next_ev[0])
-            if version == 3
-            else max(0.0, float(next_ev[0]) - float(events[idx][0]))
-        )
-        if dt > 0.05:
-            break
-        next_s = str(next_ev[2])
-        if any(
-            tok in next_s
-            for tok in ("\x1b[?1l", "\x1b>", "\x1b[?2004l", "\x1b]2;", "\x1b]1;")
-        ):
-            idx += 1
-        else:
-            break
+    # Step 2: If the [UNREV] frame has a trailing cursor-down (\x1b[1B\r\x1b[K), split it
+    # into a separate 'o' event after the marker so the cursor stays on the command line at the stop point.
+    unrev_ev = events[idx]
+    if len(unrev_ev) >= 3 and unrev_ev[1] == "o":
+        unrev_s = str(unrev_ev[2])
+        m = UNREV_CURSOR_DOWN_RE.search(unrev_s)
+        if m:
+            suffix = m.group(1)
+            unrev_ev[2] = unrev_s[: -len(suffix)]
+            split_dt = 0.02
+            if version == 3:
+                follow_time = split_dt
+                # Deduct split_dt from the next positive-dt event if possible to preserve total duration
+                for look_idx in range(idx + 1, min(len(events), idx + 6)):
+                    if float(events[look_idx][0]) >= split_dt:
+                        events[look_idx][0] = round(
+                            float(events[look_idx][0]) - split_dt, 6
+                        )
+                        break
+            else:
+                follow_time = round(float(unrev_ev[0]) + split_dt, 6)
+            events.insert(idx + 1, [follow_time, "o", suffix])
 
     return idx
 
@@ -404,7 +410,9 @@ def auto_inject_markers(
     injected: list[str] = []
     rolling_window = ""
 
-    for idx, ev in enumerate(events):
+    idx = 0
+    while idx < len(events):
+        ev = events[idx]
         if target_idx < len(marker_specs) and len(ev) >= 3 and ev[1] == "o":
             clean_chunk = strip_ansi(str(ev[2]))
             rolling_window = (rolling_window + clean_chunk)[-1500:]
@@ -420,7 +428,9 @@ def auto_inject_markers(
                     injected.append(label)
                     target_idx = lookahead + 1
                     rolling_window = ""
+                    idx = max(idx, place_idx)
                     break
+        idx += 1
 
     new_events: list[list[Any]] = []
     for idx, ev in enumerate(events):
