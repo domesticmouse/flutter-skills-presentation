@@ -35,7 +35,7 @@ EOF
 process_single_cast() {
   local cast_name="$1"
   mkdir -p "$RECORDINGS_RAW" "$RECORDINGS_FINAL"
-  local mark_script="$PRESENTATION_ROOT/.scratch/flutter-skills-presentation/prototypes/mark-cast.py"
+  local mark_script="$PRESENTATION_ROOT/.agents/skills/asciinema/scripts/mark-cast.py"
   local sanitize_script="$PRESENTATION_ROOT/.agents/skills/asciinema/scripts/sanitize-cast.py"
   local trim_script="$PRESENTATION_ROOT/.agents/skills/asciinema/scripts/trim-cast.py"
 

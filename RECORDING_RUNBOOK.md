@@ -372,25 +372,27 @@ cp -R "$EXP_DIR/parts_tracker_comprehension" "$REPO_ROOT/experiments/"
 `process-run` automatically injects canonical chapter markers for each run (`--auto-baseline`, `--auto-skilled`, `--auto-comprehension`). You can also inspect, search, or add custom stop points to any `.cast` file at any time using `mark-cast.py`:
 
 ```bash
-MARK_SCRIPT="$REPO_ROOT/.scratch/flutter-skills-presentation/prototypes/mark-cast.py"
+MARK_SCRIPT="$REPO_ROOT/.agents/skills/asciinema/scripts/mark-cast.py"
 
 # 1. List existing stop points and timestamps (raw, 1x, and time-warped)
 python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" --list
 
-# 2. Search terminal output for a phrase or regex to find its event index & timestamp
-python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" --search "Please review"
+# 2. Search terminal output with surrounding context events (to distinguish command-entry vs execution)
+python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" --search "flutter create" --context 2
 
-# 3. Add a stop point right after a terminal output pattern (use pattern#2 for 2nd occurrence)
+# 3. Inspect a range of events (#idx, dt, raw, 1x, code, stripped text)
+python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" --inspect 0:25
+
+# 4. Move/replace an existing stop point by number or label (and optionally sync the HTML test-drive player)
+python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
+  --set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project" \
+  --in-place --embed-html "$REPO_ROOT/.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html"
+
+# 5. Add a stop point right after a terminal output pattern (use pattern#2 for 2nd occurrence)
 python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
   --add-pattern "Please review the codebase" "Codebase Review" --in-place
 
-# 4. Add a stop point at an exact 1x playback timestamp or event number
-python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
-  --add-time 45.0 "Custom Stop" --effective-time --in-place
-python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
-  --add-event 430 "After Prompt" --in-place
-
-# 5. Clear all markers and re-apply canonical markers cleanly
+# 6. Clear all markers and re-apply canonical markers cleanly
 python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
   --clear --auto-baseline --in-place
 ```

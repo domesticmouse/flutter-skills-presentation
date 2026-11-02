@@ -1,11 +1,11 @@
 ---
 name: asciinema
-description: Record, replay, convert, and embed terminal sessions. Use when recording terminal demos, converting .cast files to animated GIF or SVG, embedding asciinema-player in web apps, sanitizing terminal recordings, inspecting cast durations, or trimming trailing exit sequences.
+description: Record, replay, convert, sanitize, trim, and manage chapter markers ("m" stop points) in terminal sessions. Use when recording terminal demos, converting .cast files to animated GIF or SVG, embedding asciinema-player in web apps, sanitizing terminal recordings, inspecting cast durations, trimming trailing exit sequences, or adding/moving/inspecting chapter stop-point markers.
 ---
 
 # Asciinema
 
-Tools and procedures to record, replay, export, sanitize, and embed terminal sessions using the asciinema ecosystem.
+Tools and procedures to record, replay, export, sanitize, trim, and manage chapter stop points in terminal sessions using the asciinema ecosystem.
 
 ## Workflows
 
@@ -16,8 +16,9 @@ Identify the user's objective and choose the matching workflow:
 3. [Convert and Export (GIF / SVG / Text)](#3-convert-and-export)
 4. [Sanitize and Redact Sensitive Data](#4-sanitize-and-redact-sensitive-data)
 5. [Trim Exit Sequences and Inspect Timing](#5-trim-exit-sequences-and-inspect-timing)
-6. [Embed in Web Applications](#6-embed-in-web-applications)
-7. [Self-Host an asciinema Server](#7-self-host-an-asciinema-server)
+6. [Manage Chapter Markers (`"m"` Stop Points)](#6-manage-chapter-markers-m-stop-points)
+7. [Embed in Web Applications](#7-embed-in-web-applications)
+8. [Self-Host an asciinema Server](#8-self-host-an-asciinema-server)
 
 ---
 
@@ -176,12 +177,63 @@ python3 .agents/skills/asciinema/scripts/trim-cast.py session.cast --in-place --
 python3 .agents/skills/asciinema/scripts/trim-cast.py session.cast --in-place --to-v2
 ```
 
-- **Post-Recording Chapter Marker (`"m"`) Placement Rule**: When injecting `"m"` stop-point events into a `.cast` file after recording (because `Ctrl+x` was omitted live), insert `[0.0, "m", "<label>"]` (v3) or `[abs_time, "m", "<label>"]` (v2) **immediately after** the `"o"` stdout event that finishes drawing the target prompt/question frame (right before the user's thinking/typing pause `dt`). Inserting *before* the prompt renders leaves the screen blank or half-drawn when `asciinema play -m` or `pauseOnMarkers: true` pauses at the marker.
 - **Checkable Completion Criterion**: Run `python3 .agents/skills/asciinema/scripts/trim-cast.py <file> --info`. Confirm that no trailing exit sequence is detected and duration matches the expected trimmed time.
 
 ---
 
-### 6. Embed in Web Applications
+### 6. Manage Chapter Markers (`"m"` Stop Points)
+
+Use the bundled utility script [scripts/mark-cast.py](scripts/mark-cast.py) to list, search, inspect, add, move/replace, or remove `"m"` chapter markers in `asciicast` v2 and v3 files, and optionally re-embed updated `.cast` files into standalone HTML players.
+
+#### A. List Markers & Adaptive Segment Timings
+```bash
+python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast --list
+```
+Prints every `"m"` event with its 1-based `[N]` index, 0-based event `#idx`, `raw` elapsed time, `1x` idle-capped time, adaptive segment speed (`>= 2x`, `<= 30s` per segment), and cumulative `warped` time.
+
+#### B. Search Output & Inspect Event Boundaries
+Before placing or moving a stop point, locate the exact stdout (`"o"`) event index:
+```bash
+# Search stdout for a pattern and show 2 surrounding events before/after each match
+python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast --search "flutter create" --context 2
+
+# Inspect a specific event range (e.g. events #0..#25) with dt, raw, 1x, code, and ANSI-stripped text
+python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast --inspect 0:25
+```
+
+#### C. Placement Rules: Command-Entry Hold vs. Command-Completion Hold vs. Prompt Hold
+Always place `"m"` markers (`[0.0, "m", "<label>"]` in v3, `[abs_time, "m", "<label>"]` in v2) **immediately after** the `"o"` stdout event that finishes drawing the target frame (default behavior of `mark-cast.py`):
+- **Command-Entry Hold (pause after command is typed/pasted, *before* it runs)**: Match the prompt echo/paste frame itself (e.g. `--set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project"`). In `zsh` with bracketed paste (`\x1b[?2004h`), the first `"o"` event containing the command renders the pasted text on the prompt line, followed by a `dt` pause when the user presses `Enter` to execute it. Placing the marker right after that first `"o"` event pauses with the command visible on the prompt before any command output begins.
+- **Command-Completion Hold (pause *after* a command finishes running)**: Match the final stdout frame of the command's output (e.g. `"All done!"` or `"root-commit.*Initial scaffold"`).
+- **Interactive Prompt / Question Hold**: Match the bottom status/footer of the TUI prompt frame (e.g. `"Which features.*?enter Submit"` or `"How should your parts.*?enter Select"`), right before the user's thinking/selection pause (`dt`).
+
+#### D. Move/Replace, Add, or Remove Markers
+```bash
+# Move/replace an existing marker (by 1-based number or label substring) to a pattern, @event:IDX, @time:SEC, or @1x:SEC
+python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
+  --set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project" --in-place
+
+python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
+  --set "Create Project" "@event:7" "1. Create Project" --in-place
+
+# Add a new marker right after a stdout pattern (use pattern#2 for 2nd occurrence)
+python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
+  --add-pattern "> please fix" "11. Apply Review Fixes" --in-place
+
+# Remove a specific marker by number or label substring
+python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast --remove 1 --in-place
+
+# Update markers AND sync gzip+base64 EMBEDDED_CAST_GZ_B64 in a standalone HTML player in one step
+python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
+  --set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project" \
+  --in-place --embed-html player.html
+```
+
+- **Checkable Completion Criterion**: Run `python3 .agents/skills/asciinema/scripts/mark-cast.py <file> --list` (and `--inspect <idx>` around modified markers) to confirm every marker sits immediately after the target `"o"` frame and before the user's `dt` pause.
+
+---
+
+### 7. Embed in Web Applications
 
 Integrate interactive virtual terminal playback using `asciinema-player` v3 (WASM/Rust driven).
 
@@ -194,7 +246,7 @@ Consult [EMBEDDING.md](EMBEDDING.md) for complete copy-pasteable code examples:
 
 ---
 
-### 7. Self-Host an asciinema Server
+### 8. Self-Host an asciinema Server
 
 For private session repositories, air-gapped networks, or corporate compliance:
 - Run `asciinema-server` via Docker Compose (Phoenix + PostgreSQL).
