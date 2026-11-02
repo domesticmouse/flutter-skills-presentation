@@ -240,6 +240,7 @@ python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
 ```
 
 - **Checkable Completion Criterion**: Run `python3 .agents/skills/asciinema/scripts/mark-cast.py <file> --list` and `--inspect <idx>` around modified markers to confirm every command-entry marker sits immediately after `[UNREV]` (reverse video cleared, cursor on the same line as the command) and before the split `\x1b[1B\r\x1b[K` cursor-down and command output frames.
+- **Standalone HTML Cast Players (`*-cast-player.html`)**: When editing, reviewing, or scaffolding the standalone HTML cast-player harnesses (`06-baseline-cast-player.html`, `07-skilled-cast-player.html`, `08-comprehension-cast-player.html`), read [`../cast-player-html/SKILL.md`](../cast-player-html/SKILL.md).
 
 ---
 

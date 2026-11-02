@@ -1,0 +1,139 @@
+---
+name: cast-player-html
+description: >-
+  Edit, scaffold, and manage standalone HTML asciinema cast-player files
+  (*-cast-player.html) and their embedded gzip+base64 recordings
+  (EMBEDDED_CAST_GZ_B64). Use whenever reviewing or editing a cast-player HTML
+  file (such as 06-baseline-cast-player.html, 07-skilled-cast-player.html, or
+  08-comprehension-cast-player.html), adding, moving, removing, or relabeling
+  stop points ("m" chapter markers) viewed in an HTML player, tuning adaptive
+  segment speeds, updating chapter pills or HUD controls, or scaffolding a new
+  cast-player HTML prototype for another recording.
+---
+
+# Cast-Player HTML (`*-cast-player.html`)
+
+Standalone HTML test-drive harnesses in `.scratch/flutter-skills-presentation/prototypes/` wrap `asciinema-player@3.9.0` inside a 16:9 Slidev `cast-full` stage with two-pass adaptive segment speed compilation (`>= 2x`, `<= 30s` per segment), interactive chapter stepper pills, a live speed HUD, and stage hotkeys (`p`, `[`, `]`).
+
+## File Mapping & Single Source of Truth
+
+Each HTML player embeds a gzipped, base64-encoded copy (`const EMBEDDED_CAST_GZ_B64 = "..."`) of its backing `.cast` file in `recordings/final/` so `file://` URLs load in any browser without CORS errors:
+
+| Run | HTML Player (`.scratch/flutter-skills-presentation/prototypes/`) | Backing Cast (`recordings/final/`) |
+| :--- | :--- | :--- |
+| **1. Baseline Run** | `06-baseline-cast-player.html` | `recordings/final/01-baseline.cast` |
+| **2. Skilled Run** | `07-skilled-cast-player.html` | `recordings/final/02-skilled.cast` |
+| **3. Comprehension Run** | `08-comprehension-cast-player.html` | `recordings/final/03-comprehension.cast` |
+
+### Core Rules
+1. **Treat `recordings/final/<run>.cast` as the single source of truth** for terminal events and `"m"` stop points. Always mutate the `.cast` file and re-embed `EMBEDDED_CAST_GZ_B64` using `.agents/skills/asciinema/scripts/mark-cast.py --embed-html <html-path>`.
+2. **Skip the `EMBEDDED_CAST_GZ_B64` line when reading HTML**: Line ~454 is a ~500 KB single-line base64 string that triggers the 46 KB `read_file` byte cap. Read the HTML in two ranges around it:
+   - Header, CSS, and DOM layout: `StartLine: 1, EndLine: 453`
+   - JS compiler, chapter pills, and event handlers: `StartLine: 455`
+
+---
+
+## Workflows
+
+1. [Add, Move, Remove, or Rename Stop Points](#1-add-move-remove-or-rename-stop-points)
+2. [Edit HTML/CSS/JS Player Controls or Adaptive Speed Logic](#2-edit-htmlcssjs-player-controls-or-adaptive-speed-logic)
+3. [Scaffold a New Cast-Player HTML File](#3-scaffold-a-new-cast-player-html-file)
+
+---
+
+### 1. Add, Move, Remove, or Rename Stop Points
+
+When the user reviews a `*-cast-player.html` file and asks to add, move, delete, or rename a stop point:
+
+#### Step 1: Inspect Current Markers and Target Events
+List current markers and search the backing `.cast` file in `recordings/final/`:
+
+```bash
+# List existing markers, event indices, 1x times, and adaptive segment speeds
+python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseline.cast --list
+
+# Search stdout events for the target text with surrounding context
+python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseline.cast \
+  --search "track my electronics parts" --context 8
+
+# Inspect exact event boundaries around a candidate index
+python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseline.cast --inspect 70:85
+```
+
+#### Step 2: Apply the Matching Stop-Point Placement Rule
+Place every `"m"` marker **immediately after** the `"o"` stdout event that completes the target visual frame:
+
+- **A. Shell Command / TUI Launcher Entry (`flutter create...`, `git init...`, `agy`)**:
+  Match the command text itself. In `zsh` with bracketed paste, `mark-cast.py` automatically advances from `[REV]` (`\x1b[7m` highlight) to `[UNREV]` (`\x1b[27m` Enter redraw) and splits any trailing `\x1b[1B\r\x1b[K` cursor-down into a post-marker `"o"` event (`dt=0.02s`) so the cursor stays on the command line while paused.
+- **B. Typed Prompt Inside `agy` (`I'd like to build...`, `Please run the app.`, `Please review the codebase`)**:
+  Match the prompt text typed into the `agy` input box (`#idx` where the prompt text appears before the ~0.8s–1.1s `dt` pause that clears the input box `\x1b[...D\x1b[K` and starts `⣷ Generating...`). If the prompt text also appears later in scrollback redraws, use `occurrence=1` (the default of `--add-pattern`) or target the exact event via `--add-event <idx>` / `--set <target> "@event:<idx>" "<label>"`.
+- **C. Clarifying Question / Command Completion (`enter Submit`, `enter Select`, `Build Complete`)**:
+  Match the final stdout event of the TUI prompt or command completion frame right before the user's thinking pause (`dt`).
+
+#### Step 3: Update the `.cast` File, Relabel Sequentially, and Sync the HTML Player
+Keep chapter labels numbered sequentially (`1. ...`, `2. ...`, ..., `N. ...`) and sync `EMBEDDED_CAST_GZ_B64` into the HTML file:
+
+```bash
+# 1. Insert, move, or remove the stop point in the backing .cast file
+python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseline.cast \
+  --add-pattern "I'd like to build a Flutter app for iOS that enables me to track my electronics parts" "4. Initial Prompt" \
+  --in-place
+
+# 2. Relabel markers sequentially (1..N) and re-embed gzip+base64 into the HTML player
+python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseline.cast \
+  --relabel \
+    "1. Create Project" \
+    "2. Initial Git Commit" \
+    "3. Launch agy" \
+    "4. Initial Prompt" \
+    "5. Q1: Clarifying Question" \
+    "6. Q2: Clarifying Question" \
+    "7. Q3: Clarifying Question" \
+    "8. Build Complete" \
+    "9. Run App" \
+    "10. Clear Session (/clear)" \
+    "11. Codebase Review" \
+    "12. Apply Review Fixes" \
+  --in-place \
+  --embed-html .scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html
+```
+
+Also update `CANONICAL_*_MARKERS` in `.agents/skills/asciinema/scripts/mark-cast.py` if the canonical marker list for that run changed.
+
+- **Completion Criterion**: Run `mark-cast.py <cast> --list` and `--inspect <idx-3>:<idx+3>` around the modified marker. Confirm markers are numbered `1..N` in chronological order, the marker sits immediately after the target stdout frame and before any newline/clear/spinner event, and `mark-cast.py` printed `Updated EMBEDDED_CAST_GZ_B64 in <html-path>`.
+
+---
+
+### 2. Edit HTML/CSS/JS Player Controls or Adaptive Speed Logic
+
+1. Read the HTML file while skipping the `EMBEDDED_CAST_GZ_B64` line (~line 454):
+   - Lines `1..453`: CSS variables, `.slidev-frame` (16:9 container), `.slide-header`, `.chapter-pills`, `#player-container`, `.speed-hud-pill`, and `.slide-footer`.
+   - Lines `455..end`:
+     - `prepareCastForPlayer(castText, idleTimeLimitOverride, minSpeed, maxSegmentSec)`: Two-pass compiler that splits events at `"m"` markers, calculates `segSpeed = max(minSpeed, ceil(segCappedDur / maxSegmentSec))`, and emits warped `asciicast-v2` timestamps.
+     - `renderChapterPills(hitIdx)`: Renders `↺ 0. Start`, numbered chapter pills with speed badges, and trailing `→ End` pill.
+     - `initPlayer()`: Mounts `AsciinemaPlayer.create({ data: v2Text }, container, { speed: 1, idleTimeLimit: 999999, ... })` and wires `play`, `pause`, `marker`, and `ended` events.
+2. Apply edits with `edit_file` targeting lines outside line 454.
+3. If the change modifies shared UI/JS behavior, check whether other `*-cast-player.html` files exist in `.scratch/flutter-skills-presentation/prototypes/` and apply the same UI/JS update to keep all three players consistent.
+
+- **Completion Criterion**: Read back the edited line range to verify clean syntax and confirm `const EMBEDDED_CAST_GZ_B64 = "H4sI...` remains intact.
+
+---
+
+### 3. Scaffold a New Cast-Player HTML File
+
+To create `07-skilled-cast-player.html` (from `recordings/final/02-skilled.cast`) or `08-comprehension-cast-player.html` (from `recordings/final/03-comprehension.cast`):
+
+1. Copy `.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html` to the new HTML path.
+2. Edit the metadata strings in the new HTML file:
+   - `<title>`: e.g. `Test Drive — 02-skilled.cast (Slidev cast-full + Stop Points)`
+   - `.top-title`: e.g. `recordings/final/02-skilled.cast · Adaptive Breakpoint Speeds`
+   - `.slide-title`: e.g. `Act 2 — Skilled Run: Building with Engineering Workflow Skills`
+   - Comment above `EMBEDDED_CAST_GZ_B64`: reference the corresponding `recordings/final/<run>.cast` file.
+3. Embed the target `.cast` recording into the new HTML file:
+   ```bash
+   python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/02-skilled.cast \
+     --list \
+     --embed-html .scratch/flutter-skills-presentation/prototypes/07-skilled-cast-player.html
+   ```
+
+- **Completion Criterion**: `mark-cast.py --list --embed-html` outputs `Updated EMBEDDED_CAST_GZ_B64 in <new-html-path>`, and reading lines `1..453` of the new HTML file confirms the updated titles and headers match the target run.

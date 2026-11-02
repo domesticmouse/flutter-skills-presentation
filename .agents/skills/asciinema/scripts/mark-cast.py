@@ -39,37 +39,44 @@ CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
     ),
     ("3. Launch agy", re.compile(r"\bagy\b", re.DOTALL)),
     (
-        "4. Q1: Clarifying Question",
+        "4. Initial Prompt",
+        re.compile(
+            r"I'd like to build a Flutter app for iOS that enables me to track my electronics parts",
+            re.DOTALL,
+        ),
+    ),
+    (
+        "5. Q1: Clarifying Question",
         re.compile(
             r"Which features would you like to include.*?enter Submit|Where would you like to store.*?enter Select",
             re.DOTALL,
         ),
     ),
     (
-        "5. Q2: Clarifying Question",
+        "6. Q2: Clarifying Question",
         re.compile(
             r"How should your parts inventory data be stored.*?enter Select|Which additional features.*?enter Submit",
             re.DOTALL,
         ),
     ),
     (
-        "6. Q3: Clarifying Question",
+        "7. Q3: Clarifying Question",
         re.compile(
             r"Which visual style do you prefer.*?enter Select|What UI style would you prefer.*?enter Select",
             re.DOTALL,
         ),
     ),
     (
-        "7. Build Complete",
+        "8. Build Complete",
         re.compile(
             r"PartDetailScreen.*?\? for shortcuts|Verified build completed successfully\.",
             re.DOTALL,
         ),
     ),
-    ("8. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
-    ("9. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
-    ("10. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
-    ("11. Apply Review Fixes", re.compile(r"> please fix", re.DOTALL)),
+    ("9. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
+    ("10. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
+    ("11. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
+    ("12. Apply Review Fixes", re.compile(r"> please fix", re.DOTALL)),
 ]
 
 CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [
