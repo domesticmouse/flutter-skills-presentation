@@ -21,7 +21,10 @@ import sys
 from typing import Any
 
 CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
-    ("1. Project Created", re.compile(r"All done!.*parts_tracker_baseline", re.DOTALL)),
+    (
+        "1. Create Project",
+        re.compile(r"flutter create --platforms=ios parts_tracker_baseline", re.DOTALL),
+    ),
     ("2. Initial Git Commit", re.compile(r"root-commit.*Initial scaffold", re.DOTALL)),
     ("3. Launch agy", re.compile(r"Antigravity CLI.*?\? for shortcuts", re.DOTALL)),
     (

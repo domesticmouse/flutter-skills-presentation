@@ -18,8 +18,8 @@ Following the runbook produced in [Recording Runbook and Workspace Setup Script]
   - Final (sanitized, 11 stop points injected, exit-trimmed with `3.0s` hold): [recordings/final/01-baseline.cast](../../../recordings/final/01-baseline.cast) (`33m 43.1s` raw / `28m 04.3s` at 1x with 2.0s idle cap / **`02m 35.3s` total across 12 adaptive-speed segments**)
   - Browser Test-Drive Harness: [06-baseline-cast-player.html](../prototypes/06-baseline-cast-player.html)
 - **Embedded Stop Points & Adaptive Segment Speeds (`mark-cast.py --list`)**:
-  - Intro (`00:00` → `00:04.27` 1x): `2x` (`2.1s` scaled) → `[1] 1. Project Created`
-  - `[1]` → `[2] 2. Initial Git Commit` (`00:04.27` → `00:10.28` 1x): `2x` (`3.0s` scaled)
+  - Intro (`00:00` → `00:02.36` 1x): `2x` (`1.2s` scaled) → `[1] 1. Create Project` (`flutter create --platforms=ios parts_tracker_baseline` entered, before execution)
+  - `[1]` → `[2] 2. Initial Git Commit` (`00:02.36` → `00:10.28` 1x): `2x` (`4.0s` scaled)
   - `[2]` → `[3] 3. Launch agy` (`00:10.28` → `00:13.34` 1x): `2x` (`1.5s` scaled)
   - `[3]` → `[4] 4. Q1: Clarifying Question` (`00:13.34` → `00:59.48` 1x): `2x` (`23.1s` scaled)
   - `[4]` → `[5] 5. Q2: Clarifying Question` (`00:59.48` → `01:16.76` 1x): `2x` (`8.6s` scaled)
