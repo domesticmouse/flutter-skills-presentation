@@ -373,16 +373,48 @@ function findSegmentIndexAtTime(playTimeSec: number): number {
   return segments.value.length - 1
 }
 
+let lastPolledTime = -1
+
+function findChapterAtTime(playTimeSec: number, toleranceSec = 0.05): number {
+  for (let i = 0; i < chapters.value.length; i++) {
+    if (Math.abs(playTimeSec - chapters.value[i].playTime) <= toleranceSec) {
+      return i
+    }
+  }
+  return -1
+}
+
 async function syncLiveSpeedFromPlayer() {
   if (!playerInstance || typeof playerInstance.getCurrentTime !== 'function') return
   try {
     const t = await playerInstance.getCurrentTime()
-    if (typeof t === 'number' && !Number.isNaN(t)) {
+    if (typeof t !== 'number' || Number.isNaN(t)) return
+    const timeChanged = Math.abs(t - lastPolledTime) >= 0.005
+    if (!isPlaying.value && !timeChanged) return
+    lastPolledTime = t
+
+    if (isPlaying.value) {
       const segIdx = findSegmentIndexAtTime(t)
       currentSegmentIdx.value = segIdx
-      if (isPlaying.value && segments.value[segIdx]) {
+      activeChapterIdx.value = segIdx - 1
+      if (segments.value[segIdx]) {
         statusText.value = `Playing (${segments.value[segIdx].speed}x)`
         statusMode.value = 'playing'
+      }
+    } else if (timeChanged) {
+      const matchedChapterIdx = findChapterAtTime(t)
+      if (matchedChapterIdx >= 0) {
+        activeChapterIdx.value = matchedChapterIdx
+        hitChapterIdx.value = matchedChapterIdx
+        const ch = chapters.value[matchedChapterIdx]
+        currentSegmentIdx.value = Math.min(segments.value.length - 1, matchedChapterIdx + 1)
+        statusText.value = `⏸ Stop Point ${matchedChapterIdx + 1}/${chapters.value.length}: ${ch.label} · Next: ${ch.nextSpeed}x`
+        statusMode.value = 'paused-marker'
+      } else {
+        const segIdx = findSegmentIndexAtTime(t)
+        currentSegmentIdx.value = segIdx
+        activeChapterIdx.value = segIdx - 1
+        hitChapterIdx.value = -1
       }
     }
   } catch (_) {
@@ -395,15 +427,40 @@ async function jumpToStart() {
   activeChapterIdx.value = -1
   hitChapterIdx.value = -1
   currentSegmentIdx.value = 0
+  if (isPlaying.value && props.pauseOnMarkers) {
+    await playerInstance.pause()
+    isPlaying.value = false
+  }
+  const firstSpeed = segments.value[0]?.speed ?? props.speed
+  if (isPlaying.value) {
+    statusText.value = `Playing (${firstSpeed}x)`
+    statusMode.value = 'playing'
+  } else {
+    statusText.value = `Ready at 0. Start · Next: ${firstSpeed}x`
+    statusMode.value = ''
+  }
+  lastPolledTime = 0
   await playerInstance.seek(0)
 }
 
 async function jumpToChapter(idx: number) {
   if (!playerInstance || idx < 0 || idx >= chapters.value.length) return
   activeChapterIdx.value = idx
-  hitChapterIdx.value = -1
   const ch = chapters.value[idx]
+  if (isPlaying.value && props.pauseOnMarkers) {
+    await playerInstance.pause()
+    isPlaying.value = false
+  }
+  hitChapterIdx.value = isPlaying.value ? -1 : idx
   currentSegmentIdx.value = Math.min(segments.value.length - 1, idx + 1)
+  if (isPlaying.value) {
+    statusText.value = `Playing (${ch.nextSpeed}x)`
+    statusMode.value = 'playing'
+  } else {
+    statusText.value = `⏸ Stop Point ${idx + 1}/${chapters.value.length}: ${ch.label} · Next: ${ch.nextSpeed}x`
+    statusMode.value = 'paused-marker'
+  }
+  lastPolledTime = ch.playTime
   await playerInstance.seek(ch.playTime)
 }
 
@@ -418,8 +475,11 @@ function togglePlay() {
 
 function stepPrevChapter() {
   if (!chapters.value.length) return
-  const target = Math.max(0, activeChapterIdx.value <= 0 ? 0 : activeChapterIdx.value - 1)
-  jumpToChapter(target)
+  if (activeChapterIdx.value <= 0) {
+    jumpToStart()
+  } else {
+    jumpToChapter(activeChapterIdx.value - 1)
+  }
 }
 
 function stepNextChapter() {
@@ -499,11 +559,10 @@ async function initPlayer() {
     })
 
     playerInstance = AsciinemaPlayer.create({ data: v2Text }, containerRef.value, playerOptions)
+    lastPolledTime = 0
 
     speedPollTimer = setInterval(() => {
-      if (isPlaying.value) {
-        syncLiveSpeedFromPlayer()
-      }
+      syncLiveSpeedFromPlayer()
     }, 100)
 
     playerInstance.addEventListener('play', () => {
@@ -527,8 +586,9 @@ async function initPlayer() {
       }
     })
 
-    playerInstance.addEventListener('marker', ({ index, label }: { index: number; time: number; label: string }) => {
+    playerInstance.addEventListener('marker', ({ index, time, label }: { index: number; time: number; label: string }) => {
       activeChapterIdx.value = index
+      lastPolledTime = time
       const nextSeg = segments.value[Math.min(segments.value.length - 1, index + 1)]
       if (props.pauseOnMarkers) {
         isPlaying.value = false
@@ -584,14 +644,14 @@ function teardownPlayer() {
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', handleStageKeydown)
+  window.addEventListener('keydown', handleStageKeydown, true)
   nextTick(() => {
     initPlayer()
   })
 })
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleStageKeydown)
+  window.removeEventListener('keydown', handleStageKeydown, true)
   teardownPlayer()
 })
 

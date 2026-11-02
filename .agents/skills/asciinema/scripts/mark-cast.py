@@ -82,8 +82,12 @@ CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
     ),
     ("10. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
     ("11. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
-    ("12. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
-    ("13. Apply Review Fixes", re.compile(r"> please fix", re.DOTALL)),
+    (
+        "12. Session Cleared",
+        re.compile(r"Antigravity CLI 1\.4\.12.*?\? for shortcuts", re.DOTALL),
+    ),
+    ("13. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
+    ("14. Apply Review Fixes", re.compile(r"> please fix", re.DOTALL)),
 ]
 
 CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [
@@ -826,10 +830,6 @@ def main() -> int:
             )
             print(f"[set] {msg}")
 
-    if args.relabel:
-        count = relabel_markers(events, args.relabel)
-        print(f"Relabeled {count} marker(s).")
-
     if args.auto_baseline:
         events, notes = auto_inject_markers(
             header,
@@ -919,6 +919,10 @@ def main() -> int:
             print(
                 f"[add-time] + {label!r} at {mode}={target_sec:.2f}s (event #{idx:04d})"
             )
+
+    if args.relabel:
+        count = relabel_markers(events, args.relabel)
+        print(f"Relabeled {count} marker(s).")
 
     list_markers(header, events, version)
 
