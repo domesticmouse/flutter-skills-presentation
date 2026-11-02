@@ -53,30 +53,37 @@ CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         ),
     ),
     (
-        "6. Q2: Clarifying Question",
+        "6. Q1: Options Selected",
+        re.compile(
+            r"3\. \[x\] Storage locations.*?4\. \[ \].*?x\]",
+            re.DOTALL,
+        ),
+    ),
+    (
+        "7. Q2: Clarifying Question",
         re.compile(
             r"How should your parts inventory data be stored.*?enter Select|Which additional features.*?enter Submit",
             re.DOTALL,
         ),
     ),
     (
-        "7. Q3: Clarifying Question",
+        "8. Q3: Clarifying Question",
         re.compile(
             r"Which visual style do you prefer.*?enter Select|What UI style would you prefer.*?enter Select",
             re.DOTALL,
         ),
     ),
     (
-        "8. Build Complete",
+        "9. Build Complete",
         re.compile(
             r"PartDetailScreen.*?\? for shortcuts|Verified build completed successfully\.",
             re.DOTALL,
         ),
     ),
-    ("9. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
-    ("10. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
-    ("11. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
-    ("12. Apply Review Fixes", re.compile(r"> please fix", re.DOTALL)),
+    ("10. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
+    ("11. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
+    ("12. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
+    ("13. Apply Review Fixes", re.compile(r"> please fix", re.DOTALL)),
 ]
 
 CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [
