@@ -87,7 +87,7 @@ CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(r"Antigravity CLI 1\.4\.12.*?\? for shortcuts", re.DOTALL),
     ),
     ("13. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
-    ("14. Apply Review Fixes", re.compile(r"> please fix", re.DOTALL)),
+    ("14. Apply Review Fixes", re.compile(r"p\s*Gleasefix", re.DOTALL)),
 ]
 
 CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [
