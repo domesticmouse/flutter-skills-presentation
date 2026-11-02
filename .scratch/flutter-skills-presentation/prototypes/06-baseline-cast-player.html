@@ -577,7 +577,7 @@
           });
           currentEvents = [];
           fromLabel = markerLabel;
-        } else {
+        } else if (code !== "x") {
           currentEvents.push({ dt, cappedDt, code, payload, rawAbs });
         }
       }
@@ -604,10 +604,8 @@
         let segRawDur = 0.0;
         let segCappedDur = 0.0;
         seg.events.forEach((e) => {
-          if (e.code !== "x") {
-            segRawDur += e.dt;
-            segCappedDur += e.cappedDt;
-          }
+          segRawDur += e.dt;
+          segCappedDur += e.cappedDt;
         });
 
         let segSpeed = minSpeed;
@@ -617,15 +615,9 @@
 
         const startTime = warpedAbs;
         seg.events.forEach((e) => {
-          if (e.code === "x") {
-            // Keep final frame hold unscaled so the ending screen stays visible
-            warpedAbs += e.cappedDt;
-            bodyLines.push(JSON.stringify([Number(warpedAbs.toFixed(6)), "o", ""]));
-          } else {
-            warpedAbs += e.cappedDt / segSpeed;
-            unwarpedCappedAbs += e.cappedDt;
-            bodyLines.push(JSON.stringify([Number(warpedAbs.toFixed(6)), e.code, e.payload]));
-          }
+          warpedAbs += e.cappedDt / segSpeed;
+          unwarpedCappedAbs += e.cappedDt;
+          bodyLines.push(JSON.stringify([Number(warpedAbs.toFixed(6)), e.code, e.payload]));
         });
 
         const endTime = Number(warpedAbs.toFixed(6));
@@ -639,7 +631,8 @@
           cappedDuration: segCappedDur,
           warpedDuration: endTime - startTime,
           startTime,
-          endTime
+          endTime,
+          rawEndTime: seg.rawEndTime
         };
         computedSegments.push(computedSeg);
 
@@ -670,7 +663,7 @@
         version: 2,
         width: (header.term && header.term.cols) || header.width || 120,
         height: (header.term && header.term.rows) || header.height || 32,
-        duration: Number(warpedAbs.toFixed(3)),
+        duration: warpedAbs,
         timestamp: header.timestamp,
         env: header.env || { SHELL: "/bin/zsh" }
       };
@@ -709,19 +702,21 @@
         container.appendChild(btn);
       });
 
-      // If there is a trailing segment after the last marker, show an info pill for the final segment speed
+      // If there is a trailing segment after the last marker, render an interactive End stop-point pill
       if (segments.length > chapters.length) {
+        const endIdx = chapters.length;
         const tailSeg = segments[segments.length - 1];
         const tier = getSpeedTierClass(tailSeg.speed, minSpeed);
-        const tailSpan = document.createElement("span");
-        tailSpan.className = "chapter-pill";
-        tailSpan.style.cursor = "default";
-        tailSpan.title = `Final segment after ${chapters[chapters.length - 1]?.label || "last marker"} plays at ${tailSeg.speed}x (${tailSeg.warpedDuration.toFixed(1)}s)`;
-        tailSpan.innerHTML =
+        const tailBtn = document.createElement("button");
+        tailBtn.className = "chapter-pill" +
+          (hitIdx === endIdx ? " hit" : activeChapterIdx === endIdx ? " active" : "");
+        tailBtn.title = `Final segment after ${chapters[chapters.length - 1]?.label || "last marker"} plays at ${tailSeg.speed}x (${tailSeg.warpedDuration.toFixed(1)}s) → stops at End`;
+        tailBtn.innerHTML =
           `<span>→ End</span>` +
           `<span class="chapter-speed-tag ${tier}">${tailSeg.speed}x</span>` +
           `<span class="chapter-time">${formatTime(tailSeg.endTime)}</span>`;
-        container.appendChild(tailSpan);
+        tailBtn.onclick = () => jumpToEnd();
+        container.appendChild(tailBtn);
       }
     }
 
@@ -734,7 +729,46 @@
       badge.textContent = text;
       badge.className = "status-pill" + (mode ? " " + mode : "");
       const playBtn = document.getElementById("play-btn");
-      playBtn.textContent = isPlaying ? "⏸ Pause" : "▶ Resume";
+      if (isPlaying) {
+        playBtn.textContent = "⏸ Pause";
+      } else if (activeChapterIdx >= chapters.length && chapters.length > 0) {
+        playBtn.textContent = "↺ Replay";
+      } else if (activeChapterIdx === -1 && lastPolledTime <= 0.02) {
+        playBtn.textContent = "▶ Play";
+      } else {
+        playBtn.textContent = "▶ Resume";
+      }
+    }
+
+    function applyEndState(reason = "jumped") {
+      const tailSegIdx = Math.max(0, segments.length - 1);
+      const tailSeg = segments[tailSegIdx];
+      const endTime = tailSeg ? tailSeg.endTime : 0;
+      const minSpeed = Number(document.getElementById("min-speed-select").value) || 2;
+      activeChapterIdx = chapters.length;
+      isPlaying = false;
+      lastPolledTime = endTime;
+      renderChapterPills(chapters.length);
+      if (tailSeg) {
+        updateSpeedIndicators(
+          tailSegIdx,
+          reason === "ended"
+            ? `End of Recording (${formatTime(endTime)} · finished @ ${tailSeg.speed}x)`
+            : `End of Recording (${formatTime(endTime)})`
+        );
+      }
+      setStatus(
+        reason === "ended"
+          ? `⏹ End: ${tailSeg ? tailSeg.toLabel : "Recording Complete"}`
+          : `⏸ End: ${tailSeg ? tailSeg.toLabel : "Recording Complete"}`,
+        "paused-marker"
+      );
+      const lastChapterLabel = chapters[chapters.length - 1]?.label || "0. Start";
+      const rawEnd = tailSeg && tailSeg.rawEndTime ? ` / ${formatTime(tailSeg.rawEndTime)} raw` : "";
+      document.getElementById("marker-detail").textContent =
+        reason === "ended"
+          ? `Reached End of Recording (${formatTime(endTime)} warped${rawEnd}) — finished Segment ${segments.length}/${segments.length} (${lastChapterLabel} → End @ ${tailSeg ? tailSeg.speed : minSpeed}x). Press [ for previous stop point or p to replay.`
+          : `End of Recording (${formatTime(endTime)} warped${rawEnd}) — final frame after "${lastChapterLabel}" (Segment ${segments.length}/${segments.length} @ ${tailSeg ? tailSeg.speed : minSpeed}x). Press [ for previous stop point.`;
     }
 
     async function jumpToStart() {
@@ -745,6 +779,7 @@
         await player.pause();
         isPlaying = false;
       }
+      lastPolledTime = 0;
       renderChapterPills(-1);
       updateSpeedIndicators(0, "At 0. Start (00:00)");
       const firstSpeed = segments[0] ? segments[0].speed : 2;
@@ -755,7 +790,6 @@
       }
       document.getElementById("marker-detail").textContent =
         `Jumped to 0. Start (00:00) — Segment 1 runs at ${firstSpeed}x.`;
-      lastPolledTime = 0;
       await player.seek(0);
     }
 
@@ -768,6 +802,7 @@
         await player.pause();
         isPlaying = false;
       }
+      lastPolledTime = ch.playTime;
       renderChapterPills(isPlaying ? -1 : idx);
       // Jumping to marker idx positions playback at the start of segment idx + 1
       const nextSegIdx = Math.min(segments.length - 1, idx + 1);
@@ -779,8 +814,19 @@
       }
       document.getElementById("marker-detail").textContent =
         `Stop Point ${idx + 1}/${chapters.length}: "${ch.label}" (${formatTime(ch.playTime)} warped / ${formatTime(ch.rawTime)} raw) — next segment runs at ${ch.nextSpeed}x`;
-      lastPolledTime = ch.playTime;
       await player.seek(ch.playTime);
+    }
+
+    async function jumpToEnd() {
+      if (!player || !segments.length) return;
+      const tailSeg = segments[segments.length - 1];
+      const pauseOnMarkers = document.getElementById("pause-markers-chk").checked;
+      if (isPlaying && pauseOnMarkers) {
+        await player.pause();
+        isPlaying = false;
+      }
+      applyEndState("jumped");
+      await player.seek(tailSeg.endTime);
     }
 
     function stepPrevChapter() {
@@ -788,14 +834,32 @@
       if (activeChapterIdx <= 0) {
         jumpToStart();
       } else {
-        jumpToChapter(activeChapterIdx - 1);
+        jumpToChapter(Math.min(chapters.length - 1, activeChapterIdx - 1));
       }
     }
 
     function stepNextChapter() {
       if (!chapters.length) return;
-      const target = Math.min(chapters.length - 1, activeChapterIdx + 1);
-      jumpToChapter(target);
+      if (activeChapterIdx < chapters.length - 1) {
+        jumpToChapter(activeChapterIdx + 1);
+      } else {
+        jumpToEnd();
+      }
+    }
+
+    async function togglePlay() {
+      if (!player) return;
+      if (isPlaying) {
+        player.pause();
+      } else {
+        if (activeChapterIdx >= chapters.length && chapters.length > 0) {
+          activeChapterIdx = -1;
+          currentSegmentIdx = 0;
+          lastPolledTime = 0;
+          await player.seek(0);
+        }
+        player.play();
+      }
     }
 
     function findChapterAtTime(playTimeSec, toleranceSec = 0.05) {
@@ -812,7 +876,17 @@
       try {
         const t = await player.getCurrentTime();
         if (typeof t !== "number" || Number.isNaN(t)) return;
+        const tailSeg = segments[segments.length - 1];
         const timeChanged = Math.abs(t - lastPolledTime) >= 0.005;
+
+        if (tailSeg && t >= tailSeg.endTime - 0.02) {
+          if (activeChapterIdx !== chapters.length || isPlaying) {
+            applyEndState(isPlaying ? "ended" : "jumped");
+          }
+          lastPolledTime = t;
+          return;
+        }
+
         if (!isPlaying && !timeChanged) return;
         lastPolledTime = t;
 
@@ -825,10 +899,23 @@
           }
           updateSpeedIndicators(segIdx);
           if (segments[segIdx]) {
-            setStatus(`Playing (${segments[segIdx].speed}x)`, "playing");
+            const seg = segments[segIdx];
+            setStatus(`Playing (${seg.speed}x)`, "playing");
+            document.getElementById("marker-detail").textContent =
+              `Playing Segment ${seg.index + 1}/${segments.length}: ${seg.fromLabel} → ${seg.toLabel} (${seg.warpedDuration.toFixed(1)}s @ ${seg.speed}x).`;
           }
         } else if (timeChanged) {
           // User seeked while paused (e.g., via timeline scrubber bar)
+          if (t <= 0.02) {
+            activeChapterIdx = -1;
+            renderChapterPills(-1);
+            const firstSpeed = segments[0] ? segments[0].speed : 2;
+            updateSpeedIndicators(0, "At 0. Start (00:00)");
+            setStatus(`Ready at 0. Start · Next: ${firstSpeed}x`, "");
+            document.getElementById("marker-detail").textContent =
+              `At 0. Start (00:00) — Segment 1 runs at ${firstSpeed}x.`;
+            return;
+          }
           const matchedChapterIdx = findChapterAtTime(t);
           if (matchedChapterIdx >= 0) {
             activeChapterIdx = matchedChapterIdx;
@@ -902,6 +989,10 @@
 
       player.addEventListener("play", () => {
         isPlaying = true;
+        if (activeChapterIdx >= chapters.length) {
+          activeChapterIdx = -1;
+          currentSegmentIdx = 0;
+        }
         // If resuming from a marker pause, show the upcoming segment's speed immediately
         const targetSegIdx = activeChapterIdx >= 0
           ? Math.min(segments.length - 1, activeChapterIdx + 1)
@@ -910,10 +1001,25 @@
         const activeSpeed = segments[targetSegIdx] ? segments[targetSegIdx].speed : minSpeed;
         setStatus(`Playing (${activeSpeed}x)`, "playing");
         renderChapterPills(-1);
+        const seg = segments[targetSegIdx];
+        if (seg) {
+          document.getElementById("marker-detail").textContent =
+            `Playing Segment ${seg.index + 1}/${segments.length}: ${seg.fromLabel} → ${seg.toLabel} (${seg.warpedDuration.toFixed(1)}s @ ${seg.speed}x).`;
+        }
       });
 
-      player.addEventListener("pause", () => {
+      player.addEventListener("pause", async () => {
         isPlaying = false;
+        const tailSeg = segments[segments.length - 1];
+        if (tailSeg && typeof player.getCurrentTime === "function") {
+          try {
+            const t = await player.getCurrentTime();
+            if (typeof t === "number" && t >= tailSeg.endTime - 0.05) {
+              applyEndState("ended");
+              return;
+            }
+          } catch (_) {}
+        }
         if (currentStatusMode !== "paused-marker") {
           setStatus("Paused");
         }
@@ -941,16 +1047,13 @@
       });
 
       player.addEventListener("ended", () => {
-        isPlaying = false;
-        setStatus("Ended (Final Frame Hold)");
+        applyEndState("ended");
       });
     }
 
     // Controls & Keyboard Shortcuts
     document.getElementById("play-btn").addEventListener("click", () => {
-      if (!player) return;
-      if (isPlaying) player.pause();
-      else player.play();
+      togglePlay();
     });
 
     document.getElementById("prev-btn").addEventListener("click", () => {
@@ -989,9 +1092,7 @@
       } else if (e.key === "p" || e.key === "P") {
         e.preventDefault();
         e.stopPropagation();
-        if (!player) return;
-        if (isPlaying) player.pause();
-        else player.play();
+        togglePlay();
       }
     }, true);
 

@@ -260,7 +260,7 @@ function prepareCastForPlayer(
       })
       currentEvents = []
       fromLabel = markerLabel
-    } else {
+    } else if (code !== 'x') {
       currentEvents.push({ dt, cappedDt, code, payload, rawAbs })
     }
   }
@@ -286,10 +286,8 @@ function prepareCastForPlayer(
     let segRawDur = 0.0
     let segCappedDur = 0.0
     seg.events.forEach((e) => {
-      if (e.code !== 'x') {
-        segRawDur += e.dt
-        segCappedDur += e.cappedDt
-      }
+      segRawDur += e.dt
+      segCappedDur += e.cappedDt
     })
 
     let segSpeed = minSpeed
@@ -299,14 +297,9 @@ function prepareCastForPlayer(
 
     const startTime = warpedAbs
     seg.events.forEach((e) => {
-      if (e.code === 'x') {
-        warpedAbs += e.cappedDt
-        bodyLines.push(JSON.stringify([Number(warpedAbs.toFixed(6)), 'o', '']))
-      } else {
-        warpedAbs += e.cappedDt / segSpeed
-        unwarpedCappedAbs += e.cappedDt
-        bodyLines.push(JSON.stringify([Number(warpedAbs.toFixed(6)), e.code, e.payload]))
-      }
+      warpedAbs += e.cappedDt / segSpeed
+      unwarpedCappedAbs += e.cappedDt
+      bodyLines.push(JSON.stringify([Number(warpedAbs.toFixed(6)), e.code, e.payload]))
     })
 
     const endTime = Number(warpedAbs.toFixed(6))
@@ -352,7 +345,7 @@ function prepareCastForPlayer(
     version: 2,
     width: props.cols || (header.term && header.term.cols) || header.width || 120,
     height: props.rows || (header.term && header.term.rows) || header.height || 32,
-    duration: Number(warpedAbs.toFixed(3)),
+    duration: warpedAbs,
     timestamp: header.timestamp,
     env: header.env || { SHELL: '/bin/zsh' },
   }
@@ -385,12 +378,38 @@ function findChapterAtTime(playTimeSec: number, toleranceSec = 0.05): number {
   return -1
 }
 
+function applyEndState(reason: 'ended' | 'jumped' = 'jumped') {
+  const tailSegIdx = Math.max(0, segments.value.length - 1)
+  const tailSeg = segments.value[tailSegIdx]
+  const endTime = tailSeg ? tailSeg.endTime : 0
+  activeChapterIdx.value = chapters.value.length
+  hitChapterIdx.value = chapters.value.length
+  currentSegmentIdx.value = tailSegIdx
+  isPlaying.value = false
+  lastPolledTime = endTime
+  statusText.value =
+    reason === 'ended'
+      ? `⏹ End: ${tailSeg ? tailSeg.toLabel : 'Recording Complete'}`
+      : `⏸ End: ${tailSeg ? tailSeg.toLabel : 'Recording Complete'}`
+  statusMode.value = 'paused-marker'
+}
+
 async function syncLiveSpeedFromPlayer() {
   if (!playerInstance || typeof playerInstance.getCurrentTime !== 'function') return
   try {
     const t = await playerInstance.getCurrentTime()
     if (typeof t !== 'number' || Number.isNaN(t)) return
+    const tailSeg = segments.value[segments.value.length - 1]
     const timeChanged = Math.abs(t - lastPolledTime) >= 0.005
+
+    if (tailSeg && t >= tailSeg.endTime - 0.02) {
+      if (activeChapterIdx.value !== chapters.value.length || isPlaying.value) {
+        applyEndState(isPlaying.value ? 'ended' : 'jumped')
+      }
+      lastPolledTime = t
+      return
+    }
+
     if (!isPlaying.value && !timeChanged) return
     lastPolledTime = t
 
@@ -403,6 +422,15 @@ async function syncLiveSpeedFromPlayer() {
         statusMode.value = 'playing'
       }
     } else if (timeChanged) {
+      if (t <= 0.02) {
+        activeChapterIdx.value = -1
+        hitChapterIdx.value = -1
+        currentSegmentIdx.value = 0
+        const firstSpeed = segments.value[0]?.speed ?? props.speed
+        statusText.value = `Ready at 0. Start · Next: ${firstSpeed}x`
+        statusMode.value = ''
+        return
+      }
       const matchedChapterIdx = findChapterAtTime(t)
       if (matchedChapterIdx >= 0) {
         activeChapterIdx.value = matchedChapterIdx
@@ -465,11 +493,29 @@ async function jumpToChapter(idx: number) {
   await playerInstance.seek(ch.playTime)
 }
 
-function togglePlay() {
+async function jumpToEnd() {
+  if (!playerInstance || !segments.value.length) return
+  const tailSeg = segments.value[segments.value.length - 1]
+  if (isPlaying.value && props.pauseOnMarkers) {
+    await playerInstance.pause()
+    isPlaying.value = false
+  }
+  applyEndState('jumped')
+  await playerInstance.seek(tailSeg.endTime)
+}
+
+async function togglePlay() {
   if (!playerInstance) return
   if (isPlaying.value) {
     playerInstance.pause()
   } else {
+    if (activeChapterIdx.value >= chapters.value.length && chapters.value.length > 0) {
+      activeChapterIdx.value = -1
+      hitChapterIdx.value = -1
+      currentSegmentIdx.value = 0
+      lastPolledTime = 0
+      await playerInstance.seek(0)
+    }
     playerInstance.play()
   }
 }
@@ -479,14 +525,17 @@ function stepPrevChapter() {
   if (activeChapterIdx.value <= 0) {
     jumpToStart()
   } else {
-    jumpToChapter(activeChapterIdx.value - 1)
+    jumpToChapter(Math.min(chapters.value.length - 1, activeChapterIdx.value - 1))
   }
 }
 
 function stepNextChapter() {
   if (!chapters.value.length) return
-  const target = Math.min(chapters.value.length - 1, activeChapterIdx.value + 1)
-  jumpToChapter(target)
+  if (activeChapterIdx.value < chapters.value.length - 1) {
+    jumpToChapter(activeChapterIdx.value + 1)
+  } else {
+    jumpToEnd()
+  }
 }
 
 function handleStageKeydown(e: KeyboardEvent) {
@@ -568,6 +617,10 @@ async function initPlayer() {
 
     playerInstance.addEventListener('play', () => {
       isPlaying.value = true
+      if (activeChapterIdx.value >= chapters.value.length) {
+        activeChapterIdx.value = -1
+        currentSegmentIdx.value = 0
+      }
       hitChapterIdx.value = -1
       const targetSegIdx =
         activeChapterIdx.value >= 0
@@ -579,8 +632,18 @@ async function initPlayer() {
       statusMode.value = 'playing'
     })
 
-    playerInstance.addEventListener('pause', () => {
+    playerInstance.addEventListener('pause', async () => {
       isPlaying.value = false
+      const tailSeg = segments.value[segments.value.length - 1]
+      if (tailSeg && typeof playerInstance?.getCurrentTime === 'function') {
+        try {
+          const t = await playerInstance.getCurrentTime()
+          if (typeof t === 'number' && t >= tailSeg.endTime - 0.05) {
+            applyEndState('ended')
+            return
+          }
+        } catch (_) {}
+      }
       if (statusMode.value !== 'paused-marker') {
         statusText.value = 'Paused'
         statusMode.value = ''
@@ -606,9 +669,7 @@ async function initPlayer() {
     })
 
     playerInstance.addEventListener('ended', () => {
-      isPlaying.value = false
-      statusText.value = 'Ended'
-      statusMode.value = ''
+      applyEndState('ended')
     })
 
     if (typeof ResizeObserver !== 'undefined' && containerRef.value) {
@@ -696,6 +757,23 @@ watch(
             <span class="chapter-speed-tag" :class="getSpeedTier(ch.inSpeed)">{{ ch.inSpeed }}x</span>
             <span class="chapter-time">{{ formatTime(ch.playTime) }}</span>
           </button>
+          <button
+            v-if="segments.length > chapters.length"
+            type="button"
+            class="chapter-pill"
+            :class="{
+              hit: hitChapterIdx === chapters.length,
+              active: activeChapterIdx === chapters.length && hitChapterIdx !== chapters.length,
+            }"
+            :title="`Final segment after ${chapters[chapters.length - 1]?.label || 'last marker'} plays at ${segments[segments.length - 1].speed}x (${segments[segments.length - 1].warpedDuration.toFixed(1)}s) → stops at End`"
+            @click="jumpToEnd"
+          >
+            <span>→ End</span>
+            <span class="chapter-speed-tag" :class="getSpeedTier(segments[segments.length - 1].speed)">
+              {{ segments[segments.length - 1].speed }}x
+            </span>
+            <span class="chapter-time">{{ formatTime(segments[segments.length - 1].endTime) }}</span>
+          </button>
         </div>
 
         <div class="asciinema-transport">
@@ -707,7 +785,7 @@ watch(
             ◀ Prev
           </button>
           <button type="button" class="ctrl-btn ctrl-btn-primary" title="Play / Resume (p)" @click="togglePlay">
-            {{ isPlaying ? '⏸ Pause' : '▶ Resume' }}
+            {{ isPlaying ? '⏸ Pause' : activeChapterIdx >= chapters.length && chapters.length > 0 ? '↺ Replay' : '▶ Resume' }}
           </button>
           <button type="button" class="ctrl-btn" title="Next Stop Point (])" @click="stepNextChapter">
             Next ▶
