@@ -42,9 +42,11 @@ Run these quick checks before starting the recordings to confirm every required 
 ```bash
 flutter --version
 flutter doctor
-open -a Simulator
+open -a DeviceHub
+xcrun simctl boot "iPhone 18 Pro" 2>/dev/null || true
+xcrun simctl list devices booted
 ```
-- Confirm **Flutter**, **Xcode** (for iOS development), and **CocoaPods** show `[✓]`, and that an iOS Simulator is booted so `Please run the app.` launches without device-selection prompts.
+- Confirm **Flutter**, **Xcode** (for iOS development), and **CocoaPods** show `[✓]`, and that an iOS Simulator is booted (in Xcode 27+, `Simulator.app` was replaced by `DeviceHub.app` at `/Applications/Xcode.app/Contents/Applications/DeviceHub.app`) so `Please run the app.` launches without device-selection prompts.
 - Optional quick smoke test that `flutter create --platforms=ios` succeeds cleanly without first-run prompts:
   ```bash
   flutter create --platforms=ios /tmp/flutter_preflight_test && rm -rf /tmp/flutter_preflight_test
