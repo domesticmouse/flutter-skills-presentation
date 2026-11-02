@@ -6,9 +6,10 @@ description: >-
   (EMBEDDED_CAST_GZ_B64). Use whenever reviewing or editing a cast-player HTML
   file (such as 06-baseline-cast-player.html, 07-skilled-cast-player.html, or
   08-comprehension-cast-player.html), adding, moving, removing, or relabeling
-  stop points ("m" chapter markers) viewed in an HTML player, tuning adaptive
-  segment speeds, updating chapter pills or HUD controls, or scaffolding a new
-  cast-player HTML prototype for another recording.
+  stop points ("m" chapter markers) viewed in an HTML player, shortening
+  cut-and-paste or prompt delays (dt), tuning adaptive segment speeds, updating
+  chapter pills or HUD controls, or scaffolding a new cast-player HTML prototype
+  for another recording.
 ---
 
 # Cast-Player HTML (`*-cast-player.html`)
@@ -41,9 +42,9 @@ Each HTML player embeds a gzipped, base64-encoded copy (`const EMBEDDED_CAST_GZ_
 
 ---
 
-### 1. Add, Move, Remove, or Rename Stop Points
+### 1. Add, Move, Remove, or Rename Stop Points (and Tighten Paste Delays)
 
-When the user reviews a `*-cast-player.html` file and asks to add, move, delete, or rename a stop point:
+When the user reviews a `*-cast-player.html` file and asks to add, move, delete, or rename a stop point, or shorten cut-and-paste / input pauses:
 
 #### Step 1: Inspect Current Markers and Target Events
 List current markers and search the backing `.cast` file in `recordings/final/`:
@@ -103,7 +104,30 @@ python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseli
 
 Also update `CANONICAL_*_MARKERS` in `.agents/skills/asciinema/scripts/mark-cast.py` if the canonical marker list for that run changed.
 
-- **Completion Criterion**: Run `mark-cast.py <cast> --list` and `--inspect <idx-3>:<idx+3>` around the modified marker. Confirm markers are numbered `1..N` in chronological order, the marker sits immediately after the target stdout frame and before any newline/clear/spinner event, and `mark-cast.py` printed `Updated EMBEDDED_CAST_GZ_B64 in <html-path>`.
+#### Step 4: Tighten Cut-and-Paste or Specific Event Delays (`dt`)
+Because `recordings/final/<run>.cast` uses `asciicast-v3` relative event deltas (`dt`) and `prepareCastForPlayer()` dynamically compiles cumulative `asciicast-v2` timestamps and segment speeds, shortening `dt` on individual events never desynchronizes markers.
+
+Default target delays (`--tighten-pastes`):
+- **`1.0s` (`0.5s` at `2x` playback)**: Pre-paste wait before `[REV]` shell pastes, `agy` startup banner settle, `agy` pasted/typed prompt starts, and `/clear` execution.
+- **`0.15s`**: `[REV]` → `[UNREV]` reverse-video highlight redraw when pressing `Enter` on a pasted shell command.
+- **`0.20s`**: Post-marker input-box clear/submit pause (`\x1b[\d+D\x1b[K`) when resuming from an `agy` prompt stop point.
+
+```bash
+# Automatically tighten all [REV] shell paste delays (1.0s), [UNREV] Enter redraws (0.15s), and agy prompt paste/submit pauses (0.20s)
+python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseline.cast \
+  --tighten-pastes \
+  --in-place \
+  --embed-html .scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html
+
+# Or set the relative dt of specific event indices directly
+python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseline.cast \
+  --set-dt 7 1.0 \
+  --set-dt 8 0.15 \
+  --in-place \
+  --embed-html .scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html
+```
+
+- **Completion Criterion**: Run `mark-cast.py <cast> --list` and `--inspect <idx-3>:<idx+3>` around the modified marker or event. Confirm markers are numbered `1..N` in chronological order, the marker sits immediately after the target stdout frame and before any newline/clear/spinner event, target event `dt` values reflect the tightened delays, and `mark-cast.py` printed `Updated EMBEDDED_CAST_GZ_B64 in <html-path>`.
 
 ---
 

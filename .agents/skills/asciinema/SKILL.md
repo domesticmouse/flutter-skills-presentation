@@ -1,6 +1,6 @@
 ---
 name: asciinema
-description: Record, replay, convert, sanitize, trim, and manage chapter markers ("m" stop points) in terminal sessions. Use when recording terminal demos, converting .cast files to animated GIF or SVG, embedding asciinema-player in web apps, sanitizing terminal recordings, inspecting cast durations, trimming trailing exit sequences, or adding/moving/inspecting chapter stop-point markers.
+description: Record, replay, convert, sanitize, trim, tighten paste/input delays, and manage chapter markers ("m" stop points) in terminal sessions. Use when recording terminal demos, converting .cast files to animated GIF or SVG, embedding asciinema-player in web apps, sanitizing terminal recordings, inspecting cast durations, shortening cut-and-paste or prompt pauses, trimming trailing exit sequences, or adding/moving/inspecting chapter stop-point markers.
 ---
 
 # Asciinema
@@ -211,7 +211,7 @@ Always place `"m"` markers (`[0.0, "m", "<label>"]` in v3, `[abs_time, "m", "<la
 - **Command-Completion Hold (pause *after* a command finishes running)**: Match the final stdout frame of the command's output (e.g. `"All done!"` or `"root-commit.*Initial scaffold"`).
 - **Interactive Prompt / Question Hold**: Match the bottom status/footer of the TUI prompt frame (e.g. `"Which features.*?enter Submit"` or `"How should your parts.*?enter Select"`), right before the user's thinking/selection pause (`dt`). When a synchronized TUI redraw (`\x1b[?2026h`…`\x1b[?2026l`) spans multiple `dt = 0.0` PTY chunks, `mark-cast.py` automatically advances across consecutive `dt = 0.0` `"o"` events so the marker sits after the complete frame flush.
 
-#### D. Move/Replace, Add, or Remove Markers
+#### D. Move/Replace, Add, or Remove Markers, and Tighten Paste Delays
 ```bash
 # Move/replace an existing marker (by 1-based number or label substring) to a command/pattern, @event:IDX, @time:SEC, or @1x:SEC
 # (Automatically advances from [REV] bracketed-paste highlight to [UNREV] and splits trailing cursor-down so the cursor stays on the command line)
@@ -230,6 +230,14 @@ python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
 
 # Remove a specific marker by number or label substring
 python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast --remove 1 --in-place
+
+# Automatically tighten cut-and-paste delays ([REV]/prompt paste -> 1.0s, [UNREV] Enter -> 0.15s, prompt submit -> 0.20s)
+python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
+  --tighten-pastes --in-place --embed-html player.html
+
+# Set the relative delay (dt) of specific event indices directly (shifts subsequent timestamps automatically in v2)
+python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
+  --set-dt 7 1.0 --set-dt 8 0.15 --in-place --embed-html player.html
 
 # Update markers AND sync gzip+base64 EMBEDDED_CAST_GZ_B64 in a standalone HTML player in one step
 python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \

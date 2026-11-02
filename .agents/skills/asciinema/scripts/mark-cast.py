@@ -15,7 +15,9 @@ Capabilities:
 9. --relabel LABEL1 LABEL2 ...: Rename existing "m" markers in sequence.
 10. --clear: Remove all existing "m" markers before applying additions.
 11. --auto-baseline / --auto-skilled / --auto-comprehension: Auto-inject canonical chapter markers for the 3-run experiment.
-12. --embed-html HTML_PATH: Re-compress the saved .cast file (gzip+base64) into EMBEDDED_CAST_GZ_B64 inside HTML_PATH.
+12. --set-dt EVENT_IDX SECONDS: Set the relative delay (dt) of a specific event index (adjusting subsequent timestamps automatically in v2).
+13. --tighten-pastes: Automatically shorten pre-paste delays ([REV] -> 1.0s), Enter highlight pauses ([UNREV] -> 0.15s), and prompt paste/submit delays around markers.
+14. --embed-html HTML_PATH: Re-compress the saved .cast file (gzip+base64) into EMBEDDED_CAST_GZ_B64 inside HTML_PATH.
 """
 
 import argparse
@@ -653,6 +655,120 @@ def set_marker_by_target(
     return updated_events, f"Replaced {removed_desc} -> {new_label!r} at {loc_desc}"
 
 
+def set_event_dt(
+    events: list[list[Any]], version: int, target_idx: int, new_dt: float
+) -> tuple[bool, float]:
+    """
+    Set the relative delay (dt) of event #target_idx to new_dt.
+    In v3, events[i][0] is relative dt directly.
+    In v2, events[i][0] is cumulative timestamp, so subsequent events shift by (new_dt - old_dt).
+    """
+    if target_idx < 0 or target_idx >= len(events):
+        return False, 0.0
+    new_dt = max(0.0, round(float(new_dt), 6))
+    if version == 3:
+        old_dt = float(events[target_idx][0])
+        events[target_idx][0] = new_dt
+        return True, old_dt
+
+    prev_abs = float(events[target_idx - 1][0]) if target_idx > 0 else 0.0
+    old_dt = max(0.0, float(events[target_idx][0]) - prev_abs)
+    delta = new_dt - old_dt
+    for idx in range(target_idx, len(events)):
+        events[idx][0] = round(max(0.0, float(events[idx][0]) + delta), 6)
+    return True, old_dt
+
+
+def tighten_paste_delays(
+    events: list[list[Any]],
+    version: int,
+    pre_paste_dt: float = 1.0,
+    unrev_dt: float = 0.15,
+    submit_dt: float = 0.20,
+) -> list[str]:
+    """
+    Shorten cut-and-paste, prompt-entry, and prompt-submit delays without affecting markers or output:
+      1. Shell bracketed-paste [REV] frames (\\x1b[7m): cap dt to pre_paste_dt (default 1.0s = 0.5s @ 2x).
+      2. Shell Enter [UNREV] redraw frames (\\x1b[A...\\x1b[27m): cap dt to unrev_dt (default 0.15s).
+      3. agy startup model header settle before initial prompt: cap dt to pre_paste_dt (default 1.0s).
+      4. TUI pasted prompts (containing input-box badge 'G\\x1b[m\\x1b[2A') or first typed prompt character
+         (immediately followed by the 'G\\x1b[m\\x1b[2A' badge): cap dt to pre_paste_dt (default 1.0s).
+      5. Slash-command execution frame immediately following a '(/clear)' marker: cap dt to pre_paste_dt (default 1.0s).
+      6. Input-box clear/submit events (\\x1b[\\d+D\\x1b[K) immediately following an 'm' marker:
+         cap dt to submit_dt (default 0.20s).
+    """
+    notes: list[str] = []
+    input_clear_re = re.compile(r"^\x1b\[\?2026h\x1b\[\d+D\x1b\[K\x1b\[\?2026l$")
+
+    for idx, ev in enumerate(events):
+        if len(ev) < 3 or ev[1] != "o":
+            continue
+        s = str(ev[2])
+        old_dt = (
+            float(ev[0])
+            if version == 3
+            else (float(ev[0]) - (float(events[idx - 1][0]) if idx > 0 else 0.0))
+        )
+
+        is_rev = "\x1b[7m" in s and not s.startswith("\x1b[1m\x1b[7m%\x1b[27m")
+        is_unrev = "\x1b[27m" in s and "\x1b[A" in s
+        next_is_marker = idx + 1 < len(events) and events[idx + 1][1] == "m"
+        prev_is_marker = idx > 0 and events[idx - 1][1] == "m"
+        prev_marker_label = (
+            str(events[idx - 1][2]).lower()
+            if prev_is_marker and len(events[idx - 1]) >= 3
+            else ""
+        )
+        next_has_g_badge = (
+            idx + 1 < len(events)
+            and len(events[idx + 1]) >= 3
+            and events[idx + 1][1] == "o"
+            and " \x1b[2mG\x1b[m\x1b[2A" in str(events[idx + 1][2])
+        )
+
+        target_dt: float | None = None
+        reason = ""
+        if is_rev and old_dt > pre_paste_dt:
+            target_dt = pre_paste_dt
+            reason = "[REV] shell paste"
+        elif is_unrev and old_dt > unrev_dt:
+            target_dt = unrev_dt
+            reason = "[UNREV] Enter redraw"
+        elif (
+            "Gemini " in s
+            and idx > 0
+            and "Welcome to the"
+            in strip_ansi(
+                str(events[idx - 2][2])
+                if idx >= 2 and len(events[idx - 2]) >= 3
+                else ""
+            )
+            and old_dt > pre_paste_dt
+        ):
+            target_dt = pre_paste_dt
+            reason = "agy banner settle"
+        elif next_is_marker and " \x1b[2mG\x1b[m\x1b[2A" in s and old_dt > pre_paste_dt:
+            target_dt = pre_paste_dt
+            reason = "agy pasted prompt"
+        elif next_has_g_badge and old_dt > pre_paste_dt:
+            target_dt = pre_paste_dt
+            reason = "agy typed prompt start"
+        elif prev_is_marker and "/clear" in prev_marker_label and old_dt > pre_paste_dt:
+            target_dt = pre_paste_dt
+            reason = "agy /clear execution"
+        elif prev_is_marker and input_clear_re.match(s) and old_dt > submit_dt:
+            target_dt = submit_dt
+            reason = "agy prompt submit"
+
+        if target_dt is not None:
+            set_event_dt(events, version, idx, target_dt)
+            clean_preview = " ".join(strip_ansi(s).split())[:55]
+            notes.append(
+                f"#{idx:04d} ({reason}): dt {old_dt:.2f}s -> {target_dt:.2f}s | {clean_preview!r}"
+            )
+    return notes
+
+
 def save_cast(path: str, header: dict[str, Any], events: list[list[Any]]) -> None:
     with open(path, "w", encoding="utf-8") as f:
         f.write(json.dumps(header, ensure_ascii=False) + "\n")
@@ -783,6 +899,18 @@ def main() -> int:
         help="Disable automatic fast-forward past bracketed-paste reverse-video redraws (\\x1b[7m -> \\x1b[27m)",
     )
     parser.add_argument(
+        "--set-dt",
+        nargs=2,
+        action="append",
+        metavar=("EVENT_IDX", "SECONDS"),
+        help="Set the relative delay (dt) of event #EVENT_IDX to SECONDS (repeatable)",
+    )
+    parser.add_argument(
+        "--tighten-pastes",
+        action="store_true",
+        help="Shorten cut-and-paste delays ([REV] -> 1.0s, [UNREV] -> 0.15s) and agy prompt paste/submit pauses",
+    )
+    parser.add_argument(
         "--embed-html",
         metavar="HTML_PATH",
         help="Also update EMBEDDED_CAST_GZ_B64 in the given standalone HTML player file",
@@ -802,6 +930,8 @@ def main() -> int:
         or args.add_pattern
         or args.add_time
         or args.add_event
+        or args.set_dt
+        or args.tighten_pastes
     )
 
     if args.inspect:
@@ -940,6 +1070,24 @@ def main() -> int:
     if args.relabel:
         count = relabel_markers(events, args.relabel)
         print(f"Relabeled {count} marker(s).")
+
+    if args.tighten_pastes:
+        notes = tighten_paste_delays(events, version)
+        if notes:
+            for note in notes:
+                print(f"[tighten-pastes] {note}")
+        else:
+            print("[tighten-pastes] (all paste/submit delays already tightened)")
+
+    if args.set_dt:
+        for idx_str, sec_str in args.set_dt:
+            ev_idx = int(idx_str)
+            new_dt = float(sec_str)
+            ok, old_dt = set_event_dt(events, version, ev_idx, new_dt)
+            if ok:
+                print(f"[set-dt] event #{ev_idx:04d}: dt {old_dt:.3f}s -> {new_dt:.3f}s")
+            else:
+                print(f"[set-dt] WARNING: event #{ev_idx} out of range")
 
     list_markers(header, events, version)
 
