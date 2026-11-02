@@ -129,7 +129,7 @@ Consult [`references/ASCIINEMA-INTEGRATION.md`](references/ASCIINEMA-INTEGRATION
 
 1. **Prepare & Embed `.cast` Recordings**:
    - Use `/asciinema` to sanitize secrets (`sanitize-cast.py`), strip trailing shell exit prompts (`trim-cast.py --in-place`), and place/verify `"m"` chapter stop points (`mark-cast.py --list` / `--set`) before copying `.cast` files into `slides/public/casts/`.
-   - For command-entry stop points in `zsh`, `mark-cast.py` automatically advances past bracketed-paste reverse video (`[REV]`) to the un-reversed redraw (`[UNREV]`) and splits trailing `\x1b[1B\r\x1b[K` cursor-down sequences into a post-marker `"o"` event (`dt=0.02s`) so the cursor stays on the same line at the end of the command.
+   - For shell commands and TUI launchers in `zsh` (e.g. `flutter create ...`, `git init && ...`, `agy`), place command-entry stop points on the typed/pasted command text rather than post-launch banners; `mark-cast.py` automatically advances past bracketed-paste reverse video (`[REV]`) to the un-reversed redraw (`[UNREV]`) and splits trailing `\x1b[1B\r\x1b[K` cursor-down sequences into a post-marker `"o"` event (`dt=0.02s`) so the cursor stays on the same line at the end of the command.
    - Reference recordings with root-relative paths in slide frontmatter:
      ```yaml
      ---

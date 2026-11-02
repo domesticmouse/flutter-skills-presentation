@@ -37,7 +37,7 @@ CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         "2. Initial Git Commit",
         re.compile(r'git init && git add \. && git commit -m "Initial scaffold"', re.DOTALL),
     ),
-    ("3. Launch agy", re.compile(r"Antigravity CLI.*?\? for shortcuts", re.DOTALL)),
+    ("3. Launch agy", re.compile(r"\bagy\b", re.DOTALL)),
     (
         "4. Q1: Clarifying Question",
         re.compile(
@@ -85,7 +85,7 @@ CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         "3. Install Matt Pocock Skills",
         re.compile(r"npx skills@latest add mattpocock/skills", re.DOTALL),
     ),
-    ("4. Launch agy", re.compile(r"Antigravity CLI.*?\? for shortcuts", re.DOTALL)),
+    ("4. Launch agy", re.compile(r"\bagy\b", re.DOTALL)),
     ("5. /wayfinder (Chart)", re.compile(r"/wayfinder\s+I'd like to build", re.DOTALL)),
     ("6. /wayfinder (Resolve)", re.compile(r"/wayfinder\b", re.DOTALL)),
     ("7. /to-spec", re.compile(r"/to-spec\b", re.DOTALL)),
@@ -101,7 +101,7 @@ CANONICAL_COMPREHENSION_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         "1. Install Comprehension Skills",
         re.compile(r"npx skills@latest add domesticmouse/skills", re.DOTALL),
     ),
-    ("2. Launch agy", re.compile(r"Antigravity CLI.*?\? for shortcuts", re.DOTALL)),
+    ("2. Launch agy", re.compile(r"\bagy\b", re.DOTALL)),
     ("3. /teach-code Prompt", re.compile(r"/teach-code\s+I know React", re.DOTALL)),
     ("4. Curriculum & Lesson 0001 Built", re.compile(r"build\.py --check", re.DOTALL)),
 ]
