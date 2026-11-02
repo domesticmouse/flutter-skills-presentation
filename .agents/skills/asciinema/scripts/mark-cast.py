@@ -74,20 +74,24 @@ CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         ),
     ),
     (
-        "9. Build Complete",
+        "9. Build Summary",
+        re.compile(r"I've built your iOS-read", re.DOTALL),
+    ),
+    (
+        "10. Build Complete",
         re.compile(
             r"PartDetailScreen.*?\? for shortcuts|Verified build completed successfully\.",
             re.DOTALL,
         ),
     ),
-    ("10. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
-    ("11. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
+    ("11. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
+    ("12. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
     (
-        "12. Session Cleared",
+        "13. Session Cleared",
         re.compile(r"Antigravity CLI 1\.4\.12.*?\? for shortcuts", re.DOTALL),
     ),
-    ("13. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
-    ("14. Apply Review Fixes", re.compile(r"p\s*Gleasefix", re.DOTALL)),
+    ("14. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
+    ("15. Apply Review Fixes", re.compile(r"p\s*Gleasefix", re.DOTALL)),
 ]
 
 CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [
