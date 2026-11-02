@@ -43,7 +43,7 @@ Run these quick checks before starting the recordings to confirm every required 
 flutter --version
 flutter doctor
 open -a DeviceHub
-xcrun simctl boot "iPhone 18 Pro" 2>/dev/null || true
+xcrun simctl boot 110F4146-D907-4E14-8AE8-453F310E8A84 2>/dev/null || true
 xcrun simctl list devices booted
 ```
 - Confirm **Flutter**, **Xcode** (for iOS development), and **CocoaPods** show `[✓]`, and that an iOS Simulator is booted (in Xcode 27+, `Simulator.app` was replaced by `DeviceHub.app` at `/Applications/Xcode.app/Contents/Applications/DeviceHub.app`) so `Please run the app.` launches without device-selection prompts.
