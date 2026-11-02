@@ -22,34 +22,40 @@ from typing import Any
 
 CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
     ("1. Project Created", re.compile(r"All done!.*parts_tracker_baseline", re.DOTALL)),
-    ("2. Initial Git Commit", re.compile(r"Initial scaffold|root-commit", re.DOTALL)),
+    ("2. Initial Git Commit", re.compile(r"root-commit.*Initial scaffold", re.DOTALL)),
     ("3. Launch agy", re.compile(r"Antigravity CLI.*?\? for shortcuts", re.DOTALL)),
     (
         "4. Q1: Clarifying Question",
         re.compile(
-            r"Where would you like to store.*?enter Select|enter Select", re.DOTALL
+            r"Which features would you like to include.*?enter Submit|Where would you like to store.*?enter Select",
+            re.DOTALL,
         ),
     ),
     (
         "5. Q2: Clarifying Question",
         re.compile(
-            r"Which additional features.*?enter Submit|enter Submit|enter Select",
+            r"How should your parts inventory data be stored.*?enter Select|Which additional features.*?enter Submit",
             re.DOTALL,
         ),
     ),
     (
         "6. Q3: Clarifying Question",
         re.compile(
-            r"What UI style would you prefer.*?enter Select|enter Select", re.DOTALL
+            r"Which visual style do you prefer.*?enter Select|What UI style would you prefer.*?enter Select",
+            re.DOTALL,
         ),
     ),
     (
         "7. Build Complete",
-        re.compile(r"Verified build completed successfully\.|flutter test", re.DOTALL),
+        re.compile(
+            r"PartDetailScreen.*?\? for shortcuts|Verified build completed successfully\.",
+            re.DOTALL,
+        ),
     ),
     ("8. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
     ("9. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
     ("10. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
+    ("11. Apply Review Fixes", re.compile(r"> please fix", re.DOTALL)),
 ]
 
 CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [

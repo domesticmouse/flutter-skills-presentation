@@ -50,7 +50,7 @@ The operator runbook ([`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md)) and work
    ```
 
 3. **Test Drive `01-baseline.cast` in a Browser**:
-   Open [`.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html) to preview the 16:9 Slidev `cast-full` player with 7 embedded stop points, adaptive per-segment speeds (`2x`–`25x`), and `[` / `]` / `p` stage controls.
+   Open [`.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html) to preview the 16:9 Slidev `cast-full` player with 11 embedded stop points, adaptive per-segment speeds (`2x`–`29x`), and `[` / `]` / `p` stage controls.
 
 4. **Check Overall Experiment Status**:
    ```bash
