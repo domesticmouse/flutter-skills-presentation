@@ -33,7 +33,10 @@ CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         "1. Create Project",
         re.compile(r"flutter create --platforms=ios parts_tracker_baseline", re.DOTALL),
     ),
-    ("2. Initial Git Commit", re.compile(r"root-commit.*Initial scaffold", re.DOTALL)),
+    (
+        "2. Initial Git Commit",
+        re.compile(r'git init && git add \. && git commit -m "Initial scaffold"', re.DOTALL),
+    ),
     ("3. Launch agy", re.compile(r"Antigravity CLI.*?\? for shortcuts", re.DOTALL)),
     (
         "4. Q1: Clarifying Question",
@@ -74,7 +77,10 @@ CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         "1. Create Project",
         re.compile(r"flutter create --platforms=ios parts_tracker_skilled", re.DOTALL),
     ),
-    ("2. Initial Git Commit", re.compile(r"root-commit.*Initial scaffold", re.DOTALL)),
+    (
+        "2. Initial Git Commit",
+        re.compile(r'git init && git add \. && git commit -m "Initial scaffold"', re.DOTALL),
+    ),
     (
         "3. Install Matt Pocock Skills",
         re.compile(r"npx skills@latest add mattpocock/skills", re.DOTALL),
@@ -107,6 +113,85 @@ ANSI_ESCAPE_RE = re.compile(
 
 def strip_ansi(text: str) -> str:
     return ANSI_ESCAPE_RE.sub("", text)
+
+
+def describe_ansi_tags(code: str, data: Any) -> str:
+    """
+    Return compact diagnostic tags for stdout ('o') events so --inspect and --search
+    distinguish bracketed-paste reverse video ([REV]), Enter un-reverse redraw ([UNREV]),
+    and preexec OSC title ([OSC]).
+    """
+    if code != "o":
+        return ""
+    s = str(data)
+    tags: list[str] = []
+    if "\x1b[7m" in s and not s.startswith("\x1b[1m\x1b[7m%\x1b[27m"):
+        tags.append("REV")
+    elif "\x1b[27m" in s and "\x1b[A" in s:
+        tags.append("UNREV")
+    if "\x1b]2;" in s:
+        tags.append("OSC")
+    return f"[{','.join(tags)}] " if tags else ""
+
+
+def advance_past_paste_redraw(
+    events: list[list[Any]], match_idx: int, version: int
+) -> int:
+    """
+    When a stdout pattern matches a shell bracketed-paste frame in reverse video (\\x1b[7m)
+    or its immediate Enter un-reverse redraw (\\x1b[27m), advance the insertion index past:
+      1. The Enter un-reverse redraw frame (\\x1b[A...\\x1b[27m...)
+      2. The immediate pre-exec mode teardown frames (\\x1b[?1l\\x1b>, \\x1b[?2004l\\r\\r\\n)
+      3. The immediate pre-exec OSC window title frame (\\x1b]2;...\\x07)
+    so the chapter marker lands after reverse video is removed and before command stdout begins.
+    """
+    if match_idx < 0 or match_idx >= len(events):
+        return match_idx
+    ev = events[match_idx]
+    if len(ev) < 3 or ev[1] != "o":
+        return match_idx
+
+    payload = str(ev[2])
+    is_rev_paste = "\x1b[7m" in payload and not payload.startswith(
+        "\x1b[1m\x1b[7m%\x1b[27m"
+    )
+    is_unrev_redraw = "\x1b[27m" in payload and "\x1b[A" in payload
+    if not (is_rev_paste or is_unrev_redraw):
+        return match_idx
+
+    idx = match_idx
+    # Step 1: If matched on the [REV] paste frame, advance to the [UNREV] redraw frame on Enter
+    if is_rev_paste and idx + 1 < len(events):
+        next_ev = events[idx + 1]
+        if (
+            len(next_ev) >= 3
+            and next_ev[1] == "o"
+            and "\x1b[27m" in str(next_ev[2])
+        ):
+            idx += 1
+
+    # Step 2: Advance across immediate pre-exec control/title frames (dt <= 0.05s) before command stdout
+    while idx + 1 < len(events) and idx + 1 <= match_idx + 6:
+        next_ev = events[idx + 1]
+        if len(next_ev) < 3 or next_ev[1] != "o":
+            break
+        dt = (
+            float(next_ev[0])
+            if version == 3
+            else max(0.0, float(next_ev[0]) - float(events[idx][0]))
+        )
+        if dt > 0.05:
+            break
+        next_s = str(next_ev[2])
+        if any(
+            tok in next_s
+            for tok in ("\x1b[?1l", "\x1b>", "\x1b[?2004l", "\x1b]2;", "\x1b]1;")
+        ):
+            idx += 1
+        else:
+            break
+
+    return idx
 
 
 def load_cast(path: str) -> tuple[dict[str, Any], list[list[Any]], int]:
@@ -227,10 +312,11 @@ def inspect_range(
     for idx in range(start_idx, end_idx + 1):
         _, dt, raw_t, eff_t, code, data = timings[idx]
         clean = " ".join(strip_ansi(str(data)).split())
+        tags = describe_ansi_tags(code, data)
         marker_flag = " <-- MARKER" if code == "m" else ""
         print(
             f"  #{idx:04d} | dt={dt:5.2f}s | raw={raw_t:7.2f}s | 1x={eff_t:7.2f}s | "
-            f"{code} | {clean[:95]!r}{marker_flag}"
+            f"{code} | {tags}{clean[:95]!r}{marker_flag}"
         )
 
 
@@ -256,8 +342,9 @@ def search_events(
             snippet = " ".join(clean.split())
             if not snippet:
                 snippet = " ".join(rolling[-120:].split())
+            tags = describe_ansi_tags(code, data)
             print(
-                f"  event #{idx:04d} | raw={raw_t:6.2f}s | 1x={eff_t:6.2f}s | {snippet[:90]!r}"
+                f"  event #{idx:04d} | raw={raw_t:6.2f}s | 1x={eff_t:6.2f}s | {tags}{snippet[:90]!r}"
             )
             if context > 0:
                 c_start = max(0, idx - context)
@@ -265,9 +352,10 @@ def search_events(
                 for c_idx in range(c_start, c_end + 1):
                     _, c_dt, c_raw, c_eff, c_code, c_data = timings[c_idx]
                     c_clean = " ".join(strip_ansi(str(c_data)).split())
+                    c_tags = describe_ansi_tags(c_code, c_data)
                     prefix = "    >>>" if c_idx == idx else "       "
                     print(
-                        f"{prefix} #{c_idx:04d} dt={c_dt:5.2f}s raw={c_raw:6.2f}s 1x={c_eff:6.2f}s {c_code} -> {c_clean[:80]!r}"
+                        f"{prefix} #{c_idx:04d} dt={c_dt:5.2f}s raw={c_raw:6.2f}s 1x={c_eff:6.2f}s {c_code} -> {c_tags}{c_clean[:80]!r}"
                     )
             matches += 1
             rolling = ""
@@ -297,10 +385,12 @@ def auto_inject_markers(
     version: int,
     marker_specs: list[tuple[str, re.Pattern[str]]],
     insert_after: bool = True,
+    raw_match: bool = False,
 ) -> tuple[list[list[Any]], list[str]]:
     """
     Scan stdout ('o') events for the patterns in marker_specs and insert 'm' markers
-    with dt=0.0 (v3) or same timestamp (v2).
+    with dt=0.0 (v3) or same timestamp (v2). When matching a bracketed-paste reverse-video
+    command, automatically advances past the Enter un-reverse redraw and pre-exec title.
     """
     canonical_labels = {label for label, _ in marker_specs}
     events = [
@@ -309,28 +399,40 @@ def auto_inject_markers(
         if not (len(ev) >= 3 and ev[1] == "m" and ev[2] in canonical_labels)
     ]
 
-    new_events: list[list[Any]] = []
+    placements: dict[int, list[str]] = {}
     target_idx = 0
     injected: list[str] = []
     rolling_window = ""
 
-    for ev in events:
-        if insert_after:
-            new_events.append(ev)
+    for idx, ev in enumerate(events):
         if target_idx < len(marker_specs) and len(ev) >= 3 and ev[1] == "o":
             clean_chunk = strip_ansi(str(ev[2]))
             rolling_window = (rolling_window + clean_chunk)[-1500:]
             for lookahead in range(target_idx, len(marker_specs)):
                 label, pattern = marker_specs[lookahead]
                 if pattern.search(rolling_window):
-                    marker_time = 0.0 if version == 3 else ev[0]
-                    new_events.append([marker_time, "m", label])
+                    place_idx = (
+                        advance_past_paste_redraw(events, idx, version)
+                        if (insert_after and not raw_match)
+                        else idx
+                    )
+                    placements.setdefault(place_idx, []).append(label)
                     injected.append(label)
                     target_idx = lookahead + 1
                     rolling_window = ""
                     break
-        if not insert_after:
-            new_events.append(ev)
+
+    new_events: list[list[Any]] = []
+    for idx, ev in enumerate(events):
+        if not insert_after and idx in placements:
+            for label in placements[idx]:
+                marker_time = 0.0 if version == 3 else ev[0]
+                new_events.append([marker_time, "m", label])
+        new_events.append(ev)
+        if insert_after and idx in placements:
+            for label in placements[idx]:
+                marker_time = 0.0 if version == 3 else ev[0]
+                new_events.append([marker_time, "m", label])
 
     return new_events, injected
 
@@ -342,30 +444,38 @@ def add_pattern_marker(
     label: str,
     occurrence: int = 1,
     insert_after: bool = True,
+    raw_match: bool = False,
 ) -> tuple[list[list[Any]], int | None]:
+    if pattern_str.startswith("@cmd:"):
+        pattern_str = pattern_str[5:]
+        raw_match = False
     pattern = re.compile(pattern_str, re.DOTALL)
-    new_events: list[list[Any]] = []
     rolling_window = ""
     seen = 0
-    inserted_at: int | None = None
+    matched_at: int | None = None
 
     for idx, ev in enumerate(events):
-        if insert_after:
-            new_events.append(ev)
-        if inserted_at is None and len(ev) >= 3 and ev[1] == "o":
+        if len(ev) >= 3 and ev[1] == "o":
             clean_chunk = strip_ansi(str(ev[2]))
             rolling_window = (rolling_window + clean_chunk)[-1500:]
             if pattern.search(rolling_window):
                 seen += 1
                 rolling_window = ""
                 if seen == occurrence:
-                    marker_time = 0.0 if version == 3 else ev[0]
-                    new_events.append([marker_time, "m", label])
-                    inserted_at = idx
-        if not insert_after:
-            new_events.append(ev)
+                    matched_at = (
+                        advance_past_paste_redraw(events, idx, version)
+                        if (insert_after and not raw_match)
+                        else idx
+                    )
+                    break
 
-    return new_events, inserted_at
+    if matched_at is None:
+        return events, None
+
+    updated_events, _ = add_event_marker(
+        events, version, matched_at, label, insert_after=insert_after
+    )
+    return updated_events, matched_at
 
 
 def add_event_marker(
@@ -443,6 +553,7 @@ def set_marker_by_target(
     where_spec: str,
     new_label: str,
     insert_after: bool = True,
+    raw_match: bool = False,
 ) -> tuple[list[list[Any]], str]:
     """
     Replace/move an existing marker identified by 1-based index or label substring,
@@ -450,7 +561,7 @@ def set_marker_by_target(
       - '@event:123' -> event index #123
       - '@time:12.5' -> raw timestamp 12.5s
       - '@1x:12.5'   -> idle-capped 1x timestamp 12.5s
-      - 'regex' or 'regex#2' -> stdout pattern match
+      - '@cmd:regex' or 'regex' or 'regex#2' -> stdout pattern match (auto-advances past reverse-video paste redraw unless --raw-match)
     """
     events_without, removed = remove_marker_by_target(events, target)
     removed_desc = ", ".join(removed) if removed else f"(no existing marker matched {target!r})"
@@ -486,6 +597,7 @@ def set_marker_by_target(
             new_label,
             occurrence=occ,
             insert_after=insert_after,
+            raw_match=raw_match,
         )
         loc_desc = (
             f"event #{idx:04d} (pattern={pat!r}, occ={occ})"
@@ -621,6 +733,11 @@ def main() -> int:
         help="Insert --add-pattern / --add-event / --set markers immediately before the target event instead of after",
     )
     parser.add_argument(
+        "--raw-match",
+        action="store_true",
+        help="Disable automatic fast-forward past bracketed-paste reverse-video redraws (\\x1b[7m -> \\x1b[27m)",
+    )
+    parser.add_argument(
         "--embed-html",
         metavar="HTML_PATH",
         help="Also update EMBEDDED_CAST_GZ_B64 in the given standalone HTML player file",
@@ -681,6 +798,7 @@ def main() -> int:
                 where_spec,
                 new_label,
                 insert_after=not args.before,
+                raw_match=args.raw_match,
             )
             print(f"[set] {msg}")
 
@@ -690,21 +808,36 @@ def main() -> int:
 
     if args.auto_baseline:
         events, notes = auto_inject_markers(
-            header, events, version, CANONICAL_BASELINE_MARKERS, insert_after=True
+            header,
+            events,
+            version,
+            CANONICAL_BASELINE_MARKERS,
+            insert_after=True,
+            raw_match=args.raw_match,
         )
         for note in notes:
             print(f"[auto-baseline] + {note}")
 
     if args.auto_skilled:
         events, notes = auto_inject_markers(
-            header, events, version, CANONICAL_SKILLED_MARKERS, insert_after=True
+            header,
+            events,
+            version,
+            CANONICAL_SKILLED_MARKERS,
+            insert_after=True,
+            raw_match=args.raw_match,
         )
         for note in notes:
             print(f"[auto-skilled] + {note}")
 
     if args.auto_comprehension:
         events, notes = auto_inject_markers(
-            header, events, version, CANONICAL_COMPREHENSION_MARKERS, insert_after=True
+            header,
+            events,
+            version,
+            CANONICAL_COMPREHENSION_MARKERS,
+            insert_after=True,
+            raw_match=args.raw_match,
         )
         for note in notes:
             print(f"[auto-comprehension] + {note}")
@@ -723,6 +856,7 @@ def main() -> int:
                 label,
                 occurrence=occ,
                 insert_after=not args.before,
+                raw_match=args.raw_match,
             )
             if idx is not None:
                 print(

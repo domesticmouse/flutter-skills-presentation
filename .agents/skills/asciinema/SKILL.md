@@ -192,29 +192,36 @@ python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast --list
 Prints every `"m"` event with its 1-based `[N]` index, 0-based event `#idx`, `raw` elapsed time, `1x` idle-capped time, adaptive segment speed (`>= 2x`, `<= 30s` per segment), and cumulative `warped` time.
 
 #### B. Search Output & Inspect Event Boundaries
-Before placing or moving a stop point, locate the exact stdout (`"o"`) event index:
+Before placing or moving a stop point, locate the exact stdout (`"o"`) event index. Both `--search` and `--inspect` annotate stdout events with diagnostic tags so shell paste/redraw phases are visible at a glance:
+- **`[REV]`**: Bracketed-paste echo in reverse video (`\x1b[7m...`).
+- **`[UNREV]`**: `Enter` key redraw that strips reverse video (`\x1b[A...\x1b[27m...`).
+- **`[OSC]`**: Pre-exec OSC window title (`\x1b]2;<cmd>\x07`) emitted immediately before command stdout starts.
+
 ```bash
 # Search stdout for a pattern and show 2 surrounding events before/after each match
 python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast --search "flutter create" --context 2
 
-# Inspect a specific event range (e.g. events #0..#25) with dt, raw, 1x, code, and ANSI-stripped text
+# Inspect a specific event range (e.g. events #0..#25) with dt, raw, 1x, code, tags, and ANSI-stripped text
 python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast --inspect 0:25
 ```
 
 #### C. Placement Rules: Command-Entry Hold vs. Command-Completion Hold vs. Prompt Hold
 Always place `"m"` markers (`[0.0, "m", "<label>"]` in v3, `[abs_time, "m", "<label>"]` in v2) **immediately after** the `"o"` stdout event that finishes drawing the target frame (default behavior of `mark-cast.py`):
-- **Command-Entry Hold (pause after command is typed/pasted, *before* it runs)**: Match the prompt echo/paste frame itself (e.g. `--set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project"`). In `zsh` with bracketed paste (`\x1b[?2004h`), the first `"o"` event containing the command renders the pasted text on the prompt line, followed by a `dt` pause when the user presses `Enter` to execute it. Placing the marker right after that first `"o"` event pauses with the command visible on the prompt before any command output begins.
+- **Command-Entry Hold (pause after command is entered and reverse video is cleared, *before* command output)**: Match the command text (e.g. `--set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project"`). In `zsh` with bracketed paste (`\x1b[?2004h`), pasting and running a command emits `[REV]` (reverse-video paste) → `[UNREV]` (`Enter` redraw removing reverse video) → zero-`dt` mode resets (`\x1b>`, `\x1b[?2004l`) → `[OSC]` (`preexec` title `2;<cmd>`), followed by the command's first stdout event. By default, `mark-cast.py` automatically advances past `[REV]` → `[UNREV]` → `[OSC]` so the marker lands cleanly after reverse video is removed and before command output begins (pass `--raw-match` only if you explicitly want the raw `[REV]` paste frame).
 - **Command-Completion Hold (pause *after* a command finishes running)**: Match the final stdout frame of the command's output (e.g. `"All done!"` or `"root-commit.*Initial scaffold"`).
 - **Interactive Prompt / Question Hold**: Match the bottom status/footer of the TUI prompt frame (e.g. `"Which features.*?enter Submit"` or `"How should your parts.*?enter Select"`), right before the user's thinking/selection pause (`dt`).
 
 #### D. Move/Replace, Add, or Remove Markers
 ```bash
-# Move/replace an existing marker (by 1-based number or label substring) to a pattern, @event:IDX, @time:SEC, or @1x:SEC
+# Move/replace an existing marker (by 1-based number or label substring) to a command/pattern, @event:IDX, @time:SEC, or @1x:SEC
+# (Automatically advances past [REV] bracketed-paste highlight to the clean [UNREV]/[OSC] pre-output boundary)
 python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
-  --set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project" --in-place
+  --set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project" \
+  --set 2 'git init && git add . && git commit -m "Initial scaffold"' "2. Initial Git Commit" \
+  --in-place
 
 python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
-  --set "Create Project" "@event:7" "1. Create Project" --in-place
+  --set "Create Project" "@event:11" "1. Create Project" --in-place
 
 # Add a new marker right after a stdout pattern (use pattern#2 for 2nd occurrence)
 python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
@@ -226,10 +233,11 @@ python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast --remove 1 --
 # Update markers AND sync gzip+base64 EMBEDDED_CAST_GZ_B64 in a standalone HTML player in one step
 python3 .agents/skills/asciinema/scripts/mark-cast.py session.cast \
   --set 1 "flutter create --platforms=ios parts_tracker_baseline" "1. Create Project" \
+  --set 2 'git init && git add . && git commit -m "Initial scaffold"' "2. Initial Git Commit" \
   --in-place --embed-html player.html
 ```
 
-- **Checkable Completion Criterion**: Run `python3 .agents/skills/asciinema/scripts/mark-cast.py <file> --list` (and `--inspect <idx>` around modified markers) to confirm every marker sits immediately after the target `"o"` frame and before the user's `dt` pause.
+- **Checkable Completion Criterion**: Run `python3 .agents/skills/asciinema/scripts/mark-cast.py <file> --list` and `--inspect <idx>` around modified markers to confirm every command-entry marker sits after `[UNREV]`/`[OSC]` (reverse video cleared) and immediately before the first command output frame.
 
 ---
 
