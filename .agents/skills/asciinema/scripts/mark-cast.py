@@ -179,7 +179,20 @@ def advance_past_paste_redraw(
     )
     is_unrev_redraw = "\x1b[27m" in payload and "\x1b[A" in payload
     if not (is_rev_paste or is_unrev_redraw):
-        return match_idx
+        idx = match_idx
+        while idx + 1 < len(events):
+            next_ev = events[idx + 1]
+            if len(next_ev) < 3 or next_ev[1] != "o":
+                break
+            dt = (
+                float(next_ev[0])
+                if version == 3
+                else max(0.0, float(next_ev[0]) - float(events[idx][0]))
+            )
+            if dt > 0.0:
+                break
+            idx += 1
+        return idx
 
     idx = match_idx
     # Step 1: If matched on the [REV] paste frame, advance to the [UNREV] redraw frame on Enter

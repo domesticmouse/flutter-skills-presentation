@@ -309,7 +309,8 @@ function prepareCastForPlayer(
       }
     })
 
-    const endTime = warpedAbs
+    const endTime = Number(warpedAbs.toFixed(6))
+    warpedAbs = endTime
     const computedSeg: CastSegmentInfo = {
       index: segIdx,
       fromLabel: seg.fromLabel,
@@ -324,13 +325,13 @@ function prepareCastForPlayer(
     computedSegments.push(computedSeg)
 
     if (seg.isMarkerEnd && seg.markerLabel) {
-      const markerTime = Number(warpedAbs.toFixed(6))
+      const markerTime = endTime
       bodyLines.push(JSON.stringify([markerTime, 'm', seg.markerLabel]))
       foundChapters.push({
         index: foundChapters.length,
         rawTime: seg.rawEndTime,
         unwarpedPlayTime: unwarpedCappedAbs,
-        playTime: warpedAbs,
+        playTime: markerTime,
         label: seg.markerLabel,
         inSpeed: segSpeed,
         inDuration: computedSeg.warpedDuration,

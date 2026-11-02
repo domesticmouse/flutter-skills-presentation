@@ -68,7 +68,7 @@ Place every `"m"` marker **immediately after** the `"o"` stdout event that compl
 - **B. Typed Prompt Inside `agy` (`I'd like to build...`, `Please run the app.`, `Please review the codebase`)**:
   Match the prompt text typed into the `agy` input box (`#idx` where the prompt text appears before the ~0.8s–1.1s `dt` pause that clears the input box `\x1b[...D\x1b[K` and starts `⣷ Generating...`). If the prompt text also appears later in scrollback redraws, use `occurrence=1` (the default of `--add-pattern`) or target the exact event via `--add-event <idx>` / `--set <target> "@event:<idx>" "<label>"`.
 - **C. Clarifying Question / Command Completion (`enter Submit`, `enter Select`, `Build Complete`)**:
-  Match the final stdout event of the TUI prompt or command completion frame right before the user's thinking pause (`dt`).
+  Match the final stdout event of the TUI prompt or command completion frame right before the user's thinking pause (`dt`). When the TUI writes a synchronized frame (`\x1b[?2026h`…`\x1b[?2026l`) across multiple `dt = 0.0` PTY chunks, `mark-cast.py` automatically advances past trailing `dt = 0.0` `"o"` chunks so the marker sits after the complete frame flush.
 
 #### Step 3: Update the `.cast` File, Relabel Sequentially, and Sync the HTML Player
 Keep chapter labels numbered sequentially (`1. ...`, `2. ...`, ..., `N. ...`) and sync `EMBEDDED_CAST_GZ_B64` into the HTML file:
@@ -87,13 +87,15 @@ python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseli
     "3. Launch agy" \
     "4. Initial Prompt" \
     "5. Q1: Clarifying Question" \
-    "6. Q2: Clarifying Question" \
-    "7. Q3: Clarifying Question" \
-    "8. Build Complete" \
-    "9. Run App" \
-    "10. Clear Session (/clear)" \
-    "11. Codebase Review" \
-    "12. Apply Review Fixes" \
+    "6. Q1: Options Selected" \
+    "7. Q2: Clarifying Question" \
+    "8. Q3: Clarifying Question" \
+    "9. Build Complete" \
+    "10. Run App" \
+    "11. Clear Session (/clear)" \
+    "12. Session Cleared" \
+    "13. Codebase Review" \
+    "14. Apply Review Fixes" \
   --in-place \
   --embed-html .scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html
 ```
@@ -109,13 +111,14 @@ Also update `CANONICAL_*_MARKERS` in `.agents/skills/asciinema/scripts/mark-cast
 1. Read the HTML file while skipping the `EMBEDDED_CAST_GZ_B64` line (~line 454):
    - Lines `1..453`: CSS variables, `.slidev-frame` (16:9 container), `.slide-header`, `.chapter-pills`, `#player-container`, `.speed-hud-pill`, and `.slide-footer`.
    - Lines `455..end`:
-     - `prepareCastForPlayer(castText, idleTimeLimitOverride, minSpeed, maxSegmentSec)`: Two-pass compiler that splits events at `"m"` markers, calculates `segSpeed = max(minSpeed, ceil(segCappedDur / maxSegmentSec))`, and emits warped `asciicast-v2` timestamps.
+     - `prepareCastForPlayer(castText, idleTimeLimitOverride, minSpeed, maxSegmentSec)`: Two-pass compiler that splits events at `"m"` markers, calculates `segSpeed = max(minSpeed, ceil(segCappedDur / maxSegmentSec))`, and emits warped `asciicast-v2` timestamps. Always snap `endTime = Number(warpedAbs.toFixed(6))`, `warpedAbs = endTime`, and `ch.playTime = markerTime` so `player.seek(ch.playTime)` (via `[` / `]` or chapter pills) never falls short of 6-decimal rounded `"o"` event timestamps when `.toFixed(6)` rounds up.
      - `renderChapterPills(hitIdx)`: Renders `↺ 0. Start`, numbered chapter pills with speed badges, and trailing `→ End` pill.
-     - `initPlayer()`: Mounts `AsciinemaPlayer.create({ data: v2Text }, container, { speed: 1, idleTimeLimit: 999999, ... })` and wires `play`, `pause`, `marker`, and `ended` events.
+     - `jumpToStart()`, `jumpToChapter(idx)`, `stepPrevChapter()`, `stepNextChapter()`, and `syncLiveSpeedFromPlayer()`: Synchronize all five stop-point indicators (`#status-badge`, `#chapter-pills`, `#live-speed-badge`, `#speed-hud-pill`, and `#marker-detail`) across keyboard jumps (`[` / `]`), pill clicks, and paused timeline-scrubber seeks (`lastPolledTime`), and allow `stepPrevChapter()` to return from Stop Point 1 (`idx = 0`) to `0. Start` (`idx = -1`).
+     - `initPlayer()`: Mounts `AsciinemaPlayer.create({ data: v2Text }, container, { speed: 1, idleTimeLimit: 999999, ... })`, wires `play`, `pause`, `marker`, and `ended` events, and registers the `window` `keydown` listener in the **capture phase** (`true`) so `[` / `]` / `p` run before `asciinema-player`'s `.ap-wrapper` handler can swallow them when the terminal has focus.
 2. Apply edits with `edit_file` targeting lines outside line 454.
-3. If the change modifies shared UI/JS behavior, check whether other `*-cast-player.html` files exist in `.scratch/flutter-skills-presentation/prototypes/` and apply the same UI/JS update to keep all three players consistent.
+3. If the change modifies shared UI/JS behavior, apply the same update to `.agents/skills/slidev-deck/resources/components/AsciinemaPlayer.vue` and any other `*-cast-player.html` files in `.scratch/flutter-skills-presentation/prototypes/` to keep all players consistent.
 
-- **Completion Criterion**: Read back the edited line range to verify clean syntax and confirm `const EMBEDDED_CAST_GZ_B64 = "H4sI...` remains intact.
+- **Completion Criterion**: Read back the edited line range to verify clean syntax, run `node --check` on the extracted `<script>` block, and confirm `const EMBEDDED_CAST_GZ_B64 = "H4sI...` remains intact.
 
 ---
 
