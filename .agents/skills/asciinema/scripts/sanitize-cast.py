@@ -111,7 +111,7 @@ def sanitize(input_path, output_path, redact_map, strip_stdin=True, scrub_env=Tr
                 outfile.write(line)
                 continue
 
-            event_time, event_type, event_data = event[0], event[1], event[2]
+            _event_time, event_type, event_data = event[0], event[1], event[2]
 
             # Strip stdin keystroke events
             if strip_stdin and event_type == "i":

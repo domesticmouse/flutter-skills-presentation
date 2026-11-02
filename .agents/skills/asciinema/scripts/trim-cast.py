@@ -231,8 +231,10 @@ def print_info(title, stats):
 def write_cast(file_path, header_line, events):
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(header_line if header_line.endswith("\n") else header_line + "\n")
-        for ev in events:
-            f.write(ev.raw_line if ev.raw_line.endswith("\n") else ev.raw_line + "\n")
+        f.writelines(
+            ev.raw_line if ev.raw_line.endswith("\n") else ev.raw_line + "\n"
+            for ev in events
+        )
 
 
 def convert_events_to_v2(header, events):

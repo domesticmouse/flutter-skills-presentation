@@ -38,19 +38,20 @@ The three Flutter apps are created in `~/Demos/flutter-parts-experiment` (`$EXP_
 
 Run these quick checks before starting the recordings to confirm every required CLI tool, SDK, and configuration is ready:
 
-### 0.1 Verify Flutter & iOS Toolchain (`flutter doctor`)
+### 0.1 Verify Flutter, iOS Toolchain (`flutter doctor`) & Boot iOS Simulator
 ```bash
 flutter --version
 flutter doctor
+open -a Simulator
 ```
-- Confirm **Flutter**, **Xcode** (for iOS development), and **CocoaPods** show `[✓]`.
+- Confirm **Flutter**, **Xcode** (for iOS development), and **CocoaPods** show `[✓]`, and that an iOS Simulator is booted so `Please run the app.` launches without device-selection prompts.
 - Optional quick smoke test that `flutter create --platforms=ios` succeeds cleanly without first-run prompts:
   ```bash
   flutter create --platforms=ios /tmp/flutter_preflight_test && rm -rf /tmp/flutter_preflight_test
   ```
 
 ### 0.2 Verify `asciinema` Version & `--window-size` Flag (`>= 3.0`)
-The runbook uses `asciinema 3.x` flags (`--window-size 120x32`) and live `Ctrl+x` markers (`"m"` events). Verify the installed version and run a 1-second non-interactive smoke test:
+The runbook uses `asciinema 3.x` flags (`--window-size 120x32`). Chapter stop-point markers (`"m"` events) are injected automatically post-recording by `mark-cast.py`. Verify the installed version and run a 1-second non-interactive smoke test:
 ```bash
 asciinema --version
 asciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite -c "echo 'asciinema pre-flight OK'" /tmp/preflight.cast && rm -f /tmp/preflight.cast
@@ -120,42 +121,54 @@ Inside the recorded shell:
    ```bash
    cd parts_tracker_baseline
    ```
-3. **Start Antigravity in the Flutter project**:
+3. **Put the project under version control and commit the initial scaffold**:
+   ```bash
+   git init && git add . && git commit -m "Initial scaffold"
+   ```
+4. **Start Antigravity in the Flutter project**:
    ```bash
    agy
    ```
-4. **Paste the initial prompt**:
+5. **Paste the initial prompt**:
    ```text
    I'd like to build a Flutter app for iOS that enables me to track my electronics parts
    ```
-5. Answer `agy`'s one-at-a-time clarifying questions using the **Canonical Q&A Answers** table above.
-6. Let `agy` build the Flutter iOS app and verify `flutter analyze` / `flutter test`.
-7. **Ask `agy` to run the app**
+6. Answer `agy`'s one-at-a-time clarifying questions using the **Canonical Q&A Answers** table above.
+7. Let `agy` build the Flutter iOS app and verify `flutter analyze` / `flutter test`.
+8. **Ask `agy` to run the app**:
    ```text
    Please run the app.
    ```
-8. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
+9. **Start a new `agy` session**:
+   ```text
+   /clear
+   ```
+10. **Review the codebase**:
+    ```text
+    Please review the codebase
+    ```
+11. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
 
 ### 2.3 Process, Inspect & Decide: Good Capture or Redo Run 1?
-Immediately after exiting the recording shell, run `process-run` to sanitize/trim `01-baseline.cast` and export the Antigravity session logs for `parts_tracker_baseline`:
+Immediately after exiting the recording shell, run `process-run` to sanitize/trim `01-baseline.cast`, auto-inject chapter stop-point markers via `mark-cast.py`, and export the Antigravity session logs for `parts_tracker_baseline`:
 
 ```bash
 "$REPO_ROOT/.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh" process-run 01-baseline.cast parts_tracker_baseline
 ```
 
 **Verify the capture:**
-1. **Check the Asciinema cast**:
-   - Confirm `recordings/final/01-baseline.cast` has non-zero stdout events and expected playback duration.
+1. **Check the Asciinema cast & auto-injected stop points**:
+   - Confirm `recordings/final/01-baseline.cast` has non-zero stdout events, chapter markers, and expected playback duration.
    - Quick visual replay in marker-pause mode at 2x speed (`Space` to resume after each stop point, `]` to jump to next marker):
      ```bash
      asciinema play -m -s 2.0 -i 1.0 "$REPO_ROOT/recordings/final/01-baseline.cast"
      ```
 2. **Check the exported Agy Markdown logs**:
-   - Inspect the session summary and exported Markdown trace:
+   - Inspect the multi-session summary (Session 1: build & run; Session 2: codebase review) and exported Markdown traces:
      ```bash
      cat "$REPO_ROOT/artifacts/traces/parts_tracker_baseline/README.md"
      ```
-   - Confirm `agy` asked its clarifying questions one at a time (per your Global Rule), built the app, and did **not** produce architecture artifacts (`GLOSSARY.md` or `docs/adr/`).
+   - Confirm `agy` asked its clarifying questions one at a time (per your Global Rule), built and ran the app, reviewed the codebase after `/clear`, and did **not** produce architecture artifacts (`GLOSSARY.md` or `docs/adr/`).
 3. **Check the Flutter project**:
    ```bash
    cd "$EXP_DIR/parts_tracker_baseline" && flutter analyze && flutter test
@@ -170,8 +183,6 @@ Immediately after exiting the recording shell, run `process-run` to sanitize/tri
 ---
 
 ## Step 3: Record Run 2 — Skilled Run (`02-skilled.cast`)
-
-> **Adding Asciinema Stop Points**: Press **`Ctrl+x`** at each stop-point instruction below to insert an embedded `"m"` marker into `02-skilled.cast`.
 
 ### 3.1 Start Recording in `$EXP_DIR`
 ```bash
@@ -189,49 +200,61 @@ asciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite "$REPO_ROOT
    ```bash
    cd parts_tracker_skilled
    ```
-3. **Add asciinema stop point**: Press **`Ctrl+x`**.
+3. **Put the project under version control and commit the initial scaffold**:
+   ```bash
+   git init && git add . && git commit -m "Initial scaffold"
+   ```
 4. **Install all of Matt Pocock's skills**:
    ```bash
    npx skills@latest add mattpocock/skills
    ```
-5. **Add asciinema stop point**: Press **`Ctrl+x`**.
-6. **Start Antigravity in the Flutter project**:
+5. **Start Antigravity in the Flutter project**:
    ```bash
    agy
    ```
-7. **Add asciinema stop point**: Press **`Ctrl+x`**.
-8. **Prompt Antigravity with `/wayfinder`**:
+6. **Prompt Antigravity with `/wayfinder`**:
    ```text
    /wayfinder I'd like to build a Flutter app for iOS that enables me to track my electronics parts
    ```
-9. **Answer questions** using the **Canonical Q&A Answers** table above until the map and initial decision tickets are created.
-10. **Issue `/clear` in `agy`** to start a new conversation:
+7. **Answer questions** using the **Canonical Q&A Answers** table above until the map and initial decision tickets are created.
+8. **Issue `/clear` in `agy`** to start a new conversation:
+   ```text
+   /clear
+   ```
+9. **Issue `/wayfinder`** to start the next round of questions on the next open decision ticket:
+   ```text
+   /wayfinder
+   ```
+10. **Answer questions** to resolve the decision ticket.
+11. **Issue `/clear`** to start a new conversation:
     ```text
     /clear
     ```
-11. **Issue `/wayfinder`** to start the next round of questions on the next open decision ticket:
+12. **Repeat steps 9 through 11** (`/wayfinder` → answer questions → `/clear`) until all `/wayfinder` decision tickets are complete.
+13. **Complete the build of the app** (e.g., `/to-spec` → `/to-tickets` → `/implement`, with `/clear` between stages as appropriate) until the Flutter app is built and verified.
+14. **Ask `agy` to run the app**:
     ```text
-    /wayfinder
+    Please run the app.
     ```
-12. **Answer questions** to resolve the decision ticket.
-13. **Issue `/clear`** to start a new conversation:
+15. **Start a new `agy` session**:
     ```text
     /clear
     ```
-14. **Add asciinema stop point**: Press **`Ctrl+x`**.
-15. **Repeat steps 11 through 14** (`/wayfinder` → answer questions → `/clear` → **`Ctrl+x`**) until all `/wayfinder` decision tickets are complete.
-16. **Complete the build of the app** (e.g., `/to-spec` → `/to-tickets` → `/implement`, with `/clear` and **`Ctrl+x`** between stages as appropriate) until the Flutter app is built and verified.
+16. **Review the codebase**:
+    ```text
+    Please review the codebase
+    ```
 17. Exit `agy` and press `Ctrl+D` (or `exit`) to save `02-skilled.cast`.
 
 ### 3.3 Process, Inspect & Decide: Good Capture or Redo Run 2?
-Immediately after exiting the recording shell, run `process-run` to sanitize/trim `02-skilled.cast`, list your `Ctrl+x` chapter markers, and export all `/clear`-separated Antigravity session logs for `parts_tracker_skilled`:
+Immediately after exiting the recording shell, run `process-run` to sanitize/trim `02-skilled.cast`, auto-inject chapter markers via `mark-cast.py`, and export all `/clear`-separated Antigravity session logs for `parts_tracker_skilled`:
 
 ```bash
 "$REPO_ROOT/.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh" process-run 02-skilled.cast parts_tracker_skilled
 ```
 
 **Verify the capture:**
-1. **Check the Asciinema cast & `Ctrl+x` stop points**:
+1. **Check the Asciinema cast & auto-injected stop points**:
    - Confirm the output lists your `"m"` markers at the expected timestamps.
    - Replay in marker-pause mode (`-m`, press `Space` or `]` to jump between markers):
      ```bash
@@ -279,13 +302,11 @@ asciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite "$REPO_ROOT
    ```bash
    npx skills@latest add domesticmouse/skills
    ```
-2. **Add asciinema stop point**: Press **`Ctrl+x`**.
-3. **Launch `agy`**:
+2. **Launch `agy`**:
    ```bash
    agy
    ```
-4. **Add asciinema stop point**: Press **`Ctrl+x`**.
-5. **Paste the `/teach-code` prompt**:
+3. **Paste the `/teach-code` prompt**:
    ```text
    /teach-code I know React for mobile development, and I just had AI generate this Flutter iOS electronics parts tracker app for me. Help me understand how this codebase works and teach me the Flutter and Dart concepts behind it.
    ```
@@ -299,14 +320,14 @@ Use these responses when `/teach-code` interviews you:
 Exit `agy` and press `Ctrl+D` (or `exit`) to save `03-comprehension.cast`.
 
 ### 4.4 Process, Inspect & Decide: Good Capture or Redo Run 3?
-Immediately after exiting the recording shell, run `process-run` to sanitize/trim `03-comprehension.cast`, verify `Ctrl+x` markers, and export the Antigravity session logs for `parts_tracker_comprehension`:
+Immediately after exiting the recording shell, run `process-run` to sanitize/trim `03-comprehension.cast`, auto-inject chapter markers via `mark-cast.py`, and export the Antigravity session logs for `parts_tracker_comprehension`:
 
 ```bash
 "$REPO_ROOT/.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh" process-run 03-comprehension.cast parts_tracker_comprehension
 ```
 
 **Verify the capture:**
-1. **Check the Asciinema cast & `Ctrl+x` stop points**:
+1. **Check the Asciinema cast & auto-injected stop points**:
    ```bash
    asciinema play -m -s 2.0 -i 1.0 "$REPO_ROOT/recordings/final/03-comprehension.cast"
    ```
@@ -340,4 +361,34 @@ cp -R "$EXP_DIR/parts_tracker_skilled" "$REPO_ROOT/experiments/"
 cp -R "$EXP_DIR/parts_tracker_comprehension" "$REPO_ROOT/experiments/"
 
 "$REPO_ROOT/.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh" status
+```
+
+---
+
+## Step 6: Adding or Adjusting Stop Points Post-Recording (`mark-cast.py`)
+
+`process-run` automatically injects canonical chapter markers for each run (`--auto-baseline`, `--auto-skilled`, `--auto-comprehension`). You can also inspect, search, or add custom stop points to any `.cast` file at any time using `mark-cast.py`:
+
+```bash
+MARK_SCRIPT="$REPO_ROOT/.scratch/flutter-skills-presentation/prototypes/mark-cast.py"
+
+# 1. List existing stop points and timestamps (raw, 1x, and time-warped)
+python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" --list
+
+# 2. Search terminal output for a phrase or regex to find its event index & timestamp
+python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" --search "Please review"
+
+# 3. Add a stop point right after a terminal output pattern (use pattern#2 for 2nd occurrence)
+python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
+  --add-pattern "Please review the codebase" "Codebase Review" --in-place
+
+# 4. Add a stop point at an exact 1x playback timestamp or event number
+python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
+  --add-time 45.0 "Custom Stop" --effective-time --in-place
+python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
+  --add-event 430 "After Prompt" --in-place
+
+# 5. Clear all markers and re-apply canonical markers cleanly
+python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
+  --clear --auto-baseline --in-place
 ```

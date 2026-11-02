@@ -50,7 +50,7 @@ def decode_png(file_path):
         pos += length + 4  # skip data + 4-byte CRC
 
         if chunk_type == b"IHDR":
-            width, height, bit_depth, color_type, comp, filter_method, interlace = struct.unpack(
+            width, height, bit_depth, color_type, _comp, _filter_method, interlace = struct.unpack(
                 ">IIBBBBB", chunk_data
             )
             if bit_depth != 8:
@@ -174,14 +174,10 @@ def find_bounding_box(width, height, channels, rows, alpha_thresh=1, color_match
             a = row[offset + 3] if channels == 4 else 255
 
             if not is_background(r, g, b, a):
-                if x < min_x:
-                    min_x = x
-                if x > max_x:
-                    max_x = x
-                if y < min_y:
-                    min_y = y
-                if y > max_y:
-                    max_y = y
+                min_x = min(min_x, x)
+                max_x = max(max_x, x)
+                min_y = min(min_y, y)
+                max_y = max(max_y, y)
 
     if min_x > max_x or min_y > max_y:
         return None  # entire image is blank
@@ -407,7 +403,7 @@ def main():
             if len(parts) != 4:
                 raise ValueError()
             crop_box = tuple(parts)
-        except Exception:
+        except ValueError:
             sys.stderr.write("Error: --box must be 4 comma-separated integers: left,top,right,bottom\n")
             sys.exit(1)
 
@@ -418,7 +414,7 @@ def main():
             if len(parts) != 3:
                 raise ValueError()
             trim_color = tuple(parts)
-        except Exception:
+        except ValueError:
             sys.stderr.write("Error: --color must be 3 comma-separated integers: R,G,B (e.g. 255,255,255)\n")
             sys.exit(1)
 
@@ -451,7 +447,7 @@ def main():
 
         print(f"Success: {args.input} ({orig_w}x{orig_h}) -> {output_path} ({new_w}x{new_h})")
         print(f"Crop coordinates (inclusive): left={box[0]}, top={box[1]}, right={box[2]}, bottom={box[3]}")
-    except Exception as e:
+    except (OSError, ValueError, struct.error, zlib.error) as e:
         sys.stderr.write(f"Error during cropping: {e}\n")
         sys.exit(1)
 
