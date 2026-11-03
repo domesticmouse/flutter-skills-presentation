@@ -68,7 +68,7 @@ fit: both
 
 <!-- S10 -->
 <!--
-Here is the complete 33-minute Baseline Run terminal recording compressed into two and a half minutes across 15 adaptive-speed segments. We can use the bracket keys or click the chapter pills at the top to step through creating the Flutter project, launching agy, answering the three clarifying questions, watching the 29x time-warped build, running the app on the iOS Simulator, and then issuing /clear to run a fresh codebase review.
+Here is the complete 33-minute Baseline Run terminal recording compressed into two and a half minutes across 15 adaptive-speed segments. We can use the bracket keys to step between chapter stop points—creating the Flutter project, launching agy, answering the three clarifying questions, watching the 29x time-warped build, running the app on the iOS Simulator, and then issuing /clear to run a fresh codebase review.
 -->
 
 ---
