@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Lesson 0005 — Engineering Unit Search Engine &amp; Derived Filter Providers</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <script src="../assets/course.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"><nav class="course-nav" aria-label="Course navigation"><div class="nav-breadcrumbs"><a href="../index.html">Index</a><span class="nav-sep" aria-hidden="true">›</span><span class="nav-current" aria-current="page">Lesson 0005</span></div><div class="nav-controls"><span class="nav-pager-group" role="group" aria-label="Adjacent lessons"><a class="nav-pager-link" href="../lessons/0004-reactive-catalog-state-with-riverpod.html" title="Lesson 0004: Reactive Catalog State with Riverpod AsyncNotifier">← Prev</a><span class="nav-sep" aria-hidden="true">·</span><span class="nav-pager-disabled" aria-disabled="true">Next →</span></span><span class="nav-divider" aria-hidden="true">|</span><a class="nav-ref-link" href="../reference/glossary.html">Glossary</a><a class="nav-ref-link" href="../reference/react-to-flutter-cheatsheet.html">React → Flutter</a><a class="nav-ref-link" href="../reference/verification-and-testing.html">Verification &amp; Testing</a><span class="mission-badge">Flutter • Parts Tracker</span></div></nav></header>
+  <main id="main-content" class="page-main">
+    <article class="tufte-article">
+      <header class="article-header">
+        <div class="article-badge">Lesson 0005 • Unit Search &amp; Derived Providers</div>
+        <h1>Engineering Unit Search Engine &amp; Derived Filter Providers</h1>
+        <p class="article-subtitle">Build PartSearchEngine (0.1uF == 100nF, 4k7 == 4.7kΩ, 3-tier ranking, natural slot sorting) and compose derived Riverpod selectors with Dart 3 @freezed sealed classes and pattern matching.</p>
+      </header>
+      <h2 id="why-unit-search">Why Electronics Search Needs More Than <code>.includes()</code></h2>
+<p>When you're at a soldering workbench looking for a decoupling capacitor or pull-up resistor, your schematic might say <strong><code>0.1uF</code></strong> or <strong><code>4k7</code></strong>, while your catalog entry from LCSC is named <strong><code>100nF 50V X7R 0603 Capacitor</code></strong> (<code>C14663</code>) or <strong><code>4.7kΩ ±1% 0603 Resistor</code></strong> (<code>C23162</code>), or uses Greek Unicode characters like <strong><code>10µF</code></strong> (<code>U+00B5</code>) or <strong><code>10μF</code></strong> (<code>U+03BC</code>).</p>
+<p>A naive <code>part.name.toLowerCase().includes(query)</code> check in JavaScript fails on all of these! Conversely, an overly aggressive parser that expands bare 3-digit EIA codes like <code>&quot;104&quot;</code> into <code>100nF</code> and <code>100kΩ</code> will produce noisy false positives whenever a user searches for an MPN substring or drawer number.</p>
+<p>In this lesson, we build two tightly focused modules in <code>./tutorial/apps/0005-engineering-unit-search-and-filter-providers/</code>:</p>
+<ol>
+<li><strong><code>PartSearchEngine</code> (<code>lib/search/part_search_engine.dart</code>)</strong>: Pure Dart unit normalization (<code>EngineeringDimension</code>, <code>EngineeringValue</code>), EE-infix parsing (<code>4k7</code>, <code>3v3</code>, <code>2n2</code>), Unicode folding (<code>µ</code>/<code>μ</code> → <code>u</code>, <code>Ω</code>/<code>ohm</code> → <code>r</code>), 3-tier relevance ranking, and natural alphanumeric slot sorting (<code>Page 2</code> before <code>Page 10</code>).</li>
+<li><strong><code>workbench_filter_provider.dart</code> (<code>lib/search/workbench_filter_provider.dart</code>)</strong>: A Dart 3 <code>@freezed sealed class WorkbenchFacet</code> (our discriminated union for filter chips) and the derived <code>@riverpod FilteredWorkbenchView filteredWorkbenchView(Ref ref)</code> provider (Riverpod's dependency-tracked equivalent of <code>useMemo</code> / Reselect).</li>
+</ol>
+<aside class="callout callout"><p><strong>Primary Sources for Lesson 0005</strong>: Refer to the <a href="../reference/glossary.html">Glossary</a>, the <a href="../reference/react-to-flutter-cheatsheet.html">React → Flutter Cheat Sheet</a>, and the <a href="https://dart.dev/language/patterns">Dart 3 Patterns &amp; Switch Expressions documentation</a>.</p>
+</aside>
+<hr />
+<h2 id="search-engine">1. Building <code>PartSearchEngine</code> (<code>lib/search/part_search_engine.dart</code>)</h2>
+<figure class="mermaid-figure"><pre class="mermaid">flowchart TD
+  Query[&quot;Search Query: e.g. &#x27;0.1uF 50V&#x27; or &#x27;4700R&#x27;&quot;] --&gt; Split[&quot;Split into whitespace tokens&lt;br/&gt;(All tokens must match — AND semantics)&quot;]
+  Split --&gt; T1[&quot;Tier 1: Exact prefix match on&lt;br/&gt;lcscCode (with or without &#x27;C&#x27;) or mpn&quot;]
+  T1 --&gt;|No match| T2[&quot;Tier 2: Folded substring OR EngineeringValue&lt;br/&gt;equivalence in Part.name or Specs&quot;]
+  T2 --&gt;|No match| T3[&quot;Tier 3: Folded substring in containerName,&lt;br/&gt;slot, package, category, manufacturer, or notes&quot;]
+  T3 --&gt;|No match| Reject[&quot;Token unmatched → Part excluded&quot;]</pre><figcaption class="mermaid-caption">Figure 5.1: Multi-token AND evaluation and 3-tier ranking in PartSearchEngine.</figcaption></figure>
+<h3>Block 1: <code>EngineeringDimension</code> &amp; <code>EngineeringValue</code></h3>
+<div class="code-figure"><div class="code-caption">EngineeringDimension enum and tolerance-aware EngineeringValue in lib/search/part_search_engine.dart</div><pre><code class="language-dart">enum EngineeringDimension {
+  resistance,
+  capacitance,
+  inductance,
+  voltage,
+  current,
+  power,
+  frequency,
+  dimensionlessSi,
+}
+
+class EngineeringValue {
+  const EngineeringValue(this.dimension, this.baseValue);
+
+  final EngineeringDimension dimension;
+  final double baseValue;
+
+  bool matches(EngineeringValue other) {
+    final dimCompatible = _dimensionsCompatible(dimension, other.dimension);
+    if (!dimCompatible) return false;
+
+    final maxAbs = math.max(baseValue.abs(), other.baseValue.abs());
+    if (maxAbs == 0) return baseValue == other.baseValue;
+    return (baseValue - other.baseValue).abs() &lt;= 1e-6 * maxAbs;
+  }</code></pre></div>
+<ul>
+<li><strong>Why <code>1e-6 * maxAbs</code> relative tolerance?</strong> In IEEE-754 floating-point arithmetic, <code>0.1 * 1e-6</code> (<code>0.1uF</code>) and <code>100 * 1e-9</code> (<code>100nF</code>) can differ by <code>1e-23</code> due to binary representation. Comparing within <code>1e-6</code> relative tolerance matches <code>0.1uF</code>, <code>100nF</code>, and <code>100000pF</code> reliably (<code>baseValue == 1.0e-7</code> Farads).</li>
+<li><strong>Why <code>dimensionlessSi</code>?</strong> When an engineer types a prefix-only shorthand like <code>&quot;100n&quot;</code>, <code>&quot;4.7k&quot;</code>, or <code>&quot;4u7&quot;</code> without a trailing <code>F</code>, <code>Ω</code>, or <code>H</code>, <code>_dimensionsCompatible</code> allows <code>dimensionlessSi</code> to match passive RLC dimensions (<code>resistance</code>, <code>capacitance</code>, <code>inductance</code>) of the same base magnitude without falsely matching <code>voltage</code>, <code>current</code>, or <code>power</code>.</li>
+</ul>
+<h3>Block 2: Parsing EE-Infix (<code>4k7</code>, <code>3v3</code>) vs. Standard SI (<code>0.1uF</code>, <code>100nF</code>)</h3>
+<div class="code-figure"><div class="code-caption">parseEngineeringToken handling EE-infix notation and rejecting bare integers like &#x27;104&#x27;</div><pre><code class="language-dart">    // 1. Check EE-infix notation: e.g. 4k7, 4K7, 4r7, 3v3, 2n2, 4u7, 1M5, 4k7R, 2n2F
+    final infixMatch = RegExp(
+      r&#x27;^(\d+)([pPnNuUmMkKgGrRvVfFhH])(\d+)([rRfFhHvVaAwW]|[hH][zZ])?$&#x27;,
+    ).firstMatch(normalizedRaw);
+    if (infixMatch != null) {
+      final intPart = infixMatch.group(1)!;
+      final marker = infixMatch.group(2)!;
+      final fracPart = infixMatch.group(3)!;
+      final trailingUnit = infixMatch.group(4)?.toLowerCase();
+
+      final mantissa = double.tryParse(&#x27;$intPart.$fracPart&#x27;);
+      if (mantissa == null) return null;
+      // ... resolves marker (&#x27;r&#x27; -&gt; resistance, &#x27;v&#x27; -&gt; voltage, &#x27;k&#x27; -&gt; 1e3, etc.)
+    }
+
+    // 2. Check standard numeric + optional SI prefix + optional unit suffix:
+    // Must have AT LEAST a prefix OR a unit suffix (bare numbers like &quot;104&quot; are rejected!).
+    final stdMatch = RegExp(
+      r&#x27;^(\d+(?:\.\d+)?)([pPnNuUmMkKgG])?([hH][zZ]|[rRfFhHvVaAwW])?$&#x27;,
+    ).firstMatch(normalizedRaw);
+    if (stdMatch != null) {
+      final numStr = stdMatch.group(1)!;
+      final prefix = stdMatch.group(2);
+      final unit = stdMatch.group(3);
+      if (prefix == null &amp;&amp; unit == null) {
+        return null;
+      }
+      // ...
+    }</code></pre></div>
+<ul>
+<li><strong>Raw strings (<code>r'...'</code>)</strong>: Prefixing a Dart string literal with <code>r</code> creates a <strong>raw string</strong> where backslashes <code>\d</code>, <code>\s</code>, <code>\b</code> are not interpreted as string escapes—so regular expressions look just like JS <code>/^(\d+).../</code> literals without double-escaping <code>\\d</code>!</li>
+<li><strong>Case-sensitive <code>'M'</code> (<code>1e6</code> Mega) vs. <code>'m'</code> (<code>1e-3</code> milli)</strong>: Notice that SI prefixes are case-insensitive (<code>k</code>/<code>K</code>, <code>u</code>/<code>U</code>, <code>n</code>/<code>N</code>) <em>except</em> <code>'M'</code> vs. <code>'m'</code> (<code>1MΩ</code> = $10^6,\Omega$, <code>10mΩ</code> = $10^{-2},\Omega$, while <code>mhz</code> is treated as $10^6,\text{Hz}$).</li>
+<li><strong>Rejecting bare integers (<code>if (prefix == null &amp;&amp; unit == null) return null;</code>)</strong>: Ensures <code>&quot;104&quot;</code> only matches literal substrings (like MPN <code>CL10B104KB8NNNC</code>) and never hallucinates <code>100nF</code> or <code>100kΩ</code>.</li>
+</ul>
+<section class="simulator-card" data-simulator="unit-search-simulator" aria-label="Interactive Engineering Unit Search Simulator"><div class="widget-header"><h3 class="widget-title">Interactive Simulator: Engineering Unit Normalization &amp; 3-Tier Ranking</h3><span class="widget-badge">Click Any Query to Trace</span></div><p>Select a workbench search query below to inspect how <code>PartSearchEngine</code> normalizes SI prefixes, EE-infix notation (<code>4k7</code>), and Unicode symbols (<code>µ</code>/<code>Ω</code>) into canonical base values:</p><div class="sim-grid"><div class="sim-tree-list" role="toolbar" aria-label="Sample search queries"></div><div class="sim-inspector" aria-live="polite"></div></div></section>
+<h3>Block 3: Natural Alphanumeric Slot Sorting (<code>compareNaturalSlot</code>)</h3>
+<p>In <code>By Container</code> mode, slots like <code>&quot;Page 2&quot;</code> and <code>&quot;Page 10&quot;</code> (or <code>&quot;A2&quot;</code> and <code>&quot;A10&quot;</code>) should sort in human numerical order (<code>Page 2</code> before <code>Page 10</code>), with <code>null</code>/empty bulk slots placed at the bottom of the container:</p>
+<div class="code-figure"><div class="code-caption">Natural alphanumeric slot comparator in PartSearchEngine</div><pre><code class="language-dart">  static int compareNaturalSlot(String? a, String? b) {
+    final aClean = a?.trim() ?? &#x27;&#x27;;
+    final bClean = b?.trim() ?? &#x27;&#x27;;
+    if (aClean.isEmpty &amp;&amp; bClean.isEmpty) return 0;
+    if (aClean.isEmpty) return 1;
+    if (bClean.isEmpty) return -1;
+
+    final aChunks = _splitAlphaNumericChunks(aClean.toLowerCase());
+    final bChunks = _splitAlphaNumericChunks(bClean.toLowerCase());
+    final len = math.min(aChunks.length, bChunks.length);
+    for (var i = 0; i &lt; len; i++) {
+      final ca = aChunks[i];
+      final cb = bChunks[i];
+      final aNum = int.tryParse(ca);
+      final bNum = int.tryParse(cb);
+      final int cmp;
+      if (aNum != null &amp;&amp; bNum != null) {
+        cmp = aNum.compareTo(bNum);
+      } else {
+        cmp = ca.compareTo(cb);
+      }
+      if (cmp != 0) return cmp;
+    }
+    return aChunks.length.compareTo(bChunks.length);
+  }</code></pre></div>
+<hr />
+<h2 id="filter-provider">2. Derived Filter Providers &amp; Sealed Classes (<code>lib/search/workbench_filter_provider.dart</code>)</h2>
+<h3>Block 1: Discriminated Unions in Dart 3 (<code>@freezed sealed class WorkbenchFacet</code>)</h3>
+<p>In TypeScript, you model filter chip state as a discriminated union:</p>
+<div class="code-figure"><div class="code-caption">TypeScript discriminated union for filter chips</div><pre><code class="language-ts">type WorkbenchFacet =
+  | { readonly kind: &#x27;all&#x27; }
+  | { readonly kind: &#x27;lowStock&#x27; }
+  | { readonly kind: &#x27;unassigned&#x27; }
+  | { readonly kind: &#x27;category&#x27;; readonly category: string };</code></pre></div>
+<p>In Dart 3 + Freezed, you write a <strong><code>@freezed sealed class</code></strong>:</p>
+<div class="code-figure"><div class="code-caption">@freezed sealed class WorkbenchFacet in lib/search/workbench_filter_provider.dart</div><pre><code class="language-dart">@freezed
+sealed class WorkbenchFacet with _$WorkbenchFacet {
+  const factory WorkbenchFacet.all() = WorkbenchFacetAll;
+  const factory WorkbenchFacet.lowStock() = WorkbenchFacetLowStock;
+  const factory WorkbenchFacet.unassigned() = WorkbenchFacetUnassigned;
+  const factory WorkbenchFacet.category(String category) =
+      WorkbenchFacetCategory;
+}</code></pre></div>
+<p>And look at how you pattern-match on <code>WorkbenchFacet</code> inside <code>filteredWorkbenchView</code>:</p>
+<div class="code-figure"><div class="code-caption">Exhaustive Dart 3 switch expression with pattern destructuring and &#x27;when&#x27; guard</div><pre><code class="language-dart">  // If the selected category facet no longer exists in the catalog, treat as All
+  final effectiveFacet = switch (selectedFacet) {
+    WorkbenchFacetCategory(:final category)
+        when !availableCategoriesSet.any(
+          (c) =&gt; c.toLowerCase() == category.toLowerCase(),
+        ) =&gt;
+      const WorkbenchFacet.all(),
+    _ =&gt; selectedFacet,
+  };
+
+  // Inside the parts loop:
+  final matchesFacet = switch (effectiveFacet) {
+    WorkbenchFacetAll() =&gt; true,
+    WorkbenchFacetLowStock() =&gt; part.isLowStock,
+    WorkbenchFacetUnassigned() =&gt; part.isUnassigned,
+    WorkbenchFacetCategory(:final category) =&gt;
+      part.category != null &amp;&amp;
+          part.category!.toLowerCase() == category.toLowerCase(),
+  };</code></pre></div>
+<ul>
+<li><strong>Exhaustiveness checking</strong>: Because <code>WorkbenchFacet</code> is marked <strong><code>sealed</code></strong>, the Dart compiler knows every possible subtype (<code>WorkbenchFacetAll</code>, <code>WorkbenchFacetLowStock</code>, <code>WorkbenchFacetUnassigned</code>, <code>WorkbenchFacetCategory</code>). If you ever add a 5th facet constructor and forget to handle it in <code>switch (effectiveFacet)</code>, <code>flutter analyze</code> fails at compile time!</li>
+<li><strong><code>WorkbenchFacetCategory(:final category) when ...</code></strong>: Extracts the <code>category</code> property and applies a boolean <code>when</code> guard clause in a single declarative pattern.</li>
+</ul>
+<h3>Block 2: Derived Provider (<code>filteredWorkbenchView</code> vs. React's <code>useMemo</code>)</h3>
+<div class="code-figure"><div class="code-caption">Derived filteredWorkbenchView provider combining catalogProvider, searchQueryProvider, and selectedFacetProvider</div><pre><code class="language-dart">@riverpod
+FilteredWorkbenchView filteredWorkbenchView(Ref ref) {
+  final asyncCatalog = ref.watch(catalogProvider);
+  final snapshot = asyncCatalog.value ?? CatalogSnapshot.empty();
+  final query = ref.watch(searchQueryProvider);
+  final selectedFacet = ref.watch(selectedFacetProvider);
+  // ... computes flatParts, containerGroups, availableCategories, and counts</code></pre></div>
+<ul>
+<li><strong>No manual dependency arrays!</strong><span class="sidenote-number"></span><span class="sidenote">In React, <code>useMemo(() =&gt; filterParts(parts, query, facet), [parts, query, facet])</code> is prone to stale-closure bugs if a dependency is omitted. In Riverpod, <code>ref.watch(...)</code> dynamically tracks every upstream provider read during execution and caches the <code>FilteredWorkbenchView</code> until one of those watched providers changes.</span></li>
+<li><strong>Dart's Cascade Operator (<code>..sort(...)</code>)</strong>:
+<ul>
+<li>Look at lines 114–115 of <code>workbench_filter_provider.dart</code>:<pre><code class="language-dart">final availableCategories = availableCategoriesSet.toList()
+  ..sort((a, b) =&gt; a.toLowerCase().compareTo(b.toLowerCase()));
+</code></pre>
+</li>
+<li>In JavaScript, <code>Array.prototype.sort()</code> returns the sorted array, whereas in Dart, <code>List.sort()</code> returns <code>void</code> (because it sorts in place). The <strong>cascade operator <code>..</code></strong> invokes <code>.sort(...)</code> on the newly created <code>List</code> and returns the <code>List</code> itself!</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="practice">3. Interactive Practice &amp; Verification</h2>
+<section class="exercise-card" id="ex-0005" data-hint="" data-success="All blanks matched!"><div class="widget-header"><h3 class="widget-title">Interactive Lab: Dart 3 Sealed Classes, Cascades &amp; Derived Providers</h3><span class="widget-badge">Skill Practice • Tight Feedback Loop</span></div><p>Complete the missing Dart 3 pattern matching, cascade, and Riverpod tokens below:</p>
+<div class="code-figure"><pre><code class="language-dart">@freezed
+<input type="text" class="code-blank" data-answer="sealed" data-error-hint="Mark WorkbenchFacet so the compiler enforces exhaustive switch expressions." placeholder="sealed" style="width:8ch" aria-label="Fill in the blank: sealed" autocomplete="off" spellcheck="false" /> class WorkbenchFacet with _$WorkbenchFacet {
+  const factory WorkbenchFacet.all() = WorkbenchFacetAll;
+  const factory WorkbenchFacet.lowStock() = WorkbenchFacetLowStock;
+  const factory WorkbenchFacet.unassigned() = WorkbenchFacetUnassigned;
+  const factory WorkbenchFacet.category(String category) = WorkbenchFacetCategory;
+}
+
+// Exhaustive switch expression with pattern destructuring:
+final matchesFacet = switch (effectiveFacet) {
+  WorkbenchFacetAll() =&gt; true,
+  WorkbenchFacetLowStock() =&gt; part.isLowStock,
+  WorkbenchFacetUnassigned() =&gt; part.isUnassigned,
+  WorkbenchFacetCategory(<input type="text" class="code-blank" data-answer=":final category" data-error-hint="Destructure the category getter from WorkbenchFacetCategory." placeholder="final category" style="width:17ch" aria-label="Fill in the blank: final category" autocomplete="off" spellcheck="false" />) =&gt;
+    part.category != null &amp;&amp; part.category!.toLowerCase() == category.toLowerCase(),
+};
+
+// Sort a newly created list in-place and return the list using Dart&#x27;s cascade operator:
+final sortedContainers = [...snapshot.containers]
+  <input type="text" class="code-blank" data-answer="..sort" data-error-hint="Use the cascade operator to call sort() in place and return the list." placeholder="..sort" style="width:8ch" aria-label="Fill in the blank: ..sort" autocomplete="off" spellcheck="false" />((a, b) =&gt; a.name.toLowerCase().compareTo(b.name.toLowerCase()));</code></pre></div>
+<p>:::prompts
+hint: &quot;Closed union hierarchies use 'sealed class', property destructuring in patterns uses ':final category', and chaining a void method while returning the receiver uses the '..sort' cascade operator.&quot;
+success: &quot;Nailed it! You can now combine @freezed sealed classes, Dart 3 pattern matching, cascade operators, and derived Riverpod providers.&quot;</p>
+<div class="widget-actions"><button type="button" class="btn btn-primary" data-action="check-exercise">Check Answers</button><button type="button" class="btn" data-action="hint-exercise">Show Hint</button></div><div class="widget-feedback" role="status" aria-live="polite"></div></section>
+<p>:::</p>
+<section class="quiz-card" id="quiz-0005"><div class="widget-header"><h3 class="widget-title">Retrieval Practice: Engineering Unit Search, Sealed Classes &amp; Derived State</h3><span class="widget-badge">3 Questions • Equal-Length Options</span></div><div class="quiz-question-block" data-wrong-hint="Think about what the `sealed` modifier enables inside a Dart 3 `switch` expression."><div class="quiz-question-title">1. How does <code>@freezed sealed class WorkbenchFacet</code> compare to TypeScript discriminated unions?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="false" data-explain="A `sealed` class restricts all direct subtypes to the same library so the compiler knows the complete set of variants."><span class="quiz-option-letter">A.</span><span>It allows any external file to add new subclasses at runtime without recompiling.</span></button><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! Marking the union `sealed` lets Dart verify that every case (`All`, `LowStock`, `Unassigned`, `Category`) is handled."><span class="quiz-option-letter">B.</span><span>It enables compile-time exhaustive switch expressions with typed field destructuring across every variant.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`WorkbenchFacet` is an in-memory UI filter union managed by `SelectedFacet`, not persisted to the OS keychain."><span class="quiz-option-letter">C.</span><span>It serializes every filter state change directly into the operating system keychain store.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`WorkbenchFacet` is the immutable value type held by Riverpod&#x27;s `selectedFacetProvider`."><span class="quiz-option-letter">D.</span><span>It replaces Riverpod providers by storing filter state inside a global static variable.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div><div class="quiz-question-block" data-wrong-hint="Check the requirement in `parseEngineeringToken` that a standard token must have a prefix or unit suffix."><div class="quiz-question-title">2. Why does <code>PartSearchEngine.parseEngineeringToken('104')</code> return <code>null</code> instead of expanding to <code>100nF</code>?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Dart regexes match digits easily, but `parseEngineeringToken` explicitly rejects tokens where both `prefix` and `unit` are `null`."><span class="quiz-option-letter">A.</span><span>Dart regular expressions cannot match strings that contain only three consecutive ASCII digit characters.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Catalog parts use human-readable SI strings like `&#x27;100nF&#x27;` and `&#x27;10µF&#x27;`, which `parseEngineeringToken` normalizes to Farads."><span class="quiz-option-letter">B.</span><span>Capacitor values in the catalog are always stored in Farads without any SI prefixes.</span></button><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! Rejecting bare numbers ensures `&#x27;104&#x27;` only matches literal substrings (like MPN `CL10B104KB8NNNC`) without false unit matches."><span class="quiz-option-letter">C.</span><span>Bare integers lack an SI prefix or unit suffix and would cause false positives.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`PartSearchEngine` supports resistance, capacitance, inductance, voltage, current, power, and frequency."><span class="quiz-option-letter">D.</span><span>The search engine only supports resistor values and ignores all capacitor and inductor queries.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div><div class="quiz-question-block" data-wrong-hint="Compare Riverpod&#x27;s `ref.watch(...)` dependency tracking to React&#x27;s `useMemo`."><div class="quiz-question-title">3. How does the derived <code>@riverpod FilteredWorkbenchView filteredWorkbenchView(Ref ref)</code> provider behave when <code>searchQueryProvider</code> changes?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! `ref.watch` subscribes `filteredWorkbenchViewProvider` to `catalogProvider`, `searchQueryProvider`, and `selectedFacetProvider`."><span class="quiz-option-letter">A.</span><span>It automatically recomputes the cached FilteredWorkbenchView whenever any watched upstream provider state changes.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`catalogProvider` keeps the loaded `CatalogSnapshot` in memory; changing `searchQueryProvider` only re-runs the in-memory filter."><span class="quiz-option-letter">B.</span><span>It reloads the entire JSON catalog file from disk on every keystroke event.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`CatalogSnapshot.parts` is an unmodifiable list; `filteredWorkbenchView` creates new sorted lists without mutating the catalog."><span class="quiz-option-letter">C.</span><span>It mutates the original CatalogSnapshot.parts list in place and overwrites the backup file.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Riverpod tracks dependencies automatically via `ref.watch(...)` calls—no manual dependency arrays exist."><span class="quiz-option-letter">D.</span><span>It requires components to manually pass a dependency array like React's useMemo hook.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div></section>
+<section class="verify-card" id="verify-0005"><div class="widget-header"><h3 class="widget-title">Verification Lab: Run Engineering Search &amp; Filter Provider Suite</h3><span class="widget-badge">CLI Gate • Zero Warnings &amp; 100% Green</span></div><p>Run static analysis and the complete 9-test suite inside <code>tutorial/apps/0005-engineering-unit-search-and-filter-providers</code>:</p>
+<div class="code-figure"><div class="code-caption">Terminal verification commands for Lesson 0005</div><pre><code class="language-bash">cd tutorial/apps/0005-engineering-unit-search-and-filter-providers
+flutter analyze
+flutter test</code></pre></div>
+<p>Expected terminal output:</p>
+<div class="code-figure"><div class="code-caption">Verified output of flutter analyze &amp;&amp; flutter test</div><pre><code class="language-text">Analyzing 0005-engineering-unit-search-and-filter-providers...
+No issues found!
+00:01 +9: All tests passed!</code></pre></div><ul class="verify-checklist"><li class="verify-item"><input type="checkbox" id="verify-0005-chk-1" data-storage-key="verify:0005-engineering-unit-search-and-filter-providers:verify-0005:1" /><label for="verify-0005-chk-1">Inspected <code>lib/search/part_search_engine.dart</code> and <code>lib/search/workbench_filter_provider.dart</code>.</label></li><li class="verify-item"><input type="checkbox" id="verify-0005-chk-2" data-storage-key="verify:0005-engineering-unit-search-and-filter-providers:verify-0005:2" /><label for="verify-0005-chk-2">Verified <code>flutter analyze</code> reports <code>No issues found!</code>.</label></li><li class="verify-item"><input type="checkbox" id="verify-0005-chk-3" data-storage-key="verify:0005-engineering-unit-search-and-filter-providers:verify-0005:3" /><label for="verify-0005-chk-3">Verified <code>flutter test</code> passes all 9 tests—including <code>0.1uF == 100nF == 100000pF</code>, <code>4k7 == 4.7kΩ</code>, 3-tier ranking for <code>4700R</code>, non-expansion of <code>104</code>, filter chips, and natural <code>By Container</code> slot ordering (<code>Page 2</code> before <code>Page 10</code>).</label></li></ul></section>
+<aside class="teacher-prompt"><p><strong>Milestone reached!</strong> With Lessons 0001–0005 complete, you have rebuilt and verified the entire data, persistence, state, and engineering search core of the Electronics Parts Tracker! Ask me any questions about Lessons 0001–0005, or let me know when you're ready for Lessons 0006–0008 (the LCSC HTTP client, the dark Workbench UI &amp; inline accordion, and the Add/Edit/Detail bottom sheets).</p>
+</aside>
+      <nav class="lesson-pager" aria-label="Lesson pagination"><a class="pager-card pager-card-prev" href="../lessons/0004-reactive-catalog-state-with-riverpod.html"><span class="pager-meta">← Previous • Lesson 0004</span><span class="pager-title">Reactive Catalog State with Riverpod AsyncNotifier</span></a><a class="pager-card pager-card-next" href="../reference/react-to-flutter-cheatsheet.html"><span class="pager-meta">Reference Sheet →</span><span class="pager-title">React &amp; TypeScript → Flutter &amp; Dart Cheat Sheet</span></a></nav>
+    </article>
+  </main>
+  <footer class="site-footer">
+    <span>Electronics Parts Tracker — Interactive Flutter &amp; Riverpod Course for React + TypeScript Developers</span>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Verification &amp; Testing — Flutter &amp; Riverpod</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <script src="../assets/course.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"><nav class="course-nav" aria-label="Course navigation"><div class="nav-breadcrumbs"><a href="../index.html">Index</a><span class="nav-sep" aria-hidden="true">›</span><span class="nav-current" aria-current="page">Verification &amp; Testing</span></div><div class="nav-controls"><a class="nav-ref-link" href="../reference/glossary.html">Glossary</a><a class="nav-ref-link" href="../reference/react-to-flutter-cheatsheet.html">React → Flutter</a><a class="nav-ref-link" href="../reference/verification-and-testing.html" aria-current="page">Verification &amp; Testing</a><span class="mission-badge">Flutter • Parts Tracker</span></div></nav></header>
+  <main id="main-content" class="page-main">
+    <article class="tufte-article">
+      <header class="article-header">
+        <div class="article-badge">Mission: Parts Tracker in Flutter</div>
+        <h1>Verification &amp; Widget Testing Reference</h1>
+        <p class="article-subtitle">Command-line verification gates, WidgetTester vs. React Testing Library idioms, and ProviderScope dependency overrides.</p>
+      </header>
+      <h2>1. Mandatory Verification Gates</h2>
+<p>Every companion app in <code>./tutorial/apps/&lt;NNNN-slug&gt;/</code> must pass two automated gates with zero warnings and 100% passing tests before a lesson is complete:</p>
+<div class="code-figure"><div class="code-caption">Run static analysis and headless unit/widget tests inside any lesson app directory</div><pre><code class="language-bash">flutter analyze
+flutter test</code></pre></div>
+<p><span class="sidenote-number"></span><span class="sidenote">Unlike browser-based E2E runners (Playwright/Cypress) or JSDOM shims, <code>flutter test</code> executes the real Flutter layout and rendering pipeline against a deterministic fake clock inside the Dart VM—typically completing in under two seconds.</span></p>
+<p>When a lesson introduces or modifies <code>@freezed</code>, <code>@JsonSerializable</code>, or <code>@riverpod</code> annotations (starting in Lesson 0002), regenerate the companion <code>*.freezed.dart</code> and <code>*.g.dart</code> part files via:</p>
+<div class="code-figure"><div class="code-caption">Run code generation for Freezed and Riverpod annotations</div><pre><code class="language-bash">dart run build_runner build --delete-conflicting-outputs</code></pre></div>
+<h2>2. React Testing Library vs. <code>flutter_test</code></h2>
+<p>Table: Translating React Testing Library + Vitest to <code>package:flutter_test</code></p>
+<div class="table-wrapper"><table class="ref-table">
+<thead>
+<tr>
+<th style="text-align:left">Testing Action</th>
+<th style="text-align:left">React Testing Library (<code>@testing-library/react</code>)</th>
+<th style="text-align:left">Flutter Widget Test (<code>package:flutter_test</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Define a UI test</td>
+<td style="text-align:left"><code>test('renders workbench', async () =&gt; { ... })</code></td>
+<td style="text-align:left"><code>testWidgets('renders workbench', (WidgetTester tester) async { ... })</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Mount component tree</td>
+<td style="text-align:left"><code>render(&lt;Provider&gt;&lt;PartsTrackerApp /&gt;&lt;/Provider&gt;)</code></td>
+<td style="text-align:left"><code>await tester.pumpWidget(const ProviderScope(child: PartsTrackerApp()))</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Wait for async state / animations</td>
+<td style="text-align:left"><code>await waitFor(() =&gt; ...)</code></td>
+<td style="text-align:left"><code>await tester.pumpAndSettle()</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Find by visible text</td>
+<td style="text-align:left"><code>screen.getByText('Electronics Parts Tracker')</code></td>
+<td style="text-align:left"><code>find.text('Electronics Parts Tracker')</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Find by substring</td>
+<td style="text-align:left"><code>screen.getByText(/RC0603/i)</code></td>
+<td style="text-align:left"><code>find.textContaining('RC0603')</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Find by <code>data-testid</code></td>
+<td style="text-align:left"><code>screen.getByTestId('part_lcsc_input')</code></td>
+<td style="text-align:left"><code>find.byKey(const Key('part_lcsc_input'))</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Assert element is present once</td>
+<td style="text-align:left"><code>expect(el).toBeInTheDocument()</code></td>
+<td style="text-align:left"><code>expect(finder, findsOneWidget)</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Assert element is absent</td>
+<td style="text-align:left"><code>expect(screen.queryByText('...')).toBeNull()</code></td>
+<td style="text-align:left"><code>expect(finder, findsNothing)</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Click / tap an element</td>
+<td style="text-align:left"><code>await userEvent.click(el)</code></td>
+<td style="text-align:left"><code>await tester.tap(finder); await tester.pumpAndSettle();</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Type into a text input</td>
+<td style="text-align:left"><code>await userEvent.type(input, '0.1uF')</code></td>
+<td style="text-align:left"><code>await tester.enterText(finder, '0.1uF'); await tester.pumpAndSettle();</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2>3. Dependency Injection with <code>ProviderScope</code> Overrides</h2>
+<p>In React, testing components with mock stores or fake API clients requires wrapping the tree in custom <code>&lt;Context.Provider value={mock}&gt;</code> layers or module-mocking (<code>vi.mock(...)</code>). In Riverpod, every dependency is a provider that can be cleanly overridden per test without global module mocks:</p>
+<div class="code-figure"><div class="code-caption">Overriding persistence and HTTP providers inside a headless testWidgets test</div><pre><code class="language-dart">await tester.pumpWidget(
+  ProviderScope(
+    overrides: [
+      catalogPersistenceProvider.overrideWithValue(persistence),
+      lcscClientProvider.overrideWithValue(fakeLcsc),
+    ],
+    child: const PartsTrackerApp(),
+  ),
+);
+await tester.pumpAndSettle();</code></pre></div>
+      
+    </article>
+  </main>
+  <footer class="site-footer">
+    <span>Electronics Parts Tracker — Interactive Flutter &amp; Riverpod Course for React + TypeScript Developers</span>
+  </footer>
+</body>
+</html>

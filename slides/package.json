@@ -2,7 +2,7 @@
   "name": "flutter-skills-presentation-deck",
   "private": true,
   "scripts": {
-    "sync-tutorial": "mkdir -p public/tutorial && cp -R ../experiments/parts_tracker_comprehension/tutorial/{index.html,index.md,MISSION.md,NOTES.md,README.md,RESOURCES.md,assets,lessons,reference,learning-records} public/tutorial/",
+    "sync-tutorial": "mkdir -p public/tutorial && cd ../experiments/parts_tracker_comprehension/tutorial && cp -R index.html index.md MISSION.md NOTES.md README.md RESOURCES.md assets lessons reference learning-records ../../../slides/public/tutorial/",
     "predev": "npm run sync-tutorial",
     "dev": "slidev",
     "prebuild": "npm run sync-tutorial",

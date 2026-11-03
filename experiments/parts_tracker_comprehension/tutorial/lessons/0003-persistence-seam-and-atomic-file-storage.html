@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Lesson 0003 — Persistence Seam &amp; Atomic Local File Storage</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <script src="../assets/course.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"><nav class="course-nav" aria-label="Course navigation"><div class="nav-breadcrumbs"><a href="../index.html">Index</a><span class="nav-sep" aria-hidden="true">›</span><span class="nav-current" aria-current="page">Lesson 0003</span></div><div class="nav-controls"><span class="nav-pager-group" role="group" aria-label="Adjacent lessons"><a class="nav-pager-link" href="../lessons/0002-immutable-domain-models-with-freezed.html" title="Lesson 0002: Immutable Domain Models with Freezed &amp; JSON Serialization">← Prev</a><span class="nav-sep" aria-hidden="true">·</span><a class="nav-pager-link" href="../lessons/0004-reactive-catalog-state-with-riverpod.html" title="Lesson 0004: Reactive Catalog State with Riverpod AsyncNotifier">Next →</a></span><span class="nav-divider" aria-hidden="true">|</span><a class="nav-ref-link" href="../reference/glossary.html">Glossary</a><a class="nav-ref-link" href="../reference/react-to-flutter-cheatsheet.html">React → Flutter</a><a class="nav-ref-link" href="../reference/verification-and-testing.html">Verification &amp; Testing</a><span class="mission-badge">Flutter • Parts Tracker</span></div></nav></header>
+  <main id="main-content" class="page-main">
+    <article class="tufte-article">
+      <header class="article-header">
+        <div class="article-badge">Lesson 0003 • Persistence Seam &amp; Atomic I/O</div>
+        <h1>Persistence Seam &amp; Atomic Local File Storage</h1>
+        <p class="article-subtitle">Design a deep persistence module (CatalogPersistence) with an in-memory test double and an atomic, serialized file writer (FileCatalogPersistence) using Dart Futures and Completers.</p>
+      </header>
+      <h2 id="why-seam">Why Put a Seam Between State and Disk I/O?</h2>
+<p>In a browser React app, you might persist small state blobs to <code>localStorage</code> or <code>IndexedDB</code>. On mobile and desktop (iOS/macOS), our Electronics Parts Tracker stores the user's catalog in a pretty-printed <code>parts_catalog.json</code> file inside the app's documents directory—and lets the user export or import timestamped JSON backups via the native OS share sheet and file picker.</p>
+<p>If our UI or Riverpod state notifier called <code>File('.../parts_catalog.json').writeAsString(...)</code> directly, two bad things would happen:</p>
+<ol>
+<li><strong>Tests would be slow and flaky</strong>: Every unit and widget test would touch the real filesystem or fail in headless environments where native platform plugins (<code>path_provider</code>, <code>share_plus</code>, <code>file_picker</code>) aren't attached to an iOS simulator.</li>
+<li><strong>Concurrent taps could corrupt the catalog</strong>: When you rapidly tap <code>+1</code> five times on a resistor's stock counter, five asynchronous <code>save()</code> calls fire in quick succession. Without a serialized queue and atomic write-then-rename (<code>parts_catalog.json.tmp</code> → <code>parts_catalog.json</code>), two overlapping writes can interleave or leave a truncated JSON file on crash.</li>
+</ol>
+<p>In this lesson, we introduce the <strong><code>CatalogPersistence</code></strong> seam (<code>lib/catalog/catalog_persistence.dart</code>) and its production implementation <strong><code>FileCatalogPersistence</code></strong> (<code>lib/catalog/file_catalog_persistence.dart</code>).</p>
+<figure class="mermaid-figure"><pre class="mermaid">flowchart TD
+  Caller[&quot;Catalog AsyncNotifier / Widget Tests&quot;] --&gt; Seam[&quot;abstract class CatalogPersistence&lt;br/&gt;(load, save, savePreImportBackup, writeExportFile, shareExportFile, pickImportJson)&quot;]
+  Seam --&gt; InMem[&quot;InMemoryCatalogPersistence&lt;br/&gt;(Instant, zero-I/O test double)&quot;]
+  Seam --&gt; FileImpl[&quot;FileCatalogPersistence&lt;br/&gt;(Serialized _enqueue queue + atomic .tmp rename)&quot;]</pre><figcaption class="mermaid-caption">Figure 3.1: The CatalogPersistence seam isolates Riverpod state and widget tests from platform file/share plugins.</figcaption></figure>
+<aside class="callout callout"><p><strong>Primary Sources for Lesson 0003</strong>: Review the <a href="../reference/react-to-flutter-cheatsheet.html">React → Flutter Cheat Sheet</a>, the <a href="../reference/verification-and-testing.html">Verification &amp; Testing Reference</a>, and the <a href="https://dart.dev/libraries/async/async-await">Dart Asynchronous Programming (<code>Future</code> &amp; <code>Completer</code>) guide</a>.</p>
+</aside>
+<hr />
+<h2 id="persistence-seam">1. Defining the <code>CatalogPersistence</code> Seam (<code>lib/catalog/catalog_persistence.dart</code>)</h2>
+<h3>Block 1: The Abstract Interface Contract</h3>
+<p>In TypeScript, you define a contract with <code>export interface CatalogPersistence { ... }</code>. In Dart, every <code>class</code> implicitly defines an interface! Marked <code>abstract class</code>, it cannot be instantiated directly:</p>
+<div class="code-figure"><div class="code-caption">Abstract CatalogPersistence contract in lib/catalog/catalog_persistence.dart</div><pre><code class="language-dart">import &#x27;catalog_models.dart&#x27;;
+
+abstract class CatalogPersistence {
+  Future&lt;CatalogSnapshot&gt; load();
+  Future&lt;void&gt; save(CatalogSnapshot snapshot);
+  Future&lt;void&gt; savePreImportBackup(CatalogSnapshot currentSnapshot);
+  Future&lt;String&gt; writeExportFile(CatalogSnapshot snapshot);
+  Future&lt;void&gt; shareExportFile(CatalogSnapshot snapshot);
+  Future&lt;String?&gt; pickImportJson();
+}</code></pre></div>
+<ul>
+<li><strong><code>Future&lt;CatalogSnapshot&gt;</code></strong>: Dart's equivalent of TypeScript's <code>Promise&lt;CatalogSnapshot&gt;</code>.</li>
+<li><strong><code>Future&lt;void&gt;</code></strong>: Equivalent to <code>Promise&lt;void&gt;</code> for async operations that complete without a return value.</li>
+<li><strong><code>Future&lt;String?&gt; pickImportJson()</code></strong>: Returns a <code>Future</code> that resolves to the selected JSON file's contents, or <code>null</code> if the user cancels the native file picker dialog.</li>
+</ul>
+<h3>Block 2: <code>InMemoryCatalogPersistence</code> (Zero-I/O Test Double)</h3>
+<div class="code-figure"><div class="code-caption">InMemoryCatalogPersistence implementation for fast unit and widget tests</div><pre><code class="language-dart">class InMemoryCatalogPersistence implements CatalogPersistence {
+  InMemoryCatalogPersistence([
+    CatalogSnapshot? initial,
+    this.onPickImportJson,
+    this.onShareExportFile,
+  ]) : _current = initial;
+
+  CatalogSnapshot? _current;
+  CatalogSnapshot? lastPreImportBackup;
+  String? lastExportPath;
+  Future&lt;String?&gt; Function()? onPickImportJson;
+  Future&lt;void&gt; Function(String path)? onShareExportFile;
+
+  @override
+  Future&lt;CatalogSnapshot&gt; load() async {
+    return _current ?? CatalogSnapshot.empty();
+  }
+
+  @override
+  Future&lt;void&gt; save(CatalogSnapshot snapshot) async {
+    _current = snapshot;
+  }
+
+  @override
+  Future&lt;void&gt; savePreImportBackup(CatalogSnapshot currentSnapshot) async {
+    lastPreImportBackup = currentSnapshot;
+  }
+
+  @override
+  Future&lt;String&gt; writeExportFile(CatalogSnapshot snapshot) async {
+    final path = &#x27;/tmp/${snapshot.exportFileName}&#x27;;
+    lastExportPath = path;
+    return path;
+  }
+
+  @override
+  Future&lt;void&gt; shareExportFile(CatalogSnapshot snapshot) async {
+    final path = await writeExportFile(snapshot);
+    if (onShareExportFile != null) {
+      await onShareExportFile!(path);
+    }
+  }
+
+  @override
+  Future&lt;String?&gt; pickImportJson() async {
+    if (onPickImportJson != null) {
+      return onPickImportJson!();
+    }
+    return null;
+  }
+}</code></pre></div>
+<p>Unpacking the new Dart syntax in <code>InMemoryCatalogPersistence</code>:</p>
+<ul>
+<li><strong><code>implements CatalogPersistence</code></strong>: In Dart, <code>extends</code> inherits implementation from a single superclass, whereas <strong><code>implements</code></strong> treats <code>CatalogPersistence</code> purely as an interface (just like TypeScript's <code>implements</code>), requiring <code>InMemoryCatalogPersistence</code> to implement all six methods.</li>
+<li><strong><code>InMemoryCatalogPersistence([CatalogSnapshot? initial, ...]) : _current = initial;</code></strong>:
+<ul>
+<li>Square brackets <code>[ ... ]</code> in a parameter list declare <strong>optional positional parameters</strong> (as opposed to <code>{ ... }</code> named parameters).</li>
+<li><code>: _current = initial</code> after the parameter list is a <strong>constructor initializer list</strong>—it initializes private fields (like <code>_current</code>) <em>before</em> the constructor body runs.</li>
+</ul>
+</li>
+<li><strong><code>Future&lt;String?&gt; Function()? onPickImportJson</code></strong>: Dart's function type syntax puts the return type <em>before</em> the <code>Function(...)</code> keyword (equivalent to TypeScript's <code>onPickImportJson?: () =&gt; Promise&lt;string | null&gt;</code>).</li>
+<li><strong><code>await onShareExportFile!(path)</code></strong>: Because <code>onShareExportFile</code> is a nullable field, checking <code>if (onShareExportFile != null)</code> and using the non-null assertion <code>!</code> invokes the callback safely.</li>
+</ul>
+<hr />
+<h2 id="file-persistence">2. Building <code>FileCatalogPersistence</code> (<code>lib/catalog/file_catalog_persistence.dart</code>)</h2>
+<p>Now let's build the real disk persistence adapter in <code>lib/catalog/file_catalog_persistence.dart</code>.</p>
+<h3>Block 1: Injectable Directory Providers &amp; the Serialized <code>_enqueue</code> Write Queue</h3>
+<div class="code-figure"><div class="code-caption">Constructor injection and serialized Future write queue in FileCatalogPersistence</div><pre><code class="language-dart">import &#x27;dart:async&#x27;;
+import &#x27;dart:convert&#x27;;
+import &#x27;dart:io&#x27;;
+
+import &#x27;package:file_picker/file_picker.dart&#x27;;
+import &#x27;package:path_provider/path_provider.dart&#x27;;
+import &#x27;package:share_plus/share_plus.dart&#x27;;
+
+import &#x27;catalog_models.dart&#x27;;
+import &#x27;catalog_persistence.dart&#x27;;
+
+class FileCatalogPersistence implements CatalogPersistence {
+  FileCatalogPersistence({
+    Future&lt;Directory&gt; Function()? documentsDirectoryProvider,
+    Future&lt;Directory&gt; Function()? temporaryDirectoryProvider,
+  })  : _documentsDirectoryProvider =
+            documentsDirectoryProvider ?? getApplicationDocumentsDirectory,
+        _temporaryDirectoryProvider =
+            temporaryDirectoryProvider ?? getTemporaryDirectory;
+
+  static const String catalogFileName = &#x27;parts_catalog.json&#x27;;
+  static const String catalogTempFileName = &#x27;parts_catalog.json.tmp&#x27;;
+  static const String backupFileName = &#x27;parts_catalog.backup.json&#x27;;
+
+  final Future&lt;Directory&gt; Function() _documentsDirectoryProvider;
+  final Future&lt;Directory&gt; Function() _temporaryDirectoryProvider;
+
+  static const JsonEncoder _prettyEncoder = JsonEncoder.withIndent(&#x27;  &#x27;);
+
+  Future&lt;void&gt; _writeQueue = Future&lt;void&gt;.value();
+
+  Future&lt;T&gt; _enqueue&lt;T&gt;(Future&lt;T&gt; Function() action) {
+    final completer = Completer&lt;T&gt;();
+    _writeQueue = _writeQueue.then((_) async {
+      try {
+        final result = await action();
+        completer.complete(result);
+      } on Object catch (e, st) {
+        completer.completeError(e, st);
+      }
+    });
+    return completer.future;
+  }</code></pre></div>
+<ul>
+<li><strong>Injectable directory providers</strong>: In production on iOS, <code>_documentsDirectoryProvider</code> defaults to <code>getApplicationDocumentsDirectory</code> from <code>package:path_provider</code>. In our filesystem unit test (<code>test/file_catalog_persistence_test.dart</code>), we pass <code>() async =&gt; tempDir</code> so we can test real atomic file I/O in an isolated temporary directory without needing an iOS simulator!</li>
+<li><strong><code>Completer&lt;T&gt;</code> &amp; <code>_enqueue&lt;T&gt;</code></strong>:
+<ul>
+<li>In TypeScript, creating a deferred promise requires <code>Promise.withResolvers&lt;T&gt;()</code> (or <code>new Promise((resolve, reject) =&gt; ...)</code>). In <code>dart:async</code>, that pattern is a <strong><code>Completer&lt;T&gt;</code></strong>: you return <code>completer.future</code> to the caller and call <code>completer.complete(result)</code> or <code>completer.completeError(e, st)</code> when ready.<span class="sidenote-number"></span><span class="sidenote">By chaining every <code>load()</code>, <code>save()</code>, <code>savePreImportBackup()</code>, and <code>writeExportFile()</code> call onto <code>_writeQueue = _writeQueue.then(...)</code>, concurrent operations execute strictly one after another in FIFO order—even if an earlier operation throws an error.</span></li>
+</ul>
+</li>
+</ul>
+<h3>Block 2: Atomic Write-Then-Rename (<code>_writeAtomically</code>)</h3>
+<div class="code-figure"><div class="code-caption">Atomic .tmp write with flush: true followed by POSIX rename</div><pre><code class="language-dart">  Future&lt;void&gt; _writeAtomically(
+    Directory dir,
+    String targetFileName,
+    CatalogSnapshot snapshot,
+  ) async {
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+    final tempFile = File(&#x27;${dir.path}/$targetFileName.tmp&#x27;);
+    final targetFile = File(&#x27;${dir.path}/$targetFileName&#x27;);
+    final jsonMap = &lt;String, dynamic&gt;{
+      &#x27;schemaVersion&#x27;: snapshot.schemaVersion,
+      &#x27;updatedAt&#x27;: snapshot.updatedAt.toUtc().toIso8601String(),
+      &#x27;containers&#x27;: snapshot.containers.map((c) =&gt; c.toJson()).toList(),
+      &#x27;parts&#x27;: snapshot.parts.map((p) =&gt; p.toJson()).toList(),
+    };
+    final formatted = &#x27;${_prettyEncoder.convert(jsonMap)}\n&#x27;;
+    await tempFile.writeAsString(formatted, flush: true);
+    await tempFile.rename(targetFile.path);
+  }</code></pre></div>
+<ul>
+<li><strong><code>await tempFile.writeAsString(formatted, flush: true)</code></strong>: Writes 2-space indented JSON (<code>JsonEncoder.withIndent('  ')</code>) to <code>parts_catalog.json.tmp</code> and flushes OS buffers to disk before renaming.</li>
+<li><strong><code>await tempFile.rename(targetFile.path)</code></strong>: On POSIX filesystems (iOS/macOS/Linux), renaming a file within the same directory is an <strong>atomic directory-entry swap</strong>. Readers never observe an empty or half-written <code>parts_catalog.json</code>!</li>
+</ul>
+<h3>Complete <code>lib/catalog/file_catalog_persistence.dart</code> Listing</h3>
+<div class="code-figure"><div class="code-caption">tutorial/apps/0003-persistence-seam-and-atomic-file-storage/lib/catalog/file_catalog_persistence.dart</div><pre><code class="language-dart">import &#x27;dart:async&#x27;;
+import &#x27;dart:convert&#x27;;
+import &#x27;dart:io&#x27;;
+
+import &#x27;package:file_picker/file_picker.dart&#x27;;
+import &#x27;package:path_provider/path_provider.dart&#x27;;
+import &#x27;package:share_plus/share_plus.dart&#x27;;
+
+import &#x27;catalog_models.dart&#x27;;
+import &#x27;catalog_persistence.dart&#x27;;
+
+class FileCatalogPersistence implements CatalogPersistence {
+  FileCatalogPersistence({
+    Future&lt;Directory&gt; Function()? documentsDirectoryProvider,
+    Future&lt;Directory&gt; Function()? temporaryDirectoryProvider,
+  })  : _documentsDirectoryProvider =
+            documentsDirectoryProvider ?? getApplicationDocumentsDirectory,
+        _temporaryDirectoryProvider =
+            temporaryDirectoryProvider ?? getTemporaryDirectory;
+
+  static const String catalogFileName = &#x27;parts_catalog.json&#x27;;
+  static const String catalogTempFileName = &#x27;parts_catalog.json.tmp&#x27;;
+  static const String backupFileName = &#x27;parts_catalog.backup.json&#x27;;
+
+  final Future&lt;Directory&gt; Function() _documentsDirectoryProvider;
+  final Future&lt;Directory&gt; Function() _temporaryDirectoryProvider;
+
+  static const JsonEncoder _prettyEncoder = JsonEncoder.withIndent(&#x27;  &#x27;);
+
+  Future&lt;void&gt; _writeQueue = Future&lt;void&gt;.value();
+
+  Future&lt;T&gt; _enqueue&lt;T&gt;(Future&lt;T&gt; Function() action) {
+    final completer = Completer&lt;T&gt;();
+    _writeQueue = _writeQueue.then((_) async {
+      try {
+        final result = await action();
+        completer.complete(result);
+      } on Object catch (e, st) {
+        completer.completeError(e, st);
+      }
+    });
+    return completer.future;
+  }
+
+  @override
+  Future&lt;CatalogSnapshot&gt; load() {
+    return _enqueue(() async {
+      final dir = await _documentsDirectoryProvider();
+      final file = File(&#x27;${dir.path}/$catalogFileName&#x27;);
+      if (!await file.exists()) {
+        final initial = CatalogSnapshot.empty();
+        await _writeAtomically(dir, catalogFileName, initial);
+        return initial;
+      }
+      final rawJson = await file.readAsString();
+      final decoded = jsonDecode(rawJson) as Map&lt;String, dynamic&gt;;
+      return CatalogSnapshot.fromJson(decoded);
+    });
+  }
+
+  @override
+  Future&lt;void&gt; save(CatalogSnapshot snapshot) {
+    return _enqueue(() async {
+      final dir = await _documentsDirectoryProvider();
+      await _writeAtomically(dir, catalogFileName, snapshot);
+    });
+  }
+
+  @override
+  Future&lt;void&gt; savePreImportBackup(CatalogSnapshot currentSnapshot) {
+    return _enqueue(() async {
+      final dir = await _documentsDirectoryProvider();
+      await _writeAtomically(dir, backupFileName, currentSnapshot);
+    });
+  }
+
+  @override
+  Future&lt;String&gt; writeExportFile(CatalogSnapshot snapshot) {
+    return _enqueue(() async {
+      final dir = await _temporaryDirectoryProvider();
+      final fileName = snapshot.exportFileName;
+      await _writeAtomically(dir, fileName, snapshot);
+      return &#x27;${dir.path}/$fileName&#x27;;
+    });
+  }
+
+  @override
+  Future&lt;void&gt; shareExportFile(CatalogSnapshot snapshot) async {
+    final path = await writeExportFile(snapshot);
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(path)],
+        subject: &#x27;Parts Tracker Catalog Backup&#x27;,
+      ),
+    );
+  }
+
+  @override
+  Future&lt;String?&gt; pickImportJson() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const [&#x27;json&#x27;],
+    );
+    final filePath = result.singleOrNull?.path;
+    if (filePath == null) return null;
+    return File(filePath).readAsString();
+  }
+
+  Future&lt;void&gt; _writeAtomically(
+    Directory dir,
+    String targetFileName,
+    CatalogSnapshot snapshot,
+  ) async {
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+    final tempFile = File(&#x27;${dir.path}/$targetFileName.tmp&#x27;);
+    final targetFile = File(&#x27;${dir.path}/$targetFileName&#x27;);
+    final jsonMap = &lt;String, dynamic&gt;{
+      &#x27;schemaVersion&#x27;: snapshot.schemaVersion,
+      &#x27;updatedAt&#x27;: snapshot.updatedAt.toUtc().toIso8601String(),
+      &#x27;containers&#x27;: snapshot.containers.map((c) =&gt; c.toJson()).toList(),
+      &#x27;parts&#x27;: snapshot.parts.map((p) =&gt; p.toJson()).toList(),
+    };
+    final formatted = &#x27;${_prettyEncoder.convert(jsonMap)}\n&#x27;;
+    await tempFile.writeAsString(formatted, flush: true);
+    await tempFile.rename(targetFile.path);
+  }
+}</code></pre></div>
+<hr />
+<h2 id="persistence-test">3. Verifying Concurrent Atomic Writes (<code>test/file_catalog_persistence_test.dart</code>)</h2>
+<p>Just like <code>Promise.all([...])</code> in TypeScript, Dart's <strong><code>Future.wait([...])</code></strong> fires multiple futures concurrently. Look at how <code>test/file_catalog_persistence_test.dart</code> verifies that firing two concurrent <code>persistence.save(...)</code> calls never leaves a <code>.tmp</code> file behind and always commits the second snapshot cleanly:</p>
+<div class="code-figure"><div class="code-caption">Concurrent Future.wait atomic save test in test/file_catalog_persistence_test.dart</div><pre><code class="language-dart">      // Enqueue multiple saves concurrently to verify serialized atomic writes
+      await Future.wait([
+        persistence.save(snapshot.copyWith(parts: [])),
+        persistence.save(snapshot),
+      ]);
+
+      final liveFile = File(&#x27;${tempDir.path}/parts_catalog.json&#x27;);
+      final tmpFile = File(&#x27;${tempDir.path}/parts_catalog.json.tmp&#x27;);
+      expect(await liveFile.exists(), isTrue);
+      expect(await tmpFile.exists(), isFalse);</code></pre></div>
+<hr />
+<h2 id="practice">4. Interactive Practice &amp; Verification</h2>
+<section class="exercise-card" id="ex-0003" data-hint="" data-success="All blanks matched!"><div class="widget-header"><h3 class="widget-title">Interactive Lab: Implementing the Atomic Persistence Queue</h3><span class="widget-badge">Skill Practice • Tight Feedback Loop</span></div><p>Complete the missing Dart persistence and async tokens below:</p>
+<div class="code-figure"><pre><code class="language-dart">class InMemoryCatalogPersistence <input type="text" class="code-blank" data-answer="implements" data-error-hint="Use the keyword that fulfills the CatalogPersistence interface without inheriting implementation." placeholder="implements" style="width:12ch" aria-label="Fill in the blank: implements" autocomplete="off" spellcheck="false" /> CatalogPersistence {
+  // ...
+}
+
+// Inside FileCatalogPersistence._enqueue&lt;T&gt;:
+Future&lt;T&gt; _enqueue&lt;T&gt;(Future&lt;T&gt; Function() action) {
+  final completer = <input type="text" class="code-blank" data-answer="Completer&lt;T&gt;()" data-error-hint="" placeholder="Completer()" style="width:Create the dart:async deferred future controller.ch" aria-label="Fill in the blank: Completer()" autocomplete="off" spellcheck="false" />;
+  _writeQueue = _writeQueue.then((_) async {
+    try {
+      final result = await action();
+      completer.<input type="text" class="code-blank" data-answer="complete" data-error-hint="Resolve the completer with the action&#x27;s result." placeholder="complete" style="width:10ch" aria-label="Fill in the blank: complete" autocomplete="off" spellcheck="false" />(result);
+    } on Object catch (e, st) {
+      completer.completeError(e, st);
+    }
+  });
+  return completer.future;
+}
+
+// Inside _writeAtomically:
+await tempFile.writeAsString(formatted, <input type="text" class="code-blank" data-answer="flush: true" data-error-hint="Force OS buffers to flush to disk before renaming the temporary file." placeholder="flush: true" style="width:13ch" aria-label="Fill in the blank: flush: true" autocomplete="off" spellcheck="false" />);
+await tempFile.rename(targetFile.path);</code></pre></div>
+<p>:::prompts
+hint: &quot;Classes fulfill interface contracts with 'implements', deferred futures use 'Completer<T>()' and 'completer.complete(result)', and atomic writes flush buffers via 'flush: true'.&quot;
+success: &quot;Great work! You've mastered Dart interface implementation, Completer queues, and atomic file persistence.&quot;</p>
+<div class="widget-actions"><button type="button" class="btn btn-primary" data-action="check-exercise">Check Answers</button><button type="button" class="btn" data-action="hint-exercise">Show Hint</button></div><div class="widget-feedback" role="status" aria-live="polite"></div></section>
+<p>:::</p>
+<section class="quiz-card" id="quiz-0003"><div class="widget-header"><h3 class="widget-title">Retrieval Practice: Interfaces, Completers &amp; Atomic Persistence</h3><span class="widget-badge">3 Questions • Equal-Length Options</span></div><div class="quiz-question-block" data-wrong-hint="Recall that every Dart class implicitly defines an interface."><div class="quiz-question-title">1. In Dart, what is the difference between <code>class B implements A</code> and <code>class B extends A</code>?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`implements` does not inherit any fields or method bodies from `A`; it treats `A` strictly as an interface contract."><span class="quiz-option-letter">A.</span><span>implements copies all private fields from A whereas extends only copies public static methods.</span></button><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! `implements` treats `A` as a pure interface (like TypeScript&#x27;s `implements`), making it ideal for test doubles."><span class="quiz-option-letter">B.</span><span>implements requires B to provide every member of A without inheriting A's method bodies.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Any Dart class can use `extends` or `implements` regardless of whether it is a widget, service, or model."><span class="quiz-option-letter">C.</span><span>implements is only allowed on widget classes whereas extends is restricted to data models.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Both `implements` and `extends` are statically verified at compile time by the Dart analyzer and compiler."><span class="quiz-option-letter">D.</span><span>implements runs only at runtime in debug mode whereas extends is checked during compilation.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div><div class="quiz-question-block" data-wrong-hint="Consider what happens if the app is killed mid-write."><div class="quiz-question-title">2. Why does <code>FileCatalogPersistence</code> write JSON to <code>parts_catalog.json.tmp</code> and rename it instead of overwriting <code>parts_catalog.json</code> directly?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`File.writeAsString` works on any file path, but overwriting in place risks truncating existing data on crash."><span class="quiz-option-letter">A.</span><span>Dart forbids calling writeAsString directly on any file whose path ends with .json.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="The file is still plain UTF-8 2-space-indented JSON; the `.tmp` suffix is used for atomic replacement."><span class="quiz-option-letter">B.</span><span>Writing to a temporary file compresses the JSON payload into binary gzip format.</span></button><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! Writing with `flush: true` to `.tmp` and calling `rename` performs an atomic POSIX directory entry swap."><span class="quiz-option-letter">C.</span><span>Flushing a temporary file then renaming prevents half-written corrupted JSON on sudden crashes.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="OS cloud backups ignore temporary files; we use `.tmp` strictly as a staging file before renaming."><span class="quiz-option-letter">D.</span><span>Mobile operating systems automatically back up .tmp files to cloud storage every minute.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div><div class="quiz-question-block" data-wrong-hint="Think about what happens when five `save()` calls are triggered within 200ms."><div class="quiz-question-title">3. What problem does the <code>_enqueue&lt;T&gt;</code> <code>Future</code> chain in <code>FileCatalogPersistence</code> solve during rapid stock adjustments?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! Chaining onto `_writeQueue` guarantees every `load` and `save` finishes before the next one touches `.tmp`."><span class="quiz-option-letter">A.</span><span>It serializes concurrent file operations sequentially so overlapping saves never race on disk.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`_enqueue` runs on the same Dart isolate event loop using asynchronous `Future` chaining, not OS threads."><span class="quiz-option-letter">B.</span><span>It spawns a separate background OS thread for every single button tap event.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Async disk I/O is non-blocking and has no effect on the UI frame rate."><span class="quiz-option-letter">C.</span><span>It throttles user interface frame rendering to thirty frames per second on iOS.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`FileCatalogPersistence` manages local catalog JSON files on disk, not HTTP responses."><span class="quiz-option-letter">D.</span><span>It caches HTTP responses from the LCSC server inside local browser session storage.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div></section>
+<section class="verify-card" id="verify-0003"><div class="widget-header"><h3 class="widget-title">Verification Lab: Run Atomic File Persistence Tests</h3><span class="widget-badge">CLI Gate • Zero Warnings &amp; 100% Green</span></div><p>Run static analysis and the persistence test suite in <code>tutorial/apps/0003-persistence-seam-and-atomic-file-storage</code>:</p>
+<div class="code-figure"><div class="code-caption">Terminal verification commands for Lesson 0003</div><pre><code class="language-bash">cd tutorial/apps/0003-persistence-seam-and-atomic-file-storage
+flutter analyze
+flutter test</code></pre></div>
+<p>Expected terminal output:</p>
+<div class="code-figure"><div class="code-caption">Verified output of flutter analyze &amp;&amp; flutter test</div><pre><code class="language-text">Analyzing 0003-persistence-seam-and-atomic-file-storage...
+No issues found!
+00:01 +4: All tests passed!</code></pre></div><ul class="verify-checklist"><li class="verify-item"><input type="checkbox" id="verify-0003-chk-1" data-storage-key="verify:0003-persistence-seam-and-atomic-file-storage:verify-0003:1" /><label for="verify-0003-chk-1">Reviewed <code>lib/catalog/catalog_persistence.dart</code> and <code>lib/catalog/file_catalog_persistence.dart</code>.</label></li><li class="verify-item"><input type="checkbox" id="verify-0003-chk-2" data-storage-key="verify:0003-persistence-seam-and-atomic-file-storage:verify-0003:2" /><label for="verify-0003-chk-2">Verified <code>flutter analyze</code> reports <code>No issues found!</code>.</label></li><li class="verify-item"><input type="checkbox" id="verify-0003-chk-3" data-storage-key="verify:0003-persistence-seam-and-atomic-file-storage:verify-0003:3" /><label for="verify-0003-chk-3">Verified <code>flutter test</code> passes <code>test/file_catalog_persistence_test.dart</code>, <code>test/catalog_models_test.dart</code>, and <code>test/widget_test.dart</code> (4 tests total).</label></li></ul></section>
+<aside class="teacher-prompt"><p><strong>Up next</strong>: Now that we have immutable Freezed models and an atomic persistence seam, <a href="0004-reactive-catalog-state-with-riverpod.html">Lesson 0004: Reactive Catalog State with Riverpod <code>AsyncNotifier</code></a> wires them into our reactive <code>Catalog</code> store with part normalization, <code>(Container, Slot)</code> collision protection, quantity clamping, and all-or-nothing JSON import validation!</p>
+</aside>
+      <nav class="lesson-pager" aria-label="Lesson pagination"><a class="pager-card pager-card-prev" href="../lessons/0002-immutable-domain-models-with-freezed.html"><span class="pager-meta">← Previous • Lesson 0002</span><span class="pager-title">Immutable Domain Models with Freezed &amp; JSON Serialization</span></a><a class="pager-card pager-card-next" href="../lessons/0004-reactive-catalog-state-with-riverpod.html"><span class="pager-meta">Next • Lesson 0004 →</span><span class="pager-title">Reactive Catalog State with Riverpod AsyncNotifier</span></a></nav>
+    </article>
+  </main>
+  <footer class="site-footer">
+    <span>Electronics Parts Tracker — Interactive Flutter &amp; Riverpod Course for React + TypeScript Developers</span>
+  </footer>
+</body>
+</html>

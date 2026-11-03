@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Lesson 0001 — Flutter Bootstrap, ProviderScope &amp; Dark Workbench Shell</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <script src="../assets/course.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"><nav class="course-nav" aria-label="Course navigation"><div class="nav-breadcrumbs"><a href="../index.html">Index</a><span class="nav-sep" aria-hidden="true">›</span><span class="nav-current" aria-current="page">Lesson 0001</span></div><div class="nav-controls"><span class="nav-pager-group" role="group" aria-label="Adjacent lessons"><span class="nav-pager-disabled" aria-disabled="true">← Prev</span><span class="nav-sep" aria-hidden="true">·</span><a class="nav-pager-link" href="../lessons/0002-immutable-domain-models-with-freezed.html" title="Lesson 0002: Immutable Domain Models with Freezed &amp; JSON Serialization">Next →</a></span><span class="nav-divider" aria-hidden="true">|</span><a class="nav-ref-link" href="../reference/glossary.html">Glossary</a><a class="nav-ref-link" href="../reference/react-to-flutter-cheatsheet.html">React → Flutter</a><a class="nav-ref-link" href="../reference/verification-and-testing.html">Verification &amp; Testing</a><span class="mission-badge">Flutter • Parts Tracker</span></div></nav></header>
+  <main id="main-content" class="page-main">
+    <article class="tufte-article">
+      <header class="article-header">
+        <div class="article-badge">Lesson 0001 • Bootstrap &amp; ProviderScope</div>
+        <h1>Flutter Bootstrap, ProviderScope &amp; Dark Workbench Shell</h1>
+        <p class="article-subtitle">Translate package.json, createRoot(), React Context Providers, and React Testing Library into pubspec.yaml, runApp(), ProviderScope, StatelessWidget, and WidgetTester.</p>
+      </header>
+      <h2 id="why-bootstrap">Why Start at the Entrypoint?</h2>
+<p>When you open a React + TypeScript codebase for the first time, your eyes immediately look for three files: <code>package.json</code> (what libraries are installed?), <code>tsconfig.json</code> (how strict is the compiler?), and <code>src/main.tsx</code> (what wraps <code>&lt;App /&gt;</code> inside <code>createRoot(...).render(...)</code>?).</p>
+<p>In our Electronics Parts Tracker repository, those exact same roles are played by <code>pubspec.yaml</code>, <code>analysis_options.yaml</code>, and <code>lib/main.dart</code>. In this first lesson, you will build and verify the runnable application foundation in <code>./tutorial/apps/0001-flutter-bootstrap-and-provider-scope/</code>:</p>
+<ol>
+<li>Configure <code>pubspec.yaml</code> and <code>analysis_options.yaml</code> with <code>flutter_riverpod</code> and <code>flutter_lints</code>.</li>
+<li>Write <code>lib/main.dart</code> with <code>WidgetsFlutterBinding.ensureInitialized()</code>, <code>ProviderScope</code>, <code>PartsTrackerApp</code>, the cyan-accented Material 3 dark theme (<code>#00E5FF</code> on <code>#0E1318</code>), and an initial <code>WorkbenchScreen</code> shell.</li>
+<li>Verify the rendered UI headlessly in under two seconds using <code>flutter analyze</code> and <code>flutter test</code> (<code>WidgetTester</code>).</li>
+</ol>
+<aside class="callout callout"><p><strong>Primary Sources for Lesson 0001</strong>: Keep the <a href="../reference/react-to-flutter-cheatsheet.html">React &amp; TypeScript → Flutter &amp; Dart Cheat Sheet</a>, the <a href="../reference/glossary.html">Glossary</a>, and the official <a href="https://docs.flutter.dev/get-started/flutter-for/react-devs">Flutter for React Developers guide</a> handy as you work through the blocks below.</p>
+</aside>
+<hr />
+<h2 id="manifest">1. Project Manifest &amp; Static Analysis (<code>pubspec.yaml</code> &amp; <code>analysis_options.yaml</code>)</h2>
+<p>In a React + TypeScript project, <code>package.json</code> lists runtime <code>dependencies</code> and <code>devDependencies</code>, while <code>tsconfig.json</code> and <code>eslint.config.js</code> configure typechecking and lint rules. In Flutter, Dart's package manager (<code>pub</code>), compiler, static analyzer, and test runner are all built into a single <code>flutter</code> CLI tool.<span class="sidenote-number"></span><span class="sidenote">Unlike Node.js where <code>typescript</code>, <code>eslint</code>, and <code>vitest</code> are separate third-party packages, Dart ships its sound type checker, linter, formatter (<code>dart format</code>), and test runner directly inside the SDK.</span></p>
+<h3>Block 1: Declaring Dependencies in <code>pubspec.yaml</code></h3>
+<p>Here is the minimal <code>pubspec.yaml</code> for our Lesson 0001 companion app:</p>
+<div class="code-figure"><div class="code-caption">tutorial/apps/0001-flutter-bootstrap-and-provider-scope/pubspec.yaml</div><pre><code class="language-yaml">name: parts_tracker_skilled
+description: &quot;Electronics Parts Tracker companion app (Lesson 0001).&quot;
+publish_to: &#x27;none&#x27;
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^3.4.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true</code></pre></div>
+<ul>
+<li><strong><code>name: parts_tracker_skilled</code></strong>: Just like <code>&quot;name&quot;</code> in <code>package.json</code>, except Dart uses this identifier for absolute package imports inside your project (<code>import 'package:parts_tracker_skilled/main.dart';</code>—equivalent to a TypeScript path alias like <code>@/main</code>).</li>
+<li><strong><code>publish_to: 'none'</code></strong>: Equivalent to <code>&quot;private&quot;: true</code> in <code>package.json</code>, preventing accidental publishing to <code>pub.dev</code>.</li>
+<li><strong><code>dependencies</code> vs. <code>dev_dependencies</code></strong>: <code>flutter</code> and <code>flutter_riverpod</code> ship inside the compiled app binary; <code>flutter_test</code> and <code>flutter_lints</code> are only used during <code>flutter test</code> and <code>flutter analyze</code>.</li>
+<li><strong><code>uses-material-design: true</code></strong>: Bundles the Material Design icon font (<code>Icons.*</code>) into the application bundle.</li>
+</ul>
+<h3>Block 2: Configuring the Analyzer in <code>analysis_options.yaml</code></h3>
+<div class="code-figure"><div class="code-caption">tutorial/apps/0001-flutter-bootstrap-and-provider-scope/analysis_options.yaml</div><pre><code class="language-yaml">include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - ios/**
+
+linter:
+  rules:</code></pre></div>
+<ul>
+<li><strong><code>include: package:flutter_lints/flutter.yaml</code></strong>: Equivalent to <code>extends: [&quot;@eslint/js&quot;, &quot;plugin:react/recommended&quot;]</code>. Among its most important rules for React developers is <code>prefer_const_constructors</code>—the analyzer will warn you whenever a <strong>Widget</strong> can be canonicalized at compile time with <code>const</code>!</li>
+</ul>
+<hr />
+<h2 id="main-dart">2. Building <code>lib/main.dart</code> Block by Block</h2>
+<p>In React, you mount your application by passing a JSX tree into <code>createRoot(document.getElementById('root')!).render(...)</code>, wrapping your root component in context providers (like <code>&lt;QueryClientProvider&gt;</code> or <code>&lt;ReduxProvider&gt;</code>), and rendering a <code>&lt;ThemeProvider&gt;</code> inside your <code>App</code> component.</p>
+<p>Let's see how our Electronics Parts Tracker expresses that exact architecture in Dart and Flutter.</p>
+<figure class="mermaid-figure"><pre class="mermaid">flowchart TD
+  subgraph ReactApp[&quot;React + TypeScript (main.tsx)&quot;]
+    RMain[&quot;createRoot(rootEl).render(...)&quot;] --&gt; RScope[&quot;&amp;lt;QueryClientProvider&amp;gt; / &amp;lt;Provider&amp;gt;&quot;]
+    RScope --&gt; RApp[&quot;&amp;lt;PartsTrackerApp /&amp;gt;&quot;]
+    RApp --&gt; RTheme[&quot;&amp;lt;ThemeProvider theme={darkTheme}&amp;gt;&quot;]
+    RTheme --&gt; RScreen[&quot;&amp;lt;WorkbenchScreen /&amp;gt;&quot;]
+  end
+  subgraph FlutterApp[&quot;Flutter + Riverpod (lib/main.dart)&quot;]
+    FMain[&quot;void main() → runApp(...)&quot;] --&gt; FScope[&quot;const ProviderScope(...)&quot;]
+    FScope --&gt; FApp[&quot;const PartsTrackerApp()&quot;]
+    FApp --&gt; FTheme[&quot;MaterialApp(themeMode: ThemeMode.dark)&quot;]
+    FTheme --&gt; FScreen[&quot;const WorkbenchScreen()&quot;]
+  end</pre><figcaption class="mermaid-caption">Figure 1.1: Side-by-side startup flow in React + TypeScript vs. Flutter + Riverpod.</figcaption></figure>
+<h3>Block 1: Imports and the <code>main()</code> Entrypoint</h3>
+<div class="code-figure"><div class="code-caption">Imports and main() entrypoint in lib/main.dart</div><pre><code class="language-dart">import &#x27;package:flutter/material.dart&#x27;;
+import &#x27;package:flutter_riverpod/flutter_riverpod.dart&#x27;;
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    const ProviderScope(
+      child: PartsTrackerApp(),
+    ),
+  );
+}</code></pre></div>
+<ul>
+<li><strong><code>import 'package:flutter/material.dart';</code></strong>: Notice there is no <code>import { ... } from '...'</code> destructuring syntax in Dart. A single <code>import</code> statement brings all public symbols from that library into scope.<span class="sidenote-number"></span><span class="sidenote">If two packages export a class with the same name—such as Flutter's <code>Container</code> layout widget and our own <code>Container</code> storage unit model in Lesson 0002—Dart lets you filter imports with <code>hide Container</code> or <code>show ...</code>, or namespace them with <code>as</code>.</span></li>
+<li><strong><code>void main()</code></strong>: Every Dart program starts at a top-level <code>main()</code> function.</li>
+<li><strong><code>WidgetsFlutterBinding.ensureInitialized()</code></strong>: Ensures the low-level bridge between the Dart VM, the Flutter rendering engine (Impeller/Skia), and the host OS (file system paths, platform channels) is ready before any code touches native services.</li>
+<li><strong><code>runApp(...)</code></strong>: Flutter's counterpart to <code>createRoot(el).render(...)</code>. It takes the given root <strong>Widget</strong> and inflates it to fill the device screen.</li>
+<li><strong><code>const ProviderScope(child: PartsTrackerApp())</code></strong>: <code>ProviderScope</code> is the root <strong>Widget</strong> from <code>flutter_riverpod</code> that stores the state of all Riverpod providers. Unlike a global singleton store in JavaScript that leaks state between tests, storing state inside <code>ProviderScope</code> means every <code>testWidgets</code> test gets a brand-new, isolated state container!</li>
+</ul>
+<h3>Block 2: <code>PartsTrackerApp</code> (<code>StatelessWidget</code> &amp; Dark Theme)</h3>
+<p>In React, a component with no local state is a function <code>function PartsTrackerApp(props: Props): JSX.Element</code>. In Flutter, it is a class that extends <code>StatelessWidget</code>:</p>
+<div class="code-figure"><div class="code-caption">PartsTrackerApp StatelessWidget and Material 3 dark theme configuration</div><pre><code class="language-dart">class PartsTrackerApp extends StatelessWidget {
+  const PartsTrackerApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: &#x27;Electronics Parts Tracker&#x27;,
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.dark,
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF00E5FF),
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF0E1318),
+      ),
+      home: const WorkbenchScreen(),
+    );
+  }
+}</code></pre></div>
+<p>Let's unpack every Dart idiom in those 20 lines through a React + TypeScript lens:</p>
+<ul>
+<li><strong><code>const PartsTrackerApp({super.key});</code></strong>:
+<ul>
+<li>Curly braces <code>{ ... }</code> in a Dart parameter list define <strong>named parameters</strong>—just like destructuring a React <code>props</code> object (<code>{ key }</code>).</li>
+<li><code>super.key</code> forwards the optional <code>Key?</code> parameter directly to the <code>Widget</code> superclass constructor. It serves the exact same reconciliation purpose as React's <code>key</code> prop when items move or reorder in a list.</li>
+<li>The <code>const</code> keyword on the constructor allows callers to write <code>const PartsTrackerApp()</code>. In Dart, <code>const</code> objects are deeply immutable and canonicalized at compile time: two <code>const PartsTrackerApp()</code> expressions point to the <strong>exact same memory address</strong>, giving Flutter a zero-cost <code>React.memo</code> check (<code>identical(oldWidget, newWidget)</code>) that skips rebuilding the subtree!</li>
+</ul>
+</li>
+<li><strong><code>@override Widget build(BuildContext context)</code></strong>:
+<ul>
+<li>Equivalent to the return statement of a React function component.</li>
+<li>Why does <code>build</code> take <code>BuildContext context</code>? In React, hooks like <code>useContext(ThemeContext)</code> rely on a hidden global pointer to the currently rendering Fiber node. Flutter makes that node explicit: <code>BuildContext</code> <strong>is</strong> the mounted <strong>Element (<code>BuildContext</code>)</strong> node in the live tree. Passing <code>context</code> into <code>Theme.of(context)</code> or <code>Navigator.of(context)</code> walks up the Element tree in $O(1)$ time.</li>
+</ul>
+</li>
+<li><strong><code>const Color(0xFF00E5FF)</code></strong>: Dart integer color literals use 32-bit <code>0xAARRGGBB</code> hex format (<code>FF</code> = 100% alpha opacity, <code>00E5FF</code> = workbench cyan accent).</li>
+</ul>
+<h3>Block 3: The Initial <code>WorkbenchScreen</code> Shell</h3>
+<p>Before we wire up our Freezed catalog models and Riverpod providers in the upcoming lessons, <code>PartsTrackerApp</code> needs a <code>WorkbenchScreen</code> widget to mount as its <code>home:</code> route:</p>
+<div class="code-figure"><div class="code-caption">Initial WorkbenchScreen shell in lib/main.dart</div><pre><code class="language-dart">class WorkbenchScreen extends StatelessWidget {
+  const WorkbenchScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(&#x27;Electronics Parts Tracker&#x27;),
+      ),
+      body: const Center(
+        child: Text(&#x27;Workbench Ready — 0 parts cataloged&#x27;),
+      ),
+    );
+  }
+}</code></pre></div>
+<ul>
+<li><strong><code>Scaffold</code></strong>: A Material 3 page frame that provides standard layout slots for a top <code>appBar:</code>, main <code>body:</code>, <code>floatingActionButton:</code>, and modal bottom sheets.</li>
+<li><strong><code>child:</code> vs. <code>children:</code></strong>: In JSX, nested elements are always passed as variadic children (<code>&lt;div&gt;&lt;span&gt;Hi&lt;/span&gt;&lt;/div&gt;</code>). In Flutter, widgets that wrap a single child take a named <code>child: Widget</code> parameter (<code>Center</code>, <code>ProviderScope</code>), whereas layout widgets that arrange multiple children (<code>Row</code>, <code>Column</code>, <code>ListView</code>) take <code>children: &lt;Widget&gt;[...]</code>.</li>
+</ul>
+<h3>Complete <code>lib/main.dart</code> Listing</h3>
+<p>Here is the complete, runnable <code>lib/main.dart</code> for Lesson 0001 with all three blocks combined:</p>
+<div class="code-figure"><div class="code-caption">tutorial/apps/0001-flutter-bootstrap-and-provider-scope/lib/main.dart</div><pre><code class="language-dart">import &#x27;package:flutter/material.dart&#x27;;
+import &#x27;package:flutter_riverpod/flutter_riverpod.dart&#x27;;
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    const ProviderScope(
+      child: PartsTrackerApp(),
+    ),
+  );
+}
+
+class PartsTrackerApp extends StatelessWidget {
+  const PartsTrackerApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: &#x27;Electronics Parts Tracker&#x27;,
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.dark,
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF00E5FF),
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF0E1318),
+      ),
+      home: const WorkbenchScreen(),
+    );
+  }
+}
+
+class WorkbenchScreen extends StatelessWidget {
+  const WorkbenchScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(&#x27;Electronics Parts Tracker&#x27;),
+      ),
+      body: const Center(
+        child: Text(&#x27;Workbench Ready — 0 parts cataloged&#x27;),
+      ),
+    );
+  }
+}</code></pre></div>
+<section class="simulator-card" data-simulator="react-flutter-tree-mapper" aria-label="Interactive Widget Tree Simulator"><div class="widget-header"><h3 class="widget-title">Interactive Simulator: React Tree vs. Flutter Widget &amp; Element Tree</h3><span class="widget-badge">Click Any Node to Inspect</span></div><p>Select each layer of <code>lib/main.dart</code> below to compare its React + TypeScript counterpart, its <code>BuildContext</code> (<code>Element</code>) role, and when Flutter rebuilds it:</p><div class="sim-grid"><div class="sim-tree-list" role="toolbar" aria-label="Widget tree nodes"></div><div class="sim-inspector" aria-live="polite"></div></div></section>
+<hr />
+<h2 id="widget-test">3. Writing Your First Headless Widget Test (<code>test/widget_test.dart</code>)</h2>
+<p>In React, you test components using Vitest/Jest + React Testing Library (<code>render(&lt;App /&gt;)</code>, <code>screen.getByText(...)</code>, <code>expect(...).toBeInTheDocument()</code>). In Flutter, <code>package:flutter_test</code> provides <code>testWidgets</code>, which mounts your real widget tree inside a headless, deterministic frame clock driven by a <strong>WidgetTester</strong>.</p>
+<h3>Block 1: Imports and <code>testWidgets</code> Harness</h3>
+<div class="code-figure"><div class="code-caption">Mounting PartsTrackerApp inside ProviderScope with WidgetTester</div><pre><code class="language-dart">import &#x27;package:flutter/material.dart&#x27;;
+import &#x27;package:flutter_riverpod/flutter_riverpod.dart&#x27;;
+import &#x27;package:flutter_test/flutter_test.dart&#x27;;
+import &#x27;package:parts_tracker_skilled/main.dart&#x27;;
+
+void main() {
+  testWidgets(
+    &#x27;PartsTrackerApp boots inside ProviderScope with dark theme and WorkbenchScreen shell&#x27;,
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: PartsTrackerApp(),
+        ),
+      );</code></pre></div>
+<ul>
+<li><strong><code>(WidgetTester tester) async</code></strong>: Just like an <code>async () =&gt; { ... }</code> test callback in Vitest, Dart marks asynchronous functions with <code>async</code> right before the body <code>{</code> and returns a <code>Future&lt;void&gt;</code>.</li>
+<li><strong><code>await tester.pumpWidget(...)</code></strong>: Equivalent to React Testing Library's <code>render(...)</code>. Why is it called <code>pumpWidget</code>? Because Flutter's test environment controls time explicitly—nothing paints or animates until you &quot;pump&quot; a frame!</li>
+</ul>
+<h3>Block 2: Querying the Tree with <code>find</code> and <code>findsOneWidget</code></h3>
+<div class="code-figure"><div class="code-caption">Asserting rendered text and Material 3 dark theme colors</div><pre><code class="language-dart">      expect(find.text(&#x27;Electronics Parts Tracker&#x27;), findsOneWidget);
+      expect(find.text(&#x27;Workbench Ready — 0 parts cataloged&#x27;), findsOneWidget);
+
+      final materialApp = tester.widget&lt;MaterialApp&gt;(find.byType(MaterialApp));
+      expect(materialApp.themeMode, ThemeMode.dark);
+      expect(
+        materialApp.darkTheme?.scaffoldBackgroundColor,
+        const Color(0xFF0E1318),
+      );
+    },
+  );
+}</code></pre></div>
+<ul>
+<li><strong><code>expect(find.text('...'), findsOneWidget)</code></strong>:
+<ul>
+<li><code>find.text('...')</code> is a lazy query descriptor (similar to <code>screen.queryByText('...')</code>).</li>
+<li><code>findsOneWidget</code> asserts that exactly one matching <strong>Widget</strong> is currently mounted in the tree (and <code>findsNothing</code> asserts zero matches).</li>
+</ul>
+</li>
+<li><strong><code>tester.widget&lt;MaterialApp&gt;(find.byType(MaterialApp))</code></strong>: Notice Dart's generic type argument <code>&lt;MaterialApp&gt;</code>! This inspects the mounted <code>MaterialApp</code> instance directly so we can verify that <code>themeMode</code> is <code>ThemeMode.dark</code> and <code>scaffoldBackgroundColor</code> is <code>const Color(0xFF0E1318)</code>.</li>
+</ul>
+<h3>Complete <code>test/widget_test.dart</code> Listing</h3>
+<div class="code-figure"><div class="code-caption">tutorial/apps/0001-flutter-bootstrap-and-provider-scope/test/widget_test.dart</div><pre><code class="language-dart">import &#x27;package:flutter/material.dart&#x27;;
+import &#x27;package:flutter_riverpod/flutter_riverpod.dart&#x27;;
+import &#x27;package:flutter_test/flutter_test.dart&#x27;;
+import &#x27;package:parts_tracker_skilled/main.dart&#x27;;
+
+void main() {
+  testWidgets(
+    &#x27;PartsTrackerApp boots inside ProviderScope with dark theme and WorkbenchScreen shell&#x27;,
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: PartsTrackerApp(),
+        ),
+      );
+
+      expect(find.text(&#x27;Electronics Parts Tracker&#x27;), findsOneWidget);
+      expect(find.text(&#x27;Workbench Ready — 0 parts cataloged&#x27;), findsOneWidget);
+
+      final materialApp = tester.widget&lt;MaterialApp&gt;(find.byType(MaterialApp));
+      expect(materialApp.themeMode, ThemeMode.dark);
+      expect(
+        materialApp.darkTheme?.scaffoldBackgroundColor,
+        const Color(0xFF0E1318),
+      );
+    },
+  );
+}</code></pre></div>
+<hr />
+<h2 id="practice">4. Interactive Practice &amp; Verification</h2>
+<section class="exercise-card" id="ex-0001" data-hint="" data-success="All blanks matched!"><div class="widget-header"><h3 class="widget-title">Interactive Lab: Complete the Flutter &amp; Riverpod Entrypoint</h3><span class="widget-badge">Skill Practice • Tight Feedback Loop</span></div><p>Fill in the missing Dart and Flutter identifiers below from memory to wire <code>main()</code>, <code>ProviderScope</code>, <code>PartsTrackerApp</code>, and the <code>testWidgets</code> assertion:</p>
+<div class="code-figure"><pre><code class="language-dart">void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    const <input type="text" class="code-blank" data-answer="ProviderScope" data-error-hint="Use the root Riverpod widget that stores provider state." placeholder="ProviderScope" style="width:15ch" aria-label="Fill in the blank: ProviderScope" autocomplete="off" spellcheck="false" />(
+      child: PartsTrackerApp(),
+    ),
+  );
+}
+
+class PartsTrackerApp extends <input type="text" class="code-blank" data-answer="StatelessWidget" data-error-hint="Extend Flutter&#x27;s base class for widgets without mutable local state." placeholder="StatelessWidget" style="width:17ch" aria-label="Fill in the blank: StatelessWidget" autocomplete="off" spellcheck="false" /> {
+  const PartsTrackerApp({<input type="text" class="code-blank" data-answer="super.key" data-error-hint="Forward the optional Key parameter to the Widget superclass." placeholder="super.key" style="width:11ch" aria-label="Fill in the blank: super.key" autocomplete="off" spellcheck="false" />});
+
+  @override
+  Widget build(<input type="text" class="code-blank" data-answer="BuildContext" data-error-hint="Pass the Element tree handle type into build()." placeholder="BuildContext" style="width:14ch" aria-label="Fill in the blank: BuildContext" autocomplete="off" spellcheck="false" /> context) {
+    return const MaterialApp(
+      home: WorkbenchScreen(),
+    );
+  }
+}
+
+// Inside testWidgets:
+expect(find.text(&#x27;Electronics Parts Tracker&#x27;), <input type="text" class="code-blank" data-answer="findsOneWidget" data-error-hint="Use the flutter_test matcher that asserts a single mounted widget." placeholder="findsOneWidget" style="width:16ch" aria-label="Fill in the blank: findsOneWidget" autocomplete="off" spellcheck="false" />);</code></pre></div>
+<p>:::prompts
+hint: &quot;Review Complete lib/main.dart Listing and Complete test/widget_test.dart Listing above: Riverpod's root container is ProviderScope, stateless components extend StatelessWidget with {super.key} and build(BuildContext context), and flutter_test checks single presence with findsOneWidget.&quot;
+success: &quot;Spot on! You've nailed the five core building blocks of a Flutter + Riverpod entrypoint and widget test.&quot;</p>
+<div class="widget-actions"><button type="button" class="btn btn-primary" data-action="check-exercise">Check Answers</button><button type="button" class="btn" data-action="hint-exercise">Show Hint</button></div><div class="widget-feedback" role="status" aria-live="polite"></div></section>
+<p>:::</p>
+<section class="quiz-card" id="quiz-0001"><div class="widget-header"><h3 class="widget-title">Retrieval Practice: React &amp; TypeScript vs. Flutter &amp; Dart Bootstrap</h3><span class="widget-badge">3 Questions • Equal-Length Options</span></div><div class="quiz-question-block" data-wrong-hint="Think about what the Dart `const` keyword does to immutable object instances at compile time."><div class="quiz-question-title">1. In Flutter, how does a <code>StatelessWidget</code> constructor like <code>const PartsTrackerApp({super.key})</code> compare to React component rendering?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Flutter does not use browser DOM nodes; Widgets are immutable blueprints that configure Element and RenderObject trees."><span class="quiz-option-letter">A.</span><span>It mutates the live DOM node directly without running any virtual tree diffing.</span></button><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! A `const` Widget constructor canonicalizes the instance at compile time, giving Flutter an O(1) identity check similar to `React.memo`."><span class="quiz-option-letter">B.</span><span>It creates a compile-time canonicalized Widget blueprint so Flutter skips rebuilding unchanged subtrees.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="A `StatelessWidget` holds only immutable configuration fields; state lives in `ProviderScope` or `State&lt;T&gt;`."><span class="quiz-option-letter">C.</span><span>It registers a global singleton store that persists mutable state across screen reloads.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Flutter renders directly onto a Skia/Impeller canvas rather than compiling widgets into HTML WebComponents."><span class="quiz-option-letter">D.</span><span>It compiles the Dart class into a browser WebComponent with shadow DOM styling.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div><div class="quiz-question-block" data-wrong-hint="Consider where Riverpod provider state lives and how tests avoid leaking global state."><div class="quiz-question-title">2. Why do we wrap <code>PartsTrackerApp</code> inside <code>const ProviderScope(child: PartsTrackerApp())</code> in both <code>main()</code> and <code>testWidgets</code>?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Platform channel and engine initialization is handled by `WidgetsFlutterBinding.ensureInitialized()`, not `ProviderScope`."><span class="quiz-option-letter">A.</span><span>It initializes the native iOS and Android platform channels before any screen can paint.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="JSON serialization and Freezed helpers are generated at build time by `build_runner`, not at runtime by `ProviderScope`."><span class="quiz-option-letter">B.</span><span>It automatically generates JSON serialization helpers for every Freezed model class in the project.</span></button><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! `ProviderScope` owns the `ProviderContainer` for that widget tree and lets tests inject fakes via `overrides: [...]`."><span class="quiz-option-letter">C.</span><span>It hosts the isolated Riverpod state container and enables per-test dependency overrides without globals.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Visual theming is configured on `MaterialApp` (`themeMode` and `darkTheme`), not on `ProviderScope`."><span class="quiz-option-letter">D.</span><span>It configures the Material dark theme seed color and sets the default scaffold background.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div><div class="quiz-question-block" data-wrong-hint="Check the Glossary definition of `Element (BuildContext)`."><div class="quiz-question-title">3. What role does the <code>BuildContext</code> parameter in <code>Widget build(BuildContext context)</code> play compared to React?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! `BuildContext` is the live `Element` node in the mounted tree, allowing O(1) lookups like `Theme.of(context)`."><span class="quiz-option-letter">A.</span><span>It represents the mounted Element handle used to look up ancestor state.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="In Flutter, props are fields on the `Widget` class itself (`this.title`, `this.child`), not properties on `BuildContext`."><span class="quiz-option-letter">B.</span><span>It holds the component props object passed down from the parent widget.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Low-level painting happens inside `RenderObject.paint(PaintingContext, Offset)`, not on `BuildContext`."><span class="quiz-option-letter">C.</span><span>It provides a mutable canvas buffer for drawing raw OpenGL shader pixels.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Package imports are resolved statically at compile time via `pubspec.yaml`, not at runtime via `BuildContext`."><span class="quiz-option-letter">D.</span><span>It replaces the pubspec.yaml file by resolving external Dart package imports dynamically.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div></section>
+<section class="verify-card" id="verify-0001"><div class="widget-header"><h3 class="widget-title">Verification Lab: Analyze &amp; Test Lesson 0001 Companion App</h3><span class="widget-badge">CLI Gate • Zero Warnings &amp; 100% Green</span></div><p>Run the Dart static analyzer and headless widget test suite inside <code>tutorial/apps/0001-flutter-bootstrap-and-provider-scope</code>:</p>
+<div class="code-figure"><div class="code-caption">Terminal verification commands for Lesson 0001</div><pre><code class="language-bash">cd tutorial/apps/0001-flutter-bootstrap-and-provider-scope
+flutter analyze
+flutter test</code></pre></div>
+<p>Expected terminal output:</p>
+<div class="code-figure"><div class="code-caption">Verified output of flutter analyze &amp;&amp; flutter test</div><pre><code class="language-text">Analyzing 0001-flutter-bootstrap-and-provider-scope...
+No issues found!
+00:01 +1: All tests passed!</code></pre></div>
+<p>Check off each verification gate once you have reviewed or run the companion app:</p>
+<ul class="verify-checklist"><li class="verify-item"><input type="checkbox" id="verify-0001-chk-1" data-storage-key="verify:0001-flutter-bootstrap-and-provider-scope:verify-0001:1" /><label for="verify-0001-chk-1">Inspected <code>tutorial/apps/0001-flutter-bootstrap-and-provider-scope/lib/main.dart</code> and traced <code>main()</code> → <code>ProviderScope</code> → <code>PartsTrackerApp</code> → <code>MaterialApp</code> → <code>WorkbenchScreen</code>.</label></li><li class="verify-item"><input type="checkbox" id="verify-0001-chk-2" data-storage-key="verify:0001-flutter-bootstrap-and-provider-scope:verify-0001:2" /><label for="verify-0001-chk-2">Verified <code>flutter analyze</code> reports <code>No issues found!</code> (confirming <code>const</code> constructors and sound null safety).</label></li><li class="verify-item"><input type="checkbox" id="verify-0001-chk-3" data-storage-key="verify:0001-flutter-bootstrap-and-provider-scope:verify-0001:3" /><label for="verify-0001-chk-3">Verified <code>flutter test</code> passes <code>PartsTrackerApp boots inside ProviderScope with dark theme and WorkbenchScreen shell</code>.</label></li></ul></section>
+<aside class="teacher-prompt"><p><strong>Where to next?</strong> Ask me any questions about <code>StatelessWidget</code>, <code>const</code> constructors, <code>BuildContext</code>, or <code>WidgetTester</code>—or let me know when you're ready for <strong>Lesson 0002: Immutable Domain Models with Freezed &amp; JSON Serialization</strong> (<code>Container</code>, <code>Part</code>, and <code>CatalogSnapshot</code>), where we'll see how Dart + Freezed replaces TypeScript interfaces and object spread!</p>
+</aside>
+      <nav class="lesson-pager" aria-label="Lesson pagination"><a class="pager-card pager-card-prev" href="../index.html"><span class="pager-meta">← Course Index</span><span class="pager-title">All Lessons &amp; Reference Sheets</span></a><a class="pager-card pager-card-next" href="../lessons/0002-immutable-domain-models-with-freezed.html"><span class="pager-meta">Next • Lesson 0002 →</span><span class="pager-title">Immutable Domain Models with Freezed &amp; JSON Serialization</span></a></nav>
+    </article>
+  </main>
+  <footer class="site-footer">
+    <span>Electronics Parts Tracker — Interactive Flutter &amp; Riverpod Course for React + TypeScript Developers</span>
+  </footer>
+</body>
+</html>

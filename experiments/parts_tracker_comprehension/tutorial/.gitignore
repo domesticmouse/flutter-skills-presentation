@@ -1,7 +1,4 @@
 .venv/
 _site/
-index.html
-lessons/*.html
-reference/*.html
 apps/*/.dart_tool/
 apps/*/build/

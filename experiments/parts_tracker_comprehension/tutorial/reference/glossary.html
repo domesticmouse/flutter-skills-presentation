@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Glossary — Flutter &amp; Parts Tracker</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <script src="../assets/course.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"><nav class="course-nav" aria-label="Course navigation"><div class="nav-breadcrumbs"><a href="../index.html">Index</a><span class="nav-sep" aria-hidden="true">›</span><span class="nav-current" aria-current="page">Glossary</span></div><div class="nav-controls"><a class="nav-ref-link" href="../reference/glossary.html" aria-current="page">Glossary</a><a class="nav-ref-link" href="../reference/react-to-flutter-cheatsheet.html">React → Flutter</a><a class="nav-ref-link" href="../reference/verification-and-testing.html">Verification &amp; Testing</a><span class="mission-badge">Flutter • Parts Tracker</span></div></nav></header>
+  <main id="main-content" class="page-main">
+    <article class="tufte-article">
+      <header class="article-header">
+        <div class="article-badge">Mission: Parts Tracker in Flutter</div>
+        <h1>Glossary of Parts Tracker &amp; Flutter Terms</h1>
+        <p class="article-subtitle">Canonical domain and framework definitions used across all lessons and reference sheets. Designed for quick screen lookup and clean printing.</p>
+      </header>
+      <h2>1. Electronics Parts Tracker Domain</h2>
+<p><strong>Part</strong>:
+A distinct electronic component entry in the catalog (e.g., <code>10kΩ 0603 1% Resistor</code>, <code>NE555P</code>, <code>ESP32-WROOM-32E</code>), tracking a single quantity on hand, an optional <code>(Container, Slot)</code> location, package/footprint, optional LCSC code (<code>Cxxxxxx</code>), and electrical <strong>Specs</strong>.
+<em>Avoid</em>: Item, product, SKU, device</p>
+<p><strong>Spec</strong>:
+A named electrical or physical attribute of a <strong>Part</strong> (e.g., <code>Capacitance: 100nF</code>, <code>Voltage Rated: 50V</code>, <code>Tolerance: ±10%</code>), represented as an ordered key-value pair on the <strong>Part</strong>.
+<em>Avoid</em>: Parameter, property, custom field, tag</p>
+<p><strong>Container</strong>:
+A top-level physical storage unit at the workbench (e.g., <code>&quot;SMD Binder #1&quot;</code>, <code>&quot;IC Drawer Cabinet&quot;</code>, <code>&quot;Passives Grid Box A&quot;</code>), tracked as a first-class entity with a name and optional description.<span class="sidenote-number"></span><span class="sidenote">Because Flutter's Material library also exports a layout widget named <code>Container</code>, files that import both <code>package:flutter/material.dart</code> and our domain model use <code>hide Container</code> or qualify the import.</span>
+<em>Avoid</em>: Warehouse, building, parent location</p>
+<p><strong>Slot</strong>:
+A named compartment, drawer, cell, or strip inside a <strong>Container</strong> (e.g., <code>&quot;A1&quot;</code>, <code>&quot;Drawer 12&quot;</code>, <code>&quot;Page 4&quot;</code>), represented as a string label created on the fly. A <strong>Slot</strong> holds at most one <strong>Part</strong> (<code>(Container, Slot)</code> is strictly 1-to-1 when a <strong>Slot</strong> is specified).
+<em>Avoid</em>: Sub-location, child location, bin (when referring to the top-level container)</p>
+<p><strong>CatalogSnapshot</strong>:
+An immutable, versioned value object (<code>schemaVersion: 1</code>) holding the complete list of <strong>Containers</strong>, the complete list of <strong>Parts</strong>, and the UTC <code>updatedAt</code> timestamp serialized to disk or exported as a JSON backup.
+<em>Avoid</em>: Store state blob, database dump</p>
+<h2>2. Flutter &amp; Riverpod Architecture (Lesson 0001)</h2>
+<p><strong>Widget</strong>:
+An immutable description of part of a user interface (<code>StatelessWidget</code>, <code>StatefulWidget</code>, or <code>ConsumerWidget</code>), analogous to a React element blueprint (<code>JSX.Element</code>) rather than a mutable DOM node.
+<em>Avoid</em>: Component instance, DOM element, view controller</p>
+<p><strong>Element (<code>BuildContext</code>)</strong>:
+The live, mutable node in Flutter's mounted tree that manages a <strong>Widget</strong>'s lifecycle and position in the hierarchy; passed to <code>build(BuildContext context)</code> as the handle for looking up inherited theme, media query, or navigation state.
+<em>Avoid</em>: Virtual DOM fiber node, <code>this</code> context</p>
+<p><strong>ProviderScope</strong>:
+The root Riverpod <strong>Widget</strong> placed at the top of the application (<code>runApp(const ProviderScope(child: ...))</code>) or inside a <code>testWidgets</code> harness that stores the state of all providers and accepts dependency overrides for testing.
+<em>Avoid</em>: Redux store provider, global singleton container</p>
+<p><strong>WidgetTester</strong>:
+The programmatic test driver supplied to <code>testWidgets</code> callbacks that mounts a <strong>Widget</strong> tree (<code>pumpWidget</code>), advances the frame clock (<code>pump</code> / <code>pumpAndSettle</code>), and simulates user interactions (<code>tap</code>, <code>enterText</code>).
+<em>Avoid</em>: Headless browser, Enzyme wrapper</p>
+<h2>3. Data Modeling, Persistence &amp; Reactive State (Lessons 0002–0005)</h2>
+<p><strong>Freezed Data Class</strong>:
+An immutable Dart class annotated with <code>@freezed</code> whose generated mixin (<code>_$ClassName</code> in <code>*.freezed.dart</code>) synthesizes value equality (<code>==</code>, <code>hashCode</code>), <code>toString()</code>, and <code>copyWith(...)</code> cloning—replacing TypeScript interfaces paired with <code>{ ...obj }</code> object spread.
+<em>Avoid</em>: Mutable POJO, ORM entity</p>
+<p><strong>Part File (<code>part</code> / <code>part of</code>)</strong>:
+A Dart compilation-unit directive that splits a single library across multiple source files (such as <code>catalog_models.dart</code>, <code>catalog_models.freezed.dart</code>, and <code>catalog_models.g.dart</code>) so generated code can access private constructors (<code>_Container</code>, <code>_Part</code>) and implement mixins in the same namespace.
+<em>Avoid</em>: C <code>#include</code> macro, separate module import</p>
+<p><strong>AsyncNotifier</strong>:
+A Riverpod state controller (<code>class Catalog extends _$Catalog</code>) whose <code>build()</code> method returns a <code>Future&lt;T&gt;</code>, automatically exposing <code>AsyncValue&lt;T&gt;</code> (<code>AsyncLoading</code>, <code>AsyncData</code>, <code>AsyncError</code>) to watching <strong>Widgets</strong> and serializing state mutations.
+<em>Avoid</em>: Redux thunk reducer, unhandled Promise hook</p>
+<p><strong>ProviderContainer</strong>:
+The standalone Dart object backing a <strong>ProviderScope</strong> that stores provider state and dependency overrides, allowing unit tests (<code>test(...)</code>) to read, watch, and mutate Riverpod providers headlessly without mounting any <strong>Widgets</strong>.
+<em>Avoid</em>: Mock store wrapper</p>
+<p><strong>Sealed Class (<code>sealed class</code>)</strong>:
+A closed Dart 3 class hierarchy (such as <code>@freezed sealed class WorkbenchFacet</code>) whose subclasses are all known to the compiler, enabling exhaustive <code>switch</code> expressions with destructuring pattern matching—analogous to a TypeScript discriminated union (<code>type Facet = { kind: 'all' } | { kind: 'category'; category: string }</code>).
+<em>Avoid</em>: String enum tag, untyped union</p>
+<p><strong>EngineeringValue</strong>:
+A canonical <code>(EngineeringDimension, double baseValue)</code> pair produced by <code>PartSearchEngine.parseEngineeringToken</code> that normalizes SI prefixes (<code>100nF</code>, <code>0.1uF</code>, <code>100000pF</code>) and EE-infix notation (<code>4k7</code>, <code>3v3</code>, <code>2n2</code>) into base units (<code>Farads</code>, <code>Ohms</code>, <code>Volts</code>) for tolerance-aware comparison.
+<em>Avoid</em>: Regex string replacement, raw float</p>
+
+      
+    </article>
+  </main>
+  <footer class="site-footer">
+    <span>Electronics Parts Tracker — Interactive Flutter &amp; Riverpod Course for React + TypeScript Developers</span>
+  </footer>
+</body>
+</html>
