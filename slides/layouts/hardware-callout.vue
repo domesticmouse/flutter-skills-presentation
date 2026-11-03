@@ -24,9 +24,10 @@ function resolveUrl(rawSrc: string | undefined): string {
     <!-- Header Bar -->
     <div class="flex items-center justify-between pb-3 border-b border-gray-800 shrink-0">
       <div class="flex items-center gap-3">
-        <h2 class="text-2xl font-bold text-gray-100 m-0">
-          {{ $frontmatter.title || 'Architecture Callout' }}
-        </h2>
+        <h2
+          class="text-2xl font-bold text-gray-100 m-0"
+          v-html="$frontmatter.title || 'Architecture Callout'"
+        />
       </div>
     </div>
 

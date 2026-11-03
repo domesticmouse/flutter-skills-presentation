@@ -72,7 +72,7 @@ Here is the Skilled Run recording. In raw wall-clock time, walking all seven Way
 ---
 layout: skill-breakdown
 way: 2
-title: "Intent Artifact 1: Ubiquitous Domain Language (/domain-modeling)"
+title: "Intent Artifact 1: Ubiquitous Domain Language (<code>/domain-modeling</code>)"
 ---
 
 <!-- S19 -->
@@ -141,7 +141,7 @@ Here is the second Intent Artifact: .scratch/parts-tracker-v1/map.md. Notice Tic
 
 ---
 layout: hardware-callout
-title: "Throwaway UI Exploration with /prototype (Session 04)"
+title: "Throwaway UI Exploration with <code>/prototype</code> (Session 04)"
 image: /images/skilled-OptionA.png
 imageCaption: "OptionA.png — Variant A: Split Tabs & Dense Stepper Rows ('Workbench Catalog')"
 ---

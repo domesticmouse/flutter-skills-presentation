@@ -190,7 +190,7 @@ Using our agy-brain-explorer skill, we extracted the full Session Trace from ~/.
 ---
 layout: skill-breakdown
 way: 2
-title: "Session Trace 02: What Happens After /clear + 'Please review the codebase'"
+title: "Session Trace 02: What Happens After <code>/clear</code> + 'Please review the codebase'"
 ---
 
 <!-- S14 -->
