@@ -195,24 +195,51 @@ title: "Session Trace 02: What Happens After /clear + 'Please review the codebas
 
 <!-- S14 -->
 <div class="space-y-3">
-  <p class="text-xs text-gray-300 m-0">
-    Immediately after running the app, we typed <code>/clear</code> to wipe short-term memory and asked <code>Please review the codebase</code>. In <code>81</code> steps (<code>26</code> <code>edit_file</code> calls), <code>agy</code> found and fixed <strong>8 bugs in its own freshly generated code</strong>:
-  </p>
-
-  <div class="grid grid-cols-2 gap-3 text-xs">
-    <div class="p-3 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
-      <div class="text-amber-300 font-semibold">1. Domain &harr; UI Layer Violation</div>
-      <p class="text-gray-300 m-0"><code>part_item.dart</code> imported <code>package:flutter/material.dart</code> to embed <code>IconData</code> and <code>Color</code> directly inside the domain model.</p>
+  <div class="p-3.5 rounded-lg bg-gray-950/90 border border-gray-800 space-y-2 text-xs text-gray-200">
+    <div class="flex items-center justify-between border-b border-gray-800 pb-1.5">
+      <div class="font-bold text-white">
+        Session 02 <span class="font-mono font-normal text-amber-300">(88556362)</span>
+      </div>
+      <div class="flex items-center gap-3 font-mono text-gray-400">
+        <span>Duration: <strong class="text-gray-200">12m 20s</strong></span>
+        <span>&middot;</span>
+        <span>Steps: <strong class="text-gray-200">81</strong></span>
+        <span>&middot;</span>
+        <span>Tool Calls: <strong class="text-amber-300">53</strong></span>
+      </div>
     </div>
-    <div class="p-3 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
+    <div class="grid grid-cols-[11rem_1fr] gap-y-1.5 gap-x-4 items-baseline pt-0.5">
+      <div class="font-mono flex items-center justify-between pr-2">
+        <span class="text-amber-300">read_file</span>
+        <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">23</span>
+      </div>
+      <div class="text-gray-300">Audited all <code>lib/</code> models, services, views &amp; <code>test/</code> files after <code>/clear</code></div>
+      <div class="font-mono flex items-center justify-between pr-2">
+        <span class="text-amber-300">edit_file</span>
+        <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">26</span>
+      </div>
+      <div class="text-gray-300">Patched <strong>8 bugs</strong> in its own freshly generated code across 13 source files &amp; 3 test suites</div>
+      <div class="font-mono flex items-center justify-between pr-2">
+        <span class="text-amber-300">run_command</span>
+        <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">4</span>
+      </div>
+      <div class="text-gray-300">Listed workspace files and ran <code>flutter analyze &amp;&amp; flutter test</code> before &amp; after fixes</div>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2.5 text-xs">
+    <div class="p-2.5 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
+      <div class="text-amber-300 font-semibold">1. Domain &harr; UI Layer Violation</div>
+      <p class="text-gray-300 m-0"><code>part_category.dart</code> imported <code>package:flutter/material.dart</code> to embed <code>IconData</code> and <code>Color</code> directly inside the domain model.</p>
+    </div>
+    <div class="p-2.5 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
       <div class="text-amber-300 font-semibold">2. Broken iOS Sandbox Path Resolution</div>
       <p class="text-gray-300 m-0"><code>local_storage_service.dart</code> used <code>Platform.environment['HOME']</code> instead of <code>path_provider</code>, which fails on physical iOS devices.</p>
     </div>
-    <div class="p-3 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
+    <div class="p-2.5 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
       <div class="text-amber-300 font-semibold">3. Silent Data Loss on Corrupt JSON</div>
       <p class="text-gray-300 m-0">A malformed JSON file silently fell back to <code>SampleParts.initialParts</code> and overwrote the user&rsquo;s inventory on the next save.</p>
     </div>
-    <div class="p-3 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
+    <div class="p-2.5 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
       <div class="text-amber-300 font-semibold">4. Unserialized Concurrent File Writes</div>
       <p class="text-gray-300 m-0">Rapidly tapping <code>+1</code> / <code>-1</code> triggered unawaited overlapping <code>File.writeAsString</code> calls with no write queue or atomic temp rename.</p>
     </div>
