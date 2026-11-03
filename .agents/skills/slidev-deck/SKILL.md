@@ -8,7 +8,7 @@ compatibility: Requires Node.js (v18+) and npm; integrates with Slidev (@slidev/
 
 Procedural runbook, reusable Vue components/layouts, and server tooling for building high-signal technical slide decks with [Slidev](https://sli.dev/) (`slides/`), embedded `asciinema-player` terminal recordings, dark-mode typography, and static GitHub Pages deployment.
 
-Works alongside `/asciinema` (recording, sanitizing, and trimming `.cast` files) and `/crop-image` (trimming transparent margins and solid borders on slide images).
+Works alongside `/asciinema` (recording, sanitizing, and trimming `.cast` files), `/ios-simulator-screenshot` (staging and verifying mobile simulator screen captures under `artifacts/screenshots/<project_name>/`), and `/crop-image` (trimming transparent margins and solid borders on slide images).
 
 ## Workflows
 
@@ -144,7 +144,8 @@ Consult [`references/ASCIINEMA-INTEGRATION.md`](references/ASCIINEMA-INTEGRATION
      ```
    - `AsciinemaPlayer.vue` compiles each breakpoint-bounded segment to run at `>= speed` (default `2.0x`) and complete in `<= maxSegmentDuration` (default `30s`), rendering chapter stepper pills and a live segment speed HUD pill beneath the terminal.
 2. **Prepare & Embed Images**:
-   - Use `/crop-image` (`crop.py --inspect` / `--autocrop`) to remove excess transparent margins or solid borders before placing images in `slides/public/images/`.
+   - For mobile app runs, use `/ios-simulator-screenshot` (`xcrun simctl io booted screenshot /abs/path/to/repo/artifacts/screenshots/<project_name>/<file>.png` with full absolute paths) to stage clean device-framebuffer screenshots per run in `artifacts/screenshots/<project_name>/`.
+   - Use `/crop-image` (`crop.py --inspect` / `--autocrop`) to verify dimensions or remove excess transparent margins/solid borders before copying presentation-ready images into `slides/public/images/`.
    - Reference images via `image: /images/<filename>` in `hardware-callout` slides.
 3. **Preserve `BASE_URL` Resolution in Custom Vue Files**:
    - In any custom Vue layout or component that loads local assets from `slides/public/`, normalize paths with `import.meta.env.BASE_URL` so assets resolve on both local dev (`/`) and GitHub Pages subpaths (`/<repo-name>/`).
