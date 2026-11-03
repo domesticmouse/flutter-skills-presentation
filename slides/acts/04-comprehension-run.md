@@ -79,16 +79,24 @@ step: Curriculum Architecture 1 of 3
 
 <!-- S30 -->
 <div class="space-y-4">
-
-```markdown
-# Mission: Flutter & Dart via the Electronics Parts Tracker (tutorial/MISSION.md)
-Rebuild the Electronics Parts Tracker application (`parts_tracker_skilled`) from the ground up
-to transition from React and TypeScript to idiomatic Flutter, Dart, Riverpod, and Freezed.
-
-# Prior Knowledge (tutorial/learning-records/0001-react-typescript-starting-point.md)
-Anchor every new Dart/Flutter concept to its closest React/TypeScript counterpart—and explicitly
-call out where the analogy breaks (nominal vs structural typing, const canonicalization vs React.memo).
-```
+  <div class="p-4 rounded-lg bg-gray-950/90 border border-gray-800 space-y-3 text-xs text-gray-200 leading-relaxed">
+    <div>
+      <div class="text-sm font-bold text-white">
+        Mission: Flutter &amp; Dart via the Electronics Parts Tracker <span class="text-xs font-mono font-normal text-gray-400">(tutorial/MISSION.md)</span>
+      </div>
+      <p class="mt-1 m-0 text-gray-300">
+        Rebuild the Electronics Parts Tracker application (<code>parts_tracker_skilled</code>) from the ground up to transition from React and TypeScript to idiomatic Flutter, Dart, Riverpod, and Freezed.
+      </p>
+    </div>
+    <div class="border-t border-gray-800 pt-2.5">
+      <div class="text-sm font-bold text-white">
+        Prior Knowledge <span class="text-xs font-mono font-normal text-gray-400">(tutorial/learning-records/0001-react-typescript-starting-point.md)</span>
+      </div>
+      <p class="mt-1 m-0 text-gray-300">
+        Anchor every new Dart/Flutter concept to its closest React/TypeScript counterpart&mdash;and explicitly call out where the analogy breaks (nominal vs. structural typing, <code>const</code> canonicalization vs. <code>React.memo</code>).
+      </p>
+    </div>
+  </div>
 
   <div class="grid grid-cols-2 gap-4 text-xs pt-1">
     <div class="p-3 rounded-lg bg-gray-900/80 border border-gray-800">

@@ -166,12 +166,11 @@ step: Global Context
 
 <!-- S06 -->
 <div class="space-y-4">
-
-```markdown
-You are a helpful assistant.
-
-When something is unclear, please ask clarifying questions, one at a time.
-```
+  <div class="p-4 rounded-lg bg-gray-950/90 border border-gray-800 space-y-2 text-sm text-gray-200 leading-relaxed">
+    <div class="text-xs font-mono text-gray-400 border-b border-gray-800 pb-1.5 mb-2">$HOME/.gemini/config/AGENTS.md</div>
+    <p class="m-0">You are a helpful assistant.</p>
+    <p class="m-0">When something is unclear, please ask clarifying questions, one at a time.</p>
+  </div>
 
   <div class="grid grid-cols-2 gap-4 text-xs pt-2">
     <div class="p-3.5 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1.5">

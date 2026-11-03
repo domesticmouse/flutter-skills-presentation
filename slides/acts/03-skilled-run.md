@@ -79,17 +79,17 @@ step: Intent Artifact 1 of 3
 
 <!-- S19 -->
 <div class="space-y-4">
-
-```markdown
-**Part**: A distinct electronic component entry in the catalog (e.g., `10kΩ 0603 1% Resistor`, `NE555P`),
-tracking a single quantity on hand, an optional `(Container, Slot)` location, package/footprint,
-optional LCSC code (`Cxxxxxx`), and electrical **Specs**.
-
-**Container**: A top-level physical storage unit at the workbench (e.g., `"SMD Binder #1"`, `"IC Drawer Cabinet"`).
-
-**Slot**: A named compartment, drawer, or strip inside a **Container** (e.g., `"A1"`, `"Page 4"`).
-A **Slot** holds at most one **Part** (`(Container, Slot)` is strictly 1-to-1 when a Slot is specified).
-```
+  <div class="p-4 rounded-lg bg-gray-950/90 border border-gray-800 space-y-2.5 text-xs text-gray-200 leading-relaxed">
+    <div>
+      <strong class="text-white">Part</strong>: A distinct electronic component entry in the catalog (e.g., <code>10k&Omega; 0603 1% Resistor</code>, <code>NE555P</code>), tracking a single quantity on hand, an optional <code>(Container, Slot)</code> location, package/footprint, optional LCSC code (<code>Cxxxxxx</code>), and electrical <strong class="text-white">Specs</strong>.
+    </div>
+    <div>
+      <strong class="text-white">Container</strong>: A top-level physical storage unit at the workbench (e.g., <code>"SMD Binder #1"</code>, <code>"IC Drawer Cabinet"</code>).
+    </div>
+    <div>
+      <strong class="text-white">Slot</strong>: A named compartment, drawer, or strip inside a <strong class="text-white">Container</strong> (e.g., <code>"A1"</code>, <code>"Page 4"</code>). A <strong class="text-white">Slot</strong> holds at most one <strong class="text-white">Part</strong> (<code>(Container, Slot)</code> is strictly 1-to-1 when a Slot is specified).
+    </div>
+  </div>
 
   <div class="grid grid-cols-2 gap-4 text-xs pt-1">
     <div class="p-3 rounded-lg bg-gray-900/80 border border-gray-800">
@@ -115,14 +115,19 @@ step: Intent Artifact 2 of 3
 
 <!-- S20 -->
 <div class="space-y-4">
-
-```markdown
-## Decisions so far (.scratch/parts-tracker-v1/map.md)
-- [01-lcsc-part-metadata-lookup.md]: Official LCSC API requires B2B approval + IP whitelisting;
-  verified via curl that GET https://wmsc.lcsc.com/ftps/wm/product/detail?productCode=Cxxxxxx
-  returns live JSON (MPN, manufacturer, package, paramVOList specs, pdfUrl) with a standard User-Agent.
-- [02-part-domain-model-and-specs.md] ... [07-flutter-state-management-and-architecture.md]
-```
+  <div class="p-4 rounded-lg bg-gray-950/90 border border-gray-800 space-y-2 text-xs text-gray-200 leading-relaxed">
+    <div class="text-sm font-bold text-white border-b border-gray-800 pb-1.5">
+      Decisions so far <span class="text-xs font-mono font-normal text-gray-400">(.scratch/parts-tracker-v1/map.md)</span>
+    </div>
+    <ul class="list-disc pl-5 space-y-1.5 m-0">
+      <li>
+        <code>01-lcsc-part-metadata-lookup.md</code>: Official LCSC API requires B2B approval + IP whitelisting; verified via <code>curl</code> that <code>GET https://wmsc.lcsc.com/ftps/wm/product/detail?productCode=Cxxxxxx</code> returns live JSON (MPN, manufacturer, package, <code>paramVOList</code> specs, <code>pdfUrl</code>) with a standard <code>User-Agent</code>.
+      </li>
+      <li>
+        <code>02-part-domain-model-and-specs.md</code> &hellip; <code>07-flutter-state-management-and-architecture.md</code>
+      </li>
+    </ul>
+  </div>
 
   <div class="grid grid-cols-2 gap-4 text-xs pt-1">
     <div class="p-3 rounded-lg bg-gray-900/80 border border-gray-800">
@@ -179,7 +184,7 @@ imageCaption: "OptionB.png — Selected prototype: Dark Command Bar & Inline Spe
   </p>
   <ul class="text-sm text-gray-300 space-y-2 list-disc pl-5">
     <li><strong>Single-Screen Flow Wins at the Bench:</strong> Toggling <code>By Container</code> on the command bar beat switching bottom tabs back and forth while sorting physical parts.</li>
-    <li><strong>Caught Layout Overflows Early:</strong> In Session 04, <code>agy</code> used the Flutter MCP widget inspector (`get_runtime_errors`) to catch and fix a <code>RenderFlex</code> chip overflow before writing production UI code.</li>
+    <li><strong>Caught Layout Overflows Early:</strong> In Session 04, <code>agy</code> used the Flutter MCP widget inspector (<code>get_runtime_errors</code>) to catch and fix a <code>RenderFlex</code> chip overflow before writing production UI code.</li>
   </ul>
 </div>
 
@@ -235,7 +240,7 @@ imageCaption: "01-workbench-catalog.png — Variant B dark workbench with expand
     Compare this final production UI against the Baseline Run:
   </p>
   <ul class="text-sm text-gray-300 space-y-2 list-disc pl-5">
-    <li><strong>Unit-Aware Omnibox:</strong> Typing <code>4k7 0603</code> in the top search bar normalises engineering units (`4.7k&Omega;`) and intersects package tokens in real time.</li>
+    <li><strong>Unit-Aware Omnibox:</strong> Typing <code>4k7 0603</code> in the top search bar normalises engineering units (<code>4.7k&Omega;</code>) and intersects package tokens in real time.</li>
     <li><strong>Inline Accordion &amp; Spec Pills:</strong> Tapping a part reveals structured electrical <strong>Specs</strong> (<code>Resistance: 4.7k&Omega;</code>, <code>Tolerance: &plusmn;1%</code>, <code>Power: 100mW</code>) and clean, single-line <code>-10</code> / <code>-1</code> / <code>+1</code> / <code>+10</code> steppers.</li>
     <li><strong>12 Realistic Seed Parts Across 4 Containers:</strong> Pre-populated with LCSC codes, MPNs, and structured <code>(Container, Slot)</code> addresses.</li>
   </ul>
@@ -257,7 +262,7 @@ imageCaption: "03-add-part-lcsc-lookup.png — Live LCSC fetch for C2878713 (TL0
 <div class="space-y-4">
   <h3 class="text-lg font-bold text-emerald-300">Features Born Directly from Wayfinder &amp; Research</h3>
   <p class="text-sm text-gray-300 leading-relaxed">
-    Every workflow we explored during `/wayfinder` is wired end-to-end:
+    Every workflow we explored during <code>/wayfinder</code> is wired end-to-end:
   </p>
   <ul class="text-sm text-gray-300 space-y-2 list-disc pl-5">
     <li><strong>One-Tap LCSC Metadata Fetch:</strong> Typing <code>C2878713</code> and tapping <code>Fetch LCSC</code> pulls <code>TL074HIDR</code>, <code>TI</code>, <code>SOIC-14</code>, electrical specs, and the official PDF datasheet URL live.</li>
