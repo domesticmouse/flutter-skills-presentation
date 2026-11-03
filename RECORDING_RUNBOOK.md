@@ -123,37 +123,33 @@ Inside the recorded shell:
    ```bash
    cd parts_tracker_baseline
    ```
-3. **Put the project under version control and commit the initial scaffold**:
-   ```bash
-   git init && git add . && git commit -m "Initial scaffold"
-   ```
-4. **Start Antigravity in the Flutter project**:
+3. **Start Antigravity in the Flutter project**:
    ```bash
    agy
    ```
-5. **Paste the initial prompt**:
+4. **Paste the initial prompt**:
    ```text
    I'd like to build a Flutter app for iOS that enables me to track my electronics parts
    ```
-6. Answer `agy`'s one-at-a-time clarifying questions using the **Canonical Q&A Answers** table above.
-7. Let `agy` build the Flutter iOS app and verify `flutter analyze` / `flutter test`.
-8. **Ask `agy` to run the app**:
+5. Answer `agy`'s one-at-a-time clarifying questions using the **Canonical Q&A Answers** table above.
+6. Let `agy` build the Flutter iOS app and verify `flutter analyze` / `flutter test`.
+7. **Ask `agy` to run the app**:
    ```text
    Please run the app.
    ```
-9. **Start a new `agy` session**:
+8. **Start a new `agy` session**:
    ```text
    /clear
    ```
-10. **Review the codebase**:
+9. **Review the codebase**:
     ```text
     Please review the codebase
     ```
-11. **Ask `agy` to fix the issues surfaced by the review**:
+10. **Ask `agy` to fix the issues surfaced by the review**:
     ```text
     please fix
     ```
-12. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
+11. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
 
 ### 2.3 Process, Inspect & Decide: Good Capture or Redo Run 1?
 Immediately after exiting the recording shell, run `process-run` to sanitize/trim `01-baseline.cast`, auto-inject chapter stop-point markers via `mark-cast.py`, and export the Antigravity session logs for `parts_tracker_baseline`:
@@ -206,49 +202,49 @@ asciinema rec --window-size 120x32 --idle-time-limit 2.0 --overwrite "$REPO_ROOT
    ```bash
    cd parts_tracker_skilled
    ```
-3. **Put the project under version control and commit the initial scaffold**:
-   ```bash
-   git init && git add . && git commit -m "Initial scaffold"
-   ```
-4. **Install all of Matt Pocock's skills**:
+3. **Install all of Matt Pocock's skills**:
    ```bash
    npx skills@latest add mattpocock/skills
    ```
-5. **Start Antigravity in the Flutter project**:
+4. **Start Antigravity in the Flutter project**:
    ```bash
    agy
    ```
-6. **Prompt Antigravity with `/wayfinder`**:
+5. **Prompt Antigravity with `/wayfinder`**:
    ```text
    /wayfinder I'd like to build a Flutter app for iOS that enables me to track my electronics parts
    ```
-7. **Answer questions** using the **Canonical Q&A Answers** table above until the map and initial decision tickets are created.
-8. **Issue `/clear` in `agy`** to start a new conversation:
+6. **Answer questions** using the **Canonical Q&A Answers** table above until the map and initial decision tickets are created.
+7. **Issue `/clear` in `agy`** to start a new conversation:
    ```text
    /clear
    ```
-9. **Issue `/wayfinder`** to start the next round of questions on the next open decision ticket:
+8. **Issue `/wayfinder`** to start the next round of questions on the next open decision ticket:
    ```text
    /wayfinder
    ```
-10. **Answer questions** to resolve the decision ticket.
-11. **Issue `/clear`** to start a new conversation:
+9. **Answer questions** to resolve the decision ticket.
+10. **Issue `/clear`** to start a new conversation:
     ```text
     /clear
     ```
-12. **Repeat steps 9 through 11** (`/wayfinder` → answer questions → `/clear`) until all `/wayfinder` decision tickets are complete.
-13. **Complete the build of the app** (e.g., `/to-spec` → `/to-tickets` → `/implement`, with `/clear` between stages as appropriate) until the Flutter app is built and verified.
-14. **Ask `agy` to run the app**:
+11. **Repeat steps 8 through 10** (`/wayfinder` → answer questions → `/clear`) until all `/wayfinder` decision tickets are complete.
+12. **Complete the build of the app** (e.g., `/to-spec` → `/to-tickets` → `/implement`, with `/clear` between stages as appropriate) until the Flutter app is built and verified.
+13. **Ask `agy` to run the app**:
     ```text
     Please run the app.
     ```
-15. **Start a new `agy` session**:
+14. **Start a new `agy` session**:
     ```text
     /clear
     ```
-16. **Review the codebase**:
+15. **Review the codebase**:
     ```text
     Please review the codebase
+    ```
+16. **Ask `agy` to fix the issues surfaced by the review**:
+    ```text
+    please fix
     ```
 17. Exit `agy` and press `Ctrl+D` (or `exit`) to save `02-skilled.cast`.
 

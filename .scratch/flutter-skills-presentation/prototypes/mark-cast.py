@@ -3,9 +3,9 @@
 Delegates to the bundled .agents/skills/asciinema/scripts/mark-cast.py script.
 """
 
-from pathlib import Path
 import runpy
 import sys
+from pathlib import Path
 
 if __name__ == "__main__":
     skill_script = (

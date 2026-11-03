@@ -84,20 +84,19 @@ python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseli
 python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseline.cast \
   --relabel \
     "1. Create Project" \
-    "2. Initial Git Commit" \
-    "3. Launch agy" \
-    "4. Initial Prompt" \
-    "5. Q1: Clarifying Question" \
-    "6. Q1: Options Selected" \
-    "7. Q2: Clarifying Question" \
-    "8. Q3: Clarifying Question" \
-    "9. Build Summary" \
-    "10. Build Complete" \
-    "11. Run App" \
-    "12. Clear Session (/clear)" \
-    "13. Session Cleared" \
-    "14. Codebase Review" \
-    "15. Apply Review Fixes" \
+    "2. Launch agy" \
+    "3. Initial Prompt" \
+    "4. Q1: Clarifying Question" \
+    "5. Q1: Options Selected" \
+    "6. Q2: Clarifying Question" \
+    "7. Q3: Clarifying Question" \
+    "8. Build Summary" \
+    "9. Build Complete" \
+    "10. Run App" \
+    "11. Clear Session (/clear)" \
+    "12. Session Cleared" \
+    "13. Codebase Review" \
+    "14. Apply Review Fixes" \
   --in-place \
   --embed-html .scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html
 ```

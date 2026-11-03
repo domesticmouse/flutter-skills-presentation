@@ -1,23 +1,36 @@
 #!/usr/bin/env python3
 """
-mark-cast.py: Inspect, search, add, move/replace, or remove asciicast ("m") chapter markers in .cast files (v2 & v3).
+mark-cast.py: Inspect, search, add, move/replace, or remove asciicast ("m")
+chapter markers in .cast files (v2 & v3).
 
 Capabilities:
-1. --list: Display all existing "m" marker events with raw, 1x, and adaptive time-warped playback timestamps.
-2. --inspect START[:END]: Print a table of events in range [START, END] with dt, raw, 1x, code, and stripped text.
-3. --search REGEX [--context N]: Search stdout ("o") events for REGEX and print event index, timestamps, and N surrounding events.
-4. --set TARGET WHERE LABEL: Move/replace existing marker TARGET (1-based index or label substring) to WHERE
-   (regex pattern, regex#N, @event:IDX, @time:SEC, or @1x:SEC) with new LABEL.
-5. --remove TARGET: Remove existing marker(s) matching 1-based index or label substring.
-6. --add-pattern REGEX LABEL: Insert an "m" marker immediately after (or --before) the stdout frame matching REGEX (or REGEX#N).
-7. --add-time SECONDS LABEL [--effective-time]: Insert an "m" marker at raw or 1x timestamp SECONDS.
-8. --add-event EVENT_IDX LABEL: Insert an "m" marker immediately after (or --before) event #EVENT_IDX.
+1. --list: Display all existing "m" marker events with raw, 1x, and adaptive
+   time-warped playback timestamps.
+2. --inspect START[:END]: Print a table of events in range [START, END] with
+   dt, raw, 1x, code, and stripped text.
+3. --search REGEX [--context N]: Search stdout ("o") events for REGEX and print
+   event index, timestamps, and N surrounding events.
+4. --set TARGET WHERE LABEL: Move/replace existing marker TARGET (1-based index
+   or label substring) to WHERE (regex pattern, regex#N, @event:IDX, @time:SEC,
+   or @1x:SEC) with new LABEL.
+5. --remove TARGET: Remove existing marker(s) matching 1-based index or label
+   substring.
+6. --add-pattern REGEX LABEL: Insert an "m" marker immediately after (or
+   --before) the stdout frame matching REGEX (or REGEX#N).
+7. --add-time SECONDS LABEL [--effective-time]: Insert an "m" marker at raw or
+   1x timestamp SECONDS.
+8. --add-event EVENT_IDX LABEL: Insert an "m" marker immediately after (or
+   --before) event #EVENT_IDX.
 9. --relabel LABEL1 LABEL2 ...: Rename existing "m" markers in sequence.
 10. --clear: Remove all existing "m" markers before applying additions.
-11. --auto-baseline / --auto-skilled / --auto-comprehension: Auto-inject canonical chapter markers for the 3-run experiment.
-12. --set-dt EVENT_IDX SECONDS: Set the relative delay (dt) of a specific event index (adjusting subsequent timestamps automatically in v2).
-13. --tighten-pastes: Automatically shorten pre-paste delays ([REV] -> 1.0s), Enter highlight pauses ([UNREV] -> 0.15s), and prompt paste/submit delays around markers.
-14. --embed-html HTML_PATH: Re-compress the saved .cast file (gzip+base64) into EMBEDDED_CAST_GZ_B64 inside HTML_PATH.
+11. --auto-baseline / --auto-skilled / --auto-comprehension: Auto-inject
+    canonical chapter markers for the 3-run experiment.
+12. --set-dt EVENT_IDX SECONDS: Set the relative delay (dt) of a specific event
+    index (adjusting subsequent timestamps automatically in v2).
+13. --tighten-pastes: Automatically shorten pre-paste delays ([REV] -> 1.0s),
+    Enter highlight pauses ([UNREV] -> 0.15s), and prompt paste/submit delays.
+14. --embed-html HTML_PATH: Re-compress the saved .cast file (gzip+base64) into
+    EMBEDDED_CAST_GZ_B64 inside HTML_PATH.
 """
 
 import argparse
@@ -25,9 +38,9 @@ import base64
 import gzip
 import json
 import math
-from pathlib import Path
 import re
 import sys
+from pathlib import Path
 from typing import Any
 
 CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
@@ -35,65 +48,66 @@ CANONICAL_BASELINE_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         "1. Create Project",
         re.compile(r"flutter create --platforms=ios parts_tracker_baseline", re.DOTALL),
     ),
+    ("2. Launch agy", re.compile(r"\bagy\b", re.DOTALL)),
     (
-        "2. Initial Git Commit",
-        re.compile(r'git init && git add \. && git commit -m "Initial scaffold"', re.DOTALL),
-    ),
-    ("3. Launch agy", re.compile(r"\bagy\b", re.DOTALL)),
-    (
-        "4. Initial Prompt",
+        "3. Initial Prompt",
         re.compile(
-            r"I'd like to build a Flutter app for iOS that enables me to track my electronics parts",
+            r"I'd like to build a Flutter app for iOS that enables me "
+            r"to track my electronics parts",
             re.DOTALL,
         ),
     ),
     (
-        "5. Q1: Clarifying Question",
+        "4. Q1: Clarifying Question",
         re.compile(
-            r"Which features would you like to include.*?enter Submit|Where would you like to store.*?enter Select",
+            r"Which features would you like to include.*?enter Submit|"
+            r"Where would you like to store.*?enter Select",
             re.DOTALL,
         ),
     ),
     (
-        "6. Q1: Options Selected",
+        "5. Q1: Options Selected",
         re.compile(
             r"3\. \[x\] Storage locations.*?4\. \[ \].*?x\]",
             re.DOTALL,
         ),
     ),
     (
-        "7. Q2: Clarifying Question",
+        "6. Q2: Clarifying Question",
         re.compile(
-            r"How should your parts inventory data be stored.*?enter Select|Which additional features.*?enter Submit",
+            r"How should your parts inventory data be stored.*?enter Select|"
+            r"Which additional features.*?enter Submit",
             re.DOTALL,
         ),
     ),
     (
-        "8. Q3: Clarifying Question",
+        "7. Q3: Clarifying Question",
         re.compile(
-            r"Which visual style do you prefer.*?enter Select|What UI style would you prefer.*?enter Select",
+            r"Which visual style do you prefer.*?enter Select|"
+            r"What UI style would you prefer.*?enter Select",
             re.DOTALL,
         ),
     ),
     (
-        "9. Build Summary",
-        re.compile(r"I've built your iOS-read", re.DOTALL),
+        "8. Build Summary",
+        re.compile(r"What Was Built", re.DOTALL),
     ),
     (
-        "10. Build Complete",
+        "9. Build Complete",
         re.compile(
-            r"PartDetailScreen.*?\? for shortcuts|Verified build completed successfully\.",
+            r"PartDetailScreen.*?\? for shortcuts|"
+            r"Verified build completed successfully\.",
             re.DOTALL,
         ),
     ),
-    ("11. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
-    ("12. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
+    ("10. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
+    ("11. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
     (
-        "13. Session Cleared",
+        "12. Session Cleared",
         re.compile(r"Antigravity CLI 1\.4\.12.*?\? for shortcuts", re.DOTALL),
     ),
-    ("14. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
-    ("15. Apply Review Fixes", re.compile(r"p\s*Gleasefix", re.DOTALL)),
+    ("13. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
+    ("14. Apply Review Fixes", re.compile(r"p\s*Gleasefix", re.DOTALL)),
 ]
 
 CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [
@@ -102,22 +116,19 @@ CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(r"flutter create --platforms=ios parts_tracker_skilled", re.DOTALL),
     ),
     (
-        "2. Initial Git Commit",
-        re.compile(r'git init && git add \. && git commit -m "Initial scaffold"', re.DOTALL),
-    ),
-    (
-        "3. Install Matt Pocock Skills",
+        "2. Install Matt Pocock Skills",
         re.compile(r"npx skills@latest add mattpocock/skills", re.DOTALL),
     ),
-    ("4. Launch agy", re.compile(r"\bagy\b", re.DOTALL)),
-    ("5. /wayfinder (Chart)", re.compile(r"/wayfinder\s+I'd like to build", re.DOTALL)),
-    ("6. /wayfinder (Resolve)", re.compile(r"/wayfinder\b", re.DOTALL)),
-    ("7. /to-spec", re.compile(r"/to-spec\b", re.DOTALL)),
-    ("8. /to-tickets", re.compile(r"/to-tickets\b", re.DOTALL)),
-    ("9. /implement", re.compile(r"/implement\b", re.DOTALL)),
-    ("10. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
-    ("11. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
-    ("12. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
+    ("3. Launch agy", re.compile(r"\bagy\b", re.DOTALL)),
+    ("4. /wayfinder (Chart)", re.compile(r"/wayfinder\s+I'd like to build", re.DOTALL)),
+    ("5. /wayfinder (Resolve)", re.compile(r"/wayfinder\b", re.DOTALL)),
+    ("6. /to-spec", re.compile(r"/to-spec\b", re.DOTALL)),
+    ("7. /to-tickets", re.compile(r"/to-tickets\b", re.DOTALL)),
+    ("8. /implement", re.compile(r"/implement\b", re.DOTALL)),
+    ("9. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
+    ("10. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
+    ("11. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
+    ("12. Apply Review Fixes", re.compile(r"please\s*fix|p\s*Gleasefix", re.DOTALL)),
 ]
 
 CANONICAL_COMPREHENSION_MARKERS: list[tuple[str, re.Pattern[str]]] = [
@@ -142,8 +153,8 @@ def strip_ansi(text: str) -> str:
 def describe_ansi_tags(code: str, data: Any) -> str:
     """
     Return compact diagnostic tags for stdout ('o') events so --inspect and --search
-    distinguish bracketed-paste reverse video ([REV]), Enter un-reverse redraw ([UNREV]),
-    and preexec OSC title ([OSC]).
+    distinguish bracketed-paste reverse video ([REV]), Enter un-reverse redraw
+    ([UNREV]), and preexec OSC title ([OSC]).
     """
     if code != "o":
         return ""
@@ -165,13 +176,15 @@ def advance_past_paste_redraw(
     events: list[list[Any]], match_idx: int, version: int
 ) -> int:
     """
-    When a stdout pattern matches a shell bracketed-paste frame in reverse video (\\x1b[7m)
-    or its immediate Enter un-reverse redraw (\\x1b[27m):
-      1. Advance from the [REV] paste frame to the [UNREV] redraw frame (\\x1b[A...\\x1b[27m...).
-      2. If the [UNREV] frame ends with a cursor-down newline sequence (\\x1b[1B\\r\\x1b[K),
-         split that trailing cursor-down sequence into a follow-up 'o' event (dt=0.02s)
-         so that at the 'm' marker the command is in normal video with the cursor still on
-         the same line at the end of the command.
+    When a stdout pattern matches a shell bracketed-paste frame in reverse video
+    (\\x1b[7m) or its immediate Enter un-reverse redraw (\\x1b[27m):
+      1. Advance from the [REV] paste frame to the [UNREV] redraw frame
+         (\\x1b[A...\\x1b[27m...).
+      2. If the [UNREV] frame ends with a cursor-down newline sequence
+         (\\x1b[1B\\r\\x1b[K), split that trailing cursor-down sequence into a
+         follow-up 'o' event (dt=0.02s) so that at the 'm' marker the command is
+         in normal video with the cursor still on the same line at the end of
+         the command.
     """
     if match_idx < 0 or match_idx >= len(events):
         return match_idx
@@ -201,18 +214,14 @@ def advance_past_paste_redraw(
         return idx
 
     idx = match_idx
-    # Step 1: If matched on the [REV] paste frame, advance to the [UNREV] redraw frame on Enter
+    # Step 1: If matched on [REV] paste frame, advance to [UNREV] redraw frame
     if is_rev_paste and idx + 1 < len(events):
         next_ev = events[idx + 1]
-        if (
-            len(next_ev) >= 3
-            and next_ev[1] == "o"
-            and "\x1b[27m" in str(next_ev[2])
-        ):
+        if len(next_ev) >= 3 and next_ev[1] == "o" and "\x1b[27m" in str(next_ev[2]):
             idx += 1
 
-    # Step 2: If the [UNREV] frame has a trailing cursor-down (\x1b[1B\r\x1b[K), split it
-    # into a separate 'o' event after the marker so the cursor stays on the command line at the stop point.
+    # Step 2: If [UNREV] has a trailing cursor-down (\x1b[1B\r\x1b[K), split it
+    # into a separate 'o' event after the marker so cursor stays on command line.
     unrev_ev = events[idx]
     if len(unrev_ev) >= 3 and unrev_ev[1] == "o":
         unrev_s = str(unrev_ev[2])
@@ -223,7 +232,7 @@ def advance_past_paste_redraw(
             split_dt = 0.02
             if version == 3:
                 follow_time = split_dt
-                # Deduct split_dt from the next positive-dt event if possible to preserve total duration
+                # Deduct split_dt from next positive-dt event to preserve duration
                 for look_idx in range(idx + 1, min(len(events), idx + 6)):
                     if float(events[look_idx][0]) >= split_dt:
                         events[look_idx][0] = round(
@@ -238,7 +247,7 @@ def advance_past_paste_redraw(
 
 
 def load_cast(path: str) -> tuple[dict[str, Any], list[list[Any]], int]:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         lines = [
             line.strip()
             for line in f
@@ -256,8 +265,8 @@ def compute_timings(
     header: dict[str, Any], events: list[list[Any]], version: int
 ) -> list[tuple[int, float, float, float, str, Any]]:
     """
-    Returns list of (index, dt, raw_abs_time, effective_playback_time, event_code, payload).
-    Handles both v2 (absolute timestamps) and v3 (relative dt intervals).
+    Returns list of (index, dt, raw_abs_time, effective_playback_time,
+    event_code, payload). Handles both v2 and v3 formats.
     """
     idle_limit = header.get("idle_time_limit")
     idle_cap = float(idle_limit) if idle_limit is not None else None
@@ -294,7 +303,8 @@ def list_markers(
     timings = compute_timings(header, events, version)
     markers = [row for row in timings if row[4] == "m"]
     print(
-        f"Format: asciicast-v{version} | Total events: {len(events)} | Markers: {len(markers)}"
+        f"Format: asciicast-v{version} | Total events: {len(events)} | "
+        f"Markers: {len(markers)}"
     )
     if not markers:
         print("  (no 'm' marker events found)")
@@ -313,7 +323,8 @@ def list_markers(
         warped_abs += warped_dur
         print(
             f"  [{num}] event #{idx:04d} | raw={raw_t:6.2f}s | 1x={eff_t:6.2f}s | "
-            f"seg={warped_dur:4.1f}s @ {spd:g}x | warped={warped_abs:5.1f}s | label={label!r}"
+            f"seg={warped_dur:4.1f}s @ {spd:g}x | warped={warped_abs:5.1f}s | "
+            f"label={label!r}"
         )
         prev_eff = eff_t
         prev_label = str(label)
@@ -387,7 +398,8 @@ def search_events(
                 snippet = " ".join(rolling[-120:].split())
             tags = describe_ansi_tags(code, data)
             print(
-                f"  event #{idx:04d} | raw={raw_t:6.2f}s | 1x={eff_t:6.2f}s | {tags}{snippet[:90]!r}"
+                f"  event #{idx:04d} | raw={raw_t:6.2f}s | 1x={eff_t:6.2f}s | "
+                f"{tags}{snippet[:90]!r}"
             )
             if context > 0:
                 c_start = max(0, idx - context)
@@ -398,13 +410,15 @@ def search_events(
                     c_tags = describe_ansi_tags(c_code, c_data)
                     prefix = "    >>>" if c_idx == idx else "       "
                     print(
-                        f"{prefix} #{c_idx:04d} dt={c_dt:5.2f}s raw={c_raw:6.2f}s 1x={c_eff:6.2f}s {c_code} -> {c_tags}{c_clean[:80]!r}"
+                        f"{prefix} #{c_idx:04d} dt={c_dt:5.2f}s raw={c_raw:6.2f}s "
+                        f"1x={c_eff:6.2f}s {c_code} -> {c_tags}{c_clean[:80]!r}"
                     )
             matches += 1
             rolling = ""
             if matches >= limit:
                 print(
-                    f"  ... stopped at {limit} matches (use a more specific regex to narrow)"
+                    f"  ... stopped at {limit} matches "
+                    "(use a more specific regex to narrow)"
                 )
                 break
     if matches == 0:
@@ -423,7 +437,7 @@ def relabel_markers(events: list[list[Any]], labels: list[str]) -> int:
 
 
 def auto_inject_markers(
-    header: dict[str, Any],
+    _header: dict[str, Any],
     events: list[list[Any]],
     version: int,
     marker_specs: list[tuple[str, re.Pattern[str]]],
@@ -432,8 +446,9 @@ def auto_inject_markers(
 ) -> tuple[list[list[Any]], list[str]]:
     """
     Scan stdout ('o') events for the patterns in marker_specs and insert 'm' markers
-    with dt=0.0 (v3) or same timestamp (v2). When matching a bracketed-paste reverse-video
-    command, automatically advances past the Enter un-reverse redraw and pre-exec title.
+    with dt=0.0 (v3) or same timestamp (v2). When matching a bracketed-paste
+    reverse-video command, automatically advances past the Enter un-reverse redraw
+    and pre-exec title.
     """
     canonical_labels = {label for label, _ in marker_specs}
     events = [
@@ -570,7 +585,8 @@ def remove_marker_by_target(
     events: list[list[Any]], target: str
 ) -> tuple[list[list[Any]], list[str]]:
     """
-    Remove marker(s) matching 1-based marker number (e.g. '1') or case-insensitive label substring.
+    Remove marker(s) matching 1-based marker number (e.g. '1') or
+    case-insensitive label substring.
     """
     is_num = target.isdigit()
     target_num = int(target) if is_num else -1
@@ -608,10 +624,13 @@ def set_marker_by_target(
       - '@event:123' -> event index #123
       - '@time:12.5' -> raw timestamp 12.5s
       - '@1x:12.5'   -> idle-capped 1x timestamp 12.5s
-      - '@cmd:regex' or 'regex' or 'regex#2' -> stdout pattern match (auto-advances past reverse-video paste redraw unless --raw-match)
+      - '@cmd:regex' or 'regex' or 'regex#2' -> stdout pattern match
+        (auto-advances past reverse-video paste redraw unless --raw-match)
     """
     events_without, removed = remove_marker_by_target(events, target)
-    removed_desc = ", ".join(removed) if removed else f"(no existing marker matched {target!r})"
+    removed_desc = (
+        ", ".join(removed) if removed else f"(no existing marker matched {target!r})"
+    )
 
     if where_spec.startswith("@event:"):
         ev_idx = int(where_spec.split(":", 1)[1])
@@ -661,7 +680,8 @@ def set_event_dt(
     """
     Set the relative delay (dt) of event #target_idx to new_dt.
     In v3, events[i][0] is relative dt directly.
-    In v2, events[i][0] is cumulative timestamp, so subsequent events shift by (new_dt - old_dt).
+    In v2, events[i][0] is cumulative timestamp, so subsequent events shift by
+    (new_dt - old_dt).
     """
     if target_idx < 0 or target_idx >= len(events):
         return False, 0.0
@@ -687,15 +707,14 @@ def tighten_paste_delays(
     submit_dt: float = 0.20,
 ) -> list[str]:
     """
-    Shorten cut-and-paste, prompt-entry, and prompt-submit delays without affecting markers or output:
-      1. Shell bracketed-paste [REV] frames (\\x1b[7m): cap dt to pre_paste_dt (default 1.0s = 0.5s @ 2x).
-      2. Shell Enter [UNREV] redraw frames (\\x1b[A...\\x1b[27m): cap dt to unrev_dt (default 0.15s).
-      3. agy startup model header settle before initial prompt: cap dt to pre_paste_dt (default 1.0s).
-      4. TUI pasted prompts (containing input-box badge 'G\\x1b[m\\x1b[2A') or first typed prompt character
-         (immediately followed by the 'G\\x1b[m\\x1b[2A' badge): cap dt to pre_paste_dt (default 1.0s).
-      5. Slash-command execution frame immediately following a '(/clear)' marker: cap dt to pre_paste_dt (default 1.0s).
-      6. Input-box clear/submit events (\\x1b[\\d+D\\x1b[K) immediately following an 'm' marker:
-         cap dt to submit_dt (default 0.20s).
+    Shorten cut-and-paste, prompt-entry, and prompt-submit delays without
+    affecting markers or output:
+      1. Shell bracketed-paste [REV] frames (\\x1b[7m): cap dt to pre_paste_dt.
+      2. Shell Enter [UNREV] redraw frames (\\x1b[A...\\x1b[27m): cap dt to unrev_dt.
+      3. agy startup model header settle before initial prompt: cap dt to pre_paste_dt.
+      4. TUI pasted prompts or first typed prompt character: cap dt to pre_paste_dt.
+      5. Slash-command execution frame after '(/clear)' marker: cap dt to pre_paste_dt.
+      6. Input-box clear/submit events after an 'm' marker: cap dt to submit_dt.
     """
     notes: list[str] = []
     input_clear_re = re.compile(r"^\x1b\[\?2026h\x1b\[\d+D\x1b\[K\x1b\[\?2026l$")
@@ -764,7 +783,8 @@ def tighten_paste_delays(
             set_event_dt(events, version, idx, target_dt)
             clean_preview = " ".join(strip_ansi(s).split())[:55]
             notes.append(
-                f"#{idx:04d} ({reason}): dt {old_dt:.2f}s -> {target_dt:.2f}s | {clean_preview!r}"
+                f"#{idx:04d} ({reason}): dt {old_dt:.2f}s -> "
+                f"{target_dt:.2f}s | {clean_preview!r}"
             )
     return notes
 
@@ -796,7 +816,10 @@ def embed_cast_in_html(cast_path: str, html_path: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Inspect, search, add, move/replace, or remove 'm' chapter markers in .cast files."
+        description=(
+            "Inspect, search, add, move/replace, or remove 'm' chapter markers "
+            "in .cast files."
+        )
     )
     parser.add_argument("input", help="Input .cast file path")
     parser.add_argument(
@@ -811,7 +834,10 @@ def main() -> int:
     parser.add_argument(
         "--inspect",
         metavar="START[:END]",
-        help="Inspect events in range START:END (or around event index START) with dt, raw, 1x, and stripped stdout",
+        help=(
+            "Inspect events in range START:END (or around event index START) "
+            "with dt, raw, 1x, and stripped stdout"
+        ),
     )
     parser.add_argument(
         "--search",
@@ -835,14 +861,20 @@ def main() -> int:
         "--remove",
         action="append",
         metavar="NUM_OR_LABEL",
-        help="Remove a specific marker by 1-based number (e.g. 1) or label substring (repeatable)",
+        help=(
+            "Remove a specific marker by 1-based number (e.g. 1) or label "
+            "substring (repeatable)"
+        ),
     )
     parser.add_argument(
         "--set",
         nargs=3,
         action="append",
         metavar=("NUM_OR_LABEL", "WHERE", "NEW_LABEL"),
-        help="Move/replace marker NUM_OR_LABEL to WHERE (regex, regex#N, @event:IDX, @time:SEC, @1x:SEC) with NEW_LABEL",
+        help=(
+            "Move/replace marker NUM_OR_LABEL to WHERE (regex, regex#N, "
+            "@event:IDX, @time:SEC, @1x:SEC) with NEW_LABEL"
+        ),
     )
     parser.add_argument(
         "--relabel", nargs="+", help="Relabel existing 'm' markers in sequence"
@@ -867,19 +899,28 @@ def main() -> int:
         nargs=2,
         action="append",
         metavar=("REGEX", "LABEL"),
-        help="Insert a marker labeled LABEL right after stdout matches REGEX (repeatable; use regex#N for Nth match)",
+        help=(
+            "Insert a marker labeled LABEL right after stdout matches REGEX "
+            "(repeatable; use regex#N for Nth match)"
+        ),
     )
     parser.add_argument(
         "--add-time",
         nargs=2,
         action="append",
         metavar=("SECONDS", "LABEL"),
-        help="Insert a marker labeled LABEL at timestamp SECONDS (repeatable; raw time by default, or 1x with --effective-time)",
+        help=(
+            "Insert a marker labeled LABEL at timestamp SECONDS "
+            "(repeatable; raw time by default, or 1x with --effective-time)"
+        ),
     )
     parser.add_argument(
         "--effective-time",
         action="store_true",
-        help="Interpret --add-time SECONDS as idle-capped 1x playback time instead of raw elapsed time",
+        help=(
+            "Interpret --add-time SECONDS as idle-capped 1x playback time "
+            "instead of raw elapsed time"
+        ),
     )
     parser.add_argument(
         "--add-event",
@@ -891,12 +932,18 @@ def main() -> int:
     parser.add_argument(
         "--before",
         action="store_true",
-        help="Insert --add-pattern / --add-event / --set markers immediately before the target event instead of after",
+        help=(
+            "Insert --add-pattern / --add-event / --set markers immediately "
+            "before the target event instead of after"
+        ),
     )
     parser.add_argument(
         "--raw-match",
         action="store_true",
-        help="Disable automatic fast-forward past bracketed-paste reverse-video redraws (\\x1b[7m -> \\x1b[27m)",
+        help=(
+            "Disable automatic fast-forward past bracketed-paste reverse-video "
+            "redraws (\\x1b[7m -> \\x1b[27m)"
+        ),
     )
     parser.add_argument(
         "--set-dt",
@@ -908,12 +955,17 @@ def main() -> int:
     parser.add_argument(
         "--tighten-pastes",
         action="store_true",
-        help="Shorten cut-and-paste delays ([REV] -> 1.0s, [UNREV] -> 0.15s) and agy prompt paste/submit pauses",
+        help=(
+            "Shorten cut-and-paste delays ([REV] -> 1.0s, [UNREV] -> 0.15s) "
+            "and agy prompt paste/submit pauses"
+        ),
     )
     parser.add_argument(
         "--embed-html",
         metavar="HTML_PATH",
-        help="Also update EMBEDDED_CAST_GZ_B64 in the given standalone HTML player file",
+        help=(
+            "Also update EMBEDDED_CAST_GZ_B64 in the given standalone HTML player file"
+        ),
     )
     args = parser.parse_args()
 
@@ -1031,11 +1083,13 @@ def main() -> int:
             )
             if idx is not None:
                 print(
-                    f"[add-pattern] + {label!r} at event #{idx:04d} (pattern={pat!r}, occurrence={occ})"
+                    f"[add-pattern] + {label!r} at event #{idx:04d} "
+                    f"(pattern={pat!r}, occurrence={occ})"
                 )
             else:
                 print(
-                    f"[add-pattern] WARNING: pattern {pat!r} (occurrence={occ}) not found for {label!r}"
+                    f"[add-pattern] WARNING: pattern {pat!r} "
+                    f"(occurrence={occ}) not found for {label!r}"
                 )
 
     if args.add_event:
@@ -1048,7 +1102,8 @@ def main() -> int:
                 print(f"[add-event] + {label!r} at event #{target_idx:04d}")
             else:
                 print(
-                    f"[add-event] WARNING: event #{target_idx} out of range (0..{len(events) - 1})"
+                    f"[add-event] WARNING: event #{target_idx} out of range "
+                    f"(0..{len(events) - 1})"
                 )
 
     if args.add_time:
@@ -1085,7 +1140,9 @@ def main() -> int:
             new_dt = float(sec_str)
             ok, old_dt = set_event_dt(events, version, ev_idx, new_dt)
             if ok:
-                print(f"[set-dt] event #{ev_idx:04d}: dt {old_dt:.3f}s -> {new_dt:.3f}s")
+                print(
+                    f"[set-dt] event #{ev_idx:04d}: dt {old_dt:.3f}s -> {new_dt:.3f}s"
+                )
             else:
                 print(f"[set-dt] WARNING: event #{ev_idx} out of range")
 
