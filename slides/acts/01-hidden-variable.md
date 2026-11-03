@@ -65,7 +65,7 @@ layout: default
 
 <ol class="space-y-4 text-sm text-gray-200 list-decimal pl-6 mt-5 leading-relaxed">
   <li>
-    <strong class="text-white">Shared Declarative DNA ($UI = f(state)$)</strong>
+    <strong class="text-white">Shared Declarative DNA (<code>UI = f(state)</code>)</strong>
     <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
       <li>You already think in declarative component trees, immutable props, and reactive state updates.</li>
       <li>Flutter&rsquo;s <code>Widget</code> tree maps closely enough to React&rsquo;s JSX component tree that AI-generated Dart code looks <em>almost</em> readable at a glance.</li>

@@ -125,7 +125,7 @@ step: Curriculum Architecture 2 of 3
     <div class="p-3 rounded-lg bg-gray-900/90 border border-gray-800 space-y-1">
       <div class="text-cyan-300 font-mono font-semibold">React.memo() &rarr; Compile-Time const Widgets</div>
       <p class="text-gray-300 m-0">
-        Marking a constructor call <code>const MyWidget()</code> canonicalises the widget instance at compile time so Flutter skips rebuilding that subtree in $O(1)$.
+        Marking a constructor call <code>const MyWidget()</code> canonicalises the widget instance at compile time so Flutter skips rebuilding that subtree in <code>O(1)</code>.
       </p>
     </div>
     <div class="p-3 rounded-lg bg-gray-900/90 border border-gray-800 space-y-1">
