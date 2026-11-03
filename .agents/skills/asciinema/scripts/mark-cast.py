@@ -119,16 +119,64 @@ CANONICAL_SKILLED_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         "2. Install Matt Pocock Skills",
         re.compile(r"npx skills@latest add mattpocock/skills", re.DOTALL),
     ),
-    ("3. Launch agy", re.compile(r"\bagy\b", re.DOTALL)),
-    ("4. /wayfinder (Chart)", re.compile(r"/wayfinder\s+I'd like to build", re.DOTALL)),
-    ("5. /wayfinder (Resolve)", re.compile(r"/wayfinder\b", re.DOTALL)),
-    ("6. /to-spec", re.compile(r"/to-spec\b", re.DOTALL)),
-    ("7. /to-tickets", re.compile(r"/to-tickets\b", re.DOTALL)),
-    ("8. /implement", re.compile(r"/implement\b", re.DOTALL)),
-    ("9. Run App", re.compile(r"Please run the app\.", re.DOTALL)),
-    ("10. Clear Session (/clear)", re.compile(r"/clear", re.DOTALL)),
-    ("11. Codebase Review", re.compile(r"Please review the codebase", re.DOTALL)),
-    ("12. Apply Review Fixes", re.compile(r"please\s*fix|p\s*Gleasefix", re.DOTALL)),
+    ("3. Launch agy", re.compile(r"a\x08agy$", re.DOTALL)),
+    (
+        "4. /wayfinder (Chart Map)",
+        re.compile(
+            r"/wayfinder\s+I'd like to build a Flutter app for iOS that enables me "
+            r"to track my electronics parts",
+            re.DOTALL,
+        ),
+    ),
+    ("5. /wayfinder (Part Domain Model)", re.compile(r"finde/wayfinder$", re.DOTALL)),
+    (
+        "6. /wayfinder (Storage & UI Prototypes)",
+        re.compile(r"finde/wayfinder$", re.DOTALL),
+    ),
+    (
+        "7. Run UI Prototypes",
+        re.compile(
+            r"rows on the Parts tab,\s*p.*rows on the Parts tab,\s*p$", re.DOTALL
+        ),
+    ),
+    ("8. /wayfinder (JSON Persistence)", re.compile(r"finde/wayfinder$", re.DOTALL)),
+    (
+        "9. /wayfinder (Search & Units)",
+        re.compile(r"f\s+/wayfinder\s+Gemini 4 Argon", re.DOTALL),
+    ),
+    (
+        "10. /wayfinder (Architecture)",
+        re.compile(r"/wayfinder\s+esc to cancelGemini 4 Argon", re.DOTALL),
+    ),
+    ("11. /to-spec", re.compile(r">\s*/to-spec\s+─+$", re.DOTALL)),
+    (
+        "12. /to-tickets",
+        re.compile(
+            r">\s*/to-tickets\s+─+.*?esc to cancelGemini 4 Argon · medium\r$",
+            re.DOTALL,
+        ),
+    ),
+    (
+        "13. /implement (Vertical-Slice TDD)",
+        re.compile(r"esc to cancelGemini 4 Argon · medium\r/implement$", re.DOTALL),
+    ),
+    (
+        "14. Run App & Seed Data",
+        re.compile(r"p\s+Gleaseruntheapp$", re.DOTALL),
+    ),
+    (
+        "15. Clear Session (/clear)",
+        re.compile(
+            r"Fetch LCSC\..*?>\s*/clear\s+Clear conversation.*?"
+            r"firebase-security-rules-auditor",
+            re.DOTALL,
+        ),
+    ),
+    (
+        "16. Codebase Review (/code-review)",
+        re.compile(r"p\s+Gleasereviewthisapp$", re.DOTALL),
+    ),
+    ("17. Apply Review Fixes", re.compile(r"p\s+Gleasefix$", re.DOTALL)),
 ]
 
 CANONICAL_COMPREHENSION_MARKERS: list[tuple[str, re.Pattern[str]]] = [
@@ -208,7 +256,8 @@ def advance_past_paste_redraw(
                 if version == 3
                 else max(0.0, float(next_ev[0]) - float(events[idx][0]))
             )
-            if dt > 0.0:
+            next_clean = strip_ansi(str(next_ev[2])).strip()
+            if dt > 0.0 and not (dt <= 0.025 and next_clean == "G"):
                 break
             idx += 1
         return idx
@@ -468,7 +517,7 @@ def auto_inject_markers(
         if target_idx < len(marker_specs) and len(ev) >= 3 and ev[1] == "o":
             clean_chunk = strip_ansi(str(ev[2]))
             rolling_window = (rolling_window + clean_chunk)[-1500:]
-            for lookahead in range(target_idx, len(marker_specs)):
+            for lookahead in range(target_idx, min(len(marker_specs), target_idx + 2)):
                 label, pattern = marker_specs[lookahead]
                 if pattern.search(rolling_window):
                     place_idx = (
@@ -717,7 +766,9 @@ def tighten_paste_delays(
       6. Input-box clear/submit events after an 'm' marker: cap dt to submit_dt.
     """
     notes: list[str] = []
-    input_clear_re = re.compile(r"^\x1b\[\?2026h\x1b\[\d+D\x1b\[K\x1b\[\?2026l$")
+    input_clear_re = re.compile(
+        r"^\x1b\[\?2026h(?:\x1b\[\d+D\x1b\[K|\r\n\n\n\x1b\[J\x1b\[3A\x1b\[2C\x1b\[K)"
+    )
 
     for idx, ev in enumerate(events):
         if len(ev) < 3 or ev[1] != "o":

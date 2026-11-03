@@ -31,7 +31,7 @@ A complete **Presentation Script & Slidev Deck Specification** demonstrating the
 
 ## Open Issues
 
-- [Capture Terminal Casts and Extract Session Traces](./issues/04-capture-casts-and-session-traces.md): **Run 1 (`parts_tracker_baseline`) complete & verified** (`01-baseline.cast` with 15 stop points + tightened paste delays, `06-baseline-cast-player.html` synced, 2 session traces exported, and 6 iOS screenshots captured); **Run 2 (`parts_tracker_skilled`)** and **Run 3 (`parts_tracker_comprehension`)** pending recording.
+- [Capture Terminal Casts and Extract Session Traces](./issues/04-capture-casts-and-session-traces.md): **Run 1 (`parts_tracker_baseline`) & Run 2 (`parts_tracker_skilled`) complete & verified** (`01-baseline.cast` with 14 stop points + `06-baseline-cast-player.html` + 2 baseline traces; `02-skilled.cast` with 17 stop points + tightened paste delays, `07-skilled-cast-player.html` synced, and 13 skilled session traces exported); **Run 3 (`parts_tracker_comprehension`)** pending recording.
 - [Capture and Process Skilled Run iOS App Screenshots](./issues/08-skilled-ios-screenshots.md): **Phase 1 complete** (`OptionA.png`, `OptionB.png`, and `OptionC.png` `1206x2622 px` `/wayfinder` scoping prototype screenshots staged and verified in `artifacts/screenshots/parts_tracker_skilled/`); **Phase 2 pending** final app build screenshots after `/implement`.
 - [Reference Prior Training Material Examples (learn-egui and BufferedMult-SKiDL)](./issues/06-reference-prior-teach-code-examples.md): Deciding where and how in Act 3 to showcase the published `learn-egui` and `BufferedMult-SKiDL` `/teach-code` sites.
 
