@@ -43,16 +43,16 @@ layout: default
   <h2 class="text-2xl font-bold m-0">The Core Thesis &mdash; Part 1: The Trap</h2>
 </div>
 
-<div class="h-88 flex flex-col justify-between p-8 rounded-2xl bg-red-950/15 border border-red-500/30">
+<div class="flex flex-col justify-between gap-6 p-7 rounded-2xl bg-red-950/15 border border-red-500/30">
   <div class="text-xs font-mono text-red-400 uppercase tracking-widest">
     Out-of-the-Box Coding Agent
   </div>
 
-  <div class="text-4xl font-extrabold text-white tracking-tight leading-snug max-w-4xl">
+  <div class="text-3xl font-extrabold text-white tracking-tight leading-snug max-w-4xl">
     An unshaped agent will happily generate a working app in a framework you don&rsquo;t know&mdash;and hand you a pile of <span class="text-red-400">Comprehension Debt</span>.
   </div>
 
-  <div class="grid grid-cols-3 gap-4 pt-6 border-t border-red-500/20 text-sm">
+  <div class="grid grid-cols-3 gap-4 pt-5 border-t border-red-500/20 text-sm">
     <div class="p-3.5 rounded-xl bg-gray-950/70 border border-gray-800">
       <div class="text-red-300 font-bold mb-1">15 Minutes to &ldquo;Working&rdquo;</div>
       <div class="text-gray-300 text-xs leading-relaxed">2,000+ lines of generated code that compiles and runs on the first try.</div>
