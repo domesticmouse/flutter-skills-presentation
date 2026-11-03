@@ -38,20 +38,93 @@ G'day everyone! Today we are going to look at what actually happens when you han
 layout: default
 ---
 
-<!-- S02 -->
+<!-- S02a -->
 <div class="flex items-center gap-3 mb-6">
-  <h2 class="text-2xl font-bold m-0">The Core Thesis</h2>
+  <h2 class="text-2xl font-bold m-0">The Core Thesis &mdash; Part 1: The Trap</h2>
 </div>
 
-<div class="h-80 flex flex-col items-center justify-center text-center px-8">
-  <blockquote class="text-2xl font-semibold text-white tracking-tight leading-relaxed max-w-4xl">
-    &ldquo;Out of the box, an AI coding agent will happily generate a working app in a framework you don&rsquo;t know&mdash;and hand you a pile of <span class="text-red-400">Comprehension Debt</span>.<br/><br/>
-    By shaping the agent with rules and Agent Skills (<code class="text-cyan-300">SKILL.md</code>), you turn it from an eager code generator into a <span class="text-amber-300">design partner</span> that interviews you first (<code class="text-amber-300">/wayfinder</code>), and a <span class="text-emerald-300">personal tutor</span> that teaches you the codebase afterwards (<code class="text-emerald-300">/teach-code</code>).&rdquo;
-  </blockquote>
+<div class="h-88 flex flex-col justify-between p-8 rounded-2xl bg-red-950/15 border border-red-500/30">
+  <div class="text-xs font-mono text-red-400 uppercase tracking-widest">
+    Out-of-the-Box Coding Agent
+  </div>
+
+  <div class="text-4xl font-extrabold text-white tracking-tight leading-snug max-w-4xl">
+    An unshaped agent will happily generate a working app in a framework you don&rsquo;t know&mdash;and hand you a pile of <span class="text-red-400">Comprehension Debt</span>.
+  </div>
+
+  <div class="grid grid-cols-3 gap-4 pt-6 border-t border-red-500/20 text-sm">
+    <div class="p-3.5 rounded-xl bg-gray-950/70 border border-gray-800">
+      <div class="text-red-300 font-bold mb-1">15 Minutes to &ldquo;Working&rdquo;</div>
+      <div class="text-gray-300 text-xs leading-relaxed">2,000+ lines of generated code that compiles and runs on the first try.</div>
+    </div>
+    <div class="p-3.5 rounded-xl bg-gray-950/70 border border-gray-800">
+      <div class="text-red-300 font-bold mb-1">Zero Intent Artifacts</div>
+      <div class="text-gray-300 text-xs leading-relaxed">Every architectural trade-off evaporates the moment you run <code>/clear</code>.</div>
+    </div>
+    <div class="p-3.5 rounded-xl bg-gray-950/70 border border-gray-800">
+      <div class="text-red-300 font-bold mb-1">Zero Mental Model</div>
+      <div class="text-gray-300 text-xs leading-relaxed">You own the bugs in production, but not the domain seams to fix them.</div>
+    </div>
+  </div>
 </div>
 
 <!--
-Here is the core thesis for the next forty-five minutes. Out of the box, modern coding agents are almost too eager to please. Give them a one-line prompt in a language or framework you don't know, and they will hand you a working app in fifteen minutes—along with a massive pile of Comprehension Debt. You have code that runs, but you don't own the domain model, the architectural seams, or the mental model to maintain it. Turns out, by shaping the agent with rules and Agent Skills, we can turn that eager code generator into a design partner before we write code, and a personal tutor afterwards.
+Here is the first half of our core thesis. Out of the box, modern coding agents are almost too eager to please. Give them a one-line prompt in a language or framework you don't know, and they will hand you a working app in fifteen minutes—along with a massive pile of Comprehension Debt. You have two thousand lines of code that runs on the simulator, but zero Intent Artifacts in the repo and zero mental model when you need to maintain it.
+-->
+
+---
+layout: default
+---
+
+<!-- S02b -->
+<div class="flex items-center gap-3 mb-6">
+  <h2 class="text-2xl font-bold m-0">The Core Thesis &mdash; Part 2: The Antidote</h2>
+</div>
+
+<div class="text-2xl font-semibold text-gray-200 leading-snug mb-6">
+  Shaping the agent with rules and Agent Skills (<code class="text-cyan-300">SKILL.md</code>) turns an eager code generator into:
+</div>
+
+<div class="grid grid-cols-2 gap-6 h-68">
+  <div class="p-6 rounded-2xl bg-amber-950/15 border border-amber-500/30 flex flex-col justify-between">
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-mono text-amber-400 uppercase tracking-widest">1. Before You Write Code</span>
+        <code class="text-sm text-amber-300">/wayfinder</code>
+      </div>
+      <h3 class="text-3xl font-extrabold text-white tracking-tight mb-3">
+        A <span class="text-amber-300">Design Partner</span>
+      </h3>
+      <p class="text-base text-gray-200 leading-relaxed m-0">
+        Interviews you first, stress-tests domain boundaries, and commits durable <strong>Intent Artifacts</strong> (<code>SPEC.md</code>, tickets) to the repository before generating a single widget.
+      </p>
+    </div>
+    <div class="text-xs font-mono text-amber-300/90 pt-3 border-t border-amber-500/20">
+      Outcome: Shared architectural intent in git
+    </div>
+  </div>
+
+  <div class="p-6 rounded-2xl bg-emerald-950/15 border border-emerald-500/30 flex flex-col justify-between">
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">2. After the Code Exists</span>
+        <code class="text-sm text-emerald-300">/teach-code</code>
+      </div>
+      <h3 class="text-3xl font-extrabold text-white tracking-tight mb-3">
+        A <span class="text-emerald-300">Personal Tutor</span>
+      </h3>
+      <p class="text-base text-gray-200 leading-relaxed m-0">
+        Builds an interactive, stateful curriculum directly from your new codebase&mdash;bridging your existing mental model (React) to the new stack (Flutter &amp; Dart).
+      </p>
+    </div>
+    <div class="text-xs font-mono text-emerald-300/90 pt-3 border-t border-emerald-500/20">
+      Outcome: Earned engineering comprehension
+    </div>
+  </div>
+</div>
+
+<!--
+And here is the antidote. By shaping the agent with rules and composable Agent Skills—simple SKILL.md files—we transform its role at both ends of the workflow. Before we write code, skills like /wayfinder turn the agent into a design partner that interviews us and commits durable Intent Artifacts into git. And after the code exists, /teach-code turns the agent into a personal tutor that teaches us the exact architecture it just built.
 -->
 
 ---
