@@ -173,7 +173,6 @@ step: Curriculum Architecture 3 of 3
       </div>
       <a href="./tutorial/lessons/0001-flutter-bootstrap-and-provider-scope.html" target="_blank" class="font-mono text-cyan-300 hover:underline shrink-0 ml-3">Open 0001 &nearr;</a>
     </div>
-
     <div class="p-2.5 rounded-lg bg-gray-900/85 border border-gray-800 flex items-center justify-between">
       <div>
         <span class="font-mono text-emerald-400 font-semibold">Lesson 0002:</span>
@@ -182,7 +181,6 @@ step: Curriculum Architecture 3 of 3
       </div>
       <a href="./tutorial/lessons/0002-immutable-domain-models-with-freezed.html" target="_blank" class="font-mono text-cyan-300 hover:underline shrink-0 ml-3">Open 0002 &nearr;</a>
     </div>
-
     <div class="p-2.5 rounded-lg bg-gray-900/85 border border-gray-800 flex items-center justify-between">
       <div>
         <span class="font-mono text-emerald-400 font-semibold">Lesson 0003:</span>
@@ -191,7 +189,6 @@ step: Curriculum Architecture 3 of 3
       </div>
       <a href="./tutorial/lessons/0003-persistence-seam-and-atomic-file-storage.html" target="_blank" class="font-mono text-cyan-300 hover:underline shrink-0 ml-3">Open 0003 &nearr;</a>
     </div>
-
     <div class="p-2.5 rounded-lg bg-gray-900/85 border border-gray-800 flex items-center justify-between">
       <div>
         <span class="font-mono text-emerald-400 font-semibold">Lesson 0004:</span>
@@ -200,7 +197,6 @@ step: Curriculum Architecture 3 of 3
       </div>
       <a href="./tutorial/lessons/0004-reactive-catalog-state-with-riverpod.html" target="_blank" class="font-mono text-cyan-300 hover:underline shrink-0 ml-3">Open 0004 &nearr;</a>
     </div>
-
     <div class="p-2.5 rounded-lg bg-gray-900/85 border border-gray-800 flex items-center justify-between">
       <div>
         <span class="font-mono text-emerald-400 font-semibold">Lesson 0005:</span>
