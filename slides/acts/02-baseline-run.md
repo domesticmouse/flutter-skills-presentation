@@ -139,32 +139,27 @@ title: "Session Trace 01: What the Agent Did Under the Hood"
         <span>Tool Calls: <strong class="text-cyan-300">48</strong></span>
       </div>
     </div>
-
     <div class="grid grid-cols-[11rem_1fr] gap-y-1.5 gap-x-4 items-baseline pt-0.5">
       <div class="font-mono flex items-center justify-between pr-2">
         <span class="text-cyan-300">ask_question</span>
         <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">3</span>
       </div>
       <div class="text-gray-300">Steps 5, 7, 9 &mdash; triggered by Global Rule</div>
-
       <div class="font-mono flex items-center justify-between pr-2">
         <span class="text-cyan-300">read_file</span>
         <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">9</span>
       </div>
       <div class="text-gray-300">Read 5 global Flutter plugin skills in <code>~/.gemini/config/plugins/flutter/</code></div>
-
       <div class="font-mono flex items-center justify-between pr-2">
         <span class="text-cyan-300">write_file</span>
         <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">21</span>
       </div>
       <div class="text-gray-300">Created <code>lib/models/</code>, <code>lib/repositories/</code>, <code>lib/view_models/</code>, <code>lib/ui/</code></div>
-
       <div class="font-mono flex items-center justify-between pr-2">
         <span class="text-cyan-300">edit_file</span>
         <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">7</span>
       </div>
       <div class="text-gray-300">Fixed <code>widget_test.dart</code> and lints</div>
-
       <div class="font-mono flex items-center justify-between pr-2">
         <span class="text-cyan-300">run_command</span>
         <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">8</span>
@@ -172,7 +167,6 @@ title: "Session Trace 01: What the Agent Did Under the Hood"
       <div class="text-gray-300"><code>flutter pub add</code>, <code>flutter analyze</code>, <code>flutter test</code>, <code>flutter run</code></div>
     </div>
   </div>
-
   <div class="grid grid-cols-2 gap-4 text-xs pt-2">
     <div class="p-3.5 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
       <div class="text-cyan-300 font-semibold">Auto-Loaded Flutter Plugin Skills</div>
