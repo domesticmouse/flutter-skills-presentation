@@ -57,7 +57,6 @@ We start by cloning our finished Skilled Run app into parts_tracker_comprehensio
 
 ---
 layout: cast-full
-title: "Run 3 — Comprehension Run (03-comprehension.cast)"
 cast: /casts/03-comprehension.cast
 autoPlay: false
 speed: 2.0

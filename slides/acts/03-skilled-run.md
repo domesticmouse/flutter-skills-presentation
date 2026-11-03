@@ -57,7 +57,6 @@ Instead of trying to cram requirements, architecture, UI design, and coding into
 
 ---
 layout: cast-full
-title: "Run 2 — Skilled Run (02-skilled.cast)"
 cast: /casts/02-skilled.cast
 autoPlay: false
 speed: 2.0

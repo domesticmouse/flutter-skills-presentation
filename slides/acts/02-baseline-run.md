@@ -58,7 +58,6 @@ Because of our Global Rule, agy doesn't write a single line of Dart until it ask
 
 ---
 layout: cast-full
-title: "Run 1 — Baseline Run (01-baseline.cast)"
 cast: /casts/01-baseline.cast
 autoPlay: false
 speed: 2.0
