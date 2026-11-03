@@ -73,7 +73,6 @@ Here is the complete 33-minute Baseline Run terminal recording compressed into t
 ---
 layout: hardware-callout
 title: "Baseline Run iOS App: Inventory & Part Detail"
-subtitle: "parts_tracker_baseline · iOS Simulator (1206×2622)"
 image: /images/baseline-01-parts-inventory.png
 imageCaption: "01-parts-inventory.png — 8 sample parts, dashboard summary cards & category filter chips"
 ---
@@ -98,7 +97,6 @@ Look at what came out of that single nineteen-minute session. Honestly, if you s
 ---
 layout: hardware-callout
 title: "Baseline Run iOS App: Locations, Restock & Backup"
-subtitle: "parts_tracker_baseline · 3 Bottom Navigation Tabs"
 image: /images/baseline-04-storage-locations.png
 imageCaption: "04-storage-locations.png — Flat string locations ('Cabinet A - Drawer 2')"
 ---
@@ -123,9 +121,7 @@ When we switch to the Locations tab, we start to see the architectural shortcuts
 ---
 layout: skill-breakdown
 way: 1
-skill: artifacts/traces/parts_tracker_baseline/01-06523dd6.md
 title: "Session Trace 01: What the Agent Did Under the Hood"
-step: Trace Audit 1 of 2
 ---
 
 <!-- S13 -->
@@ -163,9 +159,7 @@ Using our agy-brain-explorer skill, we extracted the full Session Trace from ~/.
 ---
 layout: skill-breakdown
 way: 2
-skill: artifacts/traces/parts_tracker_baseline/02-88556362.md
 title: "Session Trace 02: What Happens After /clear + 'Please review the codebase'"
-step: Trace Audit 2 of 2
 ---
 
 <!-- S14 -->

@@ -116,8 +116,8 @@ Follow the slide design conventions below. For copy-pasteable HTML/Markdown temp
 - **`layout: center` (`class: text-center`)**: Title slide, Act divider slides, and big-quote callouts.
 - **`layout: default`**: Concept lists, 2-column anti-pattern vs. solution cards (`bg-red-950/15` vs. `bg-emerald-950/15`), and code/architecture tables.
 - **`layout: cast-full`**: Full-viewport (85–90% height) interactive `asciinema-player` slide (`title`, `cast: /casts/file.cast`, `autoPlay: false`, `speed: 2.0`, `idleTimeLimit: 1.0`, `fit: both`).
-- **`layout: skill-breakdown`**: Framed zoom-in card with top-right monospace metadata (`way: 1|2|3|mashup`, `skill: path/to/file`, `title`, `step: Zoom-In 1 of 3`).
-- **`layout: hardware-callout`**: 12-column split pairing a framed image and optional caption overlay on the left (`title`, `subtitle`, `image: /images/file.png`, `imageCaption`) with explanatory HTML content in the default slot on the right.
+- **`layout: skill-breakdown`**: Framed zoom-in card (`way: 1|2|3|mashup`, `title`).
+- **`layout: hardware-callout`**: 12-column split pairing a framed image and optional caption overlay on the left (`title`, `image: /images/file.png`, `imageCaption`) with explanatory HTML content in the default slot on the right.
 
 *Completion Criterion*: Every authored slide includes a clean `<h2>` header (or uses a dedicated layout header), unindented code fences with blank line separators, and a conversational `<!-- ... -->` speaker note block.
 

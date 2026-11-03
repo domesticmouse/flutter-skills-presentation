@@ -72,9 +72,7 @@ Here is the Skilled Run recording. In raw wall-clock time, walking all seven Way
 ---
 layout: skill-breakdown
 way: 2
-skill: experiments/parts_tracker_skilled/GLOSSARY.md
 title: "Intent Artifact 1: Ubiquitous Domain Language (/domain-modeling)"
-step: Intent Artifact 1 of 3
 ---
 
 <!-- S19 -->
@@ -108,9 +106,7 @@ Look at our first Intent Artifact committed to the repo: GLOSSARY.md. During the
 ---
 layout: skill-breakdown
 way: 2
-skill: .scratch/parts-tracker-v1/map.md · Session 02 (0b4fb5bb)
 title: "Intent Artifact 2: Wayfinder Map & Empirical Subagent Research"
-step: Intent Artifact 2 of 3
 ---
 
 <!-- S20 -->
@@ -146,7 +142,6 @@ Here is the second Intent Artifact: .scratch/parts-tracker-v1/map.md. Notice Tic
 ---
 layout: hardware-callout
 title: "Throwaway UI Exploration with /prototype (Session 04)"
-subtitle: "lib/prototype_workbench.dart · Variant A vs. Variant B vs. Variant C"
 image: /images/skilled-OptionA.png
 imageCaption: "OptionA.png — Variant A: Split Tabs & Dense Stepper Rows ('Workbench Catalog')"
 ---
@@ -171,7 +166,6 @@ Then we hit Ticket 04 on the Wayfinder map: what should the workbench UI actuall
 ---
 layout: hardware-callout
 title: "Locking Variant B: Dark Command Bar & Inline Accordion"
-subtitle: "artifacts/screenshots/parts_tracker_skilled/OptionB.png"
 image: /images/skilled-OptionB.png
 imageCaption: "OptionB.png — Selected prototype: Dark Command Bar & Inline Spec Accordion"
 ---
@@ -195,9 +189,7 @@ Playing with the three prototypes on the simulator made the decision obvious wit
 ---
 layout: skill-breakdown
 way: 2
-skill: .scratch/parts-tracker-v1/spec.md · /implement (Session 08)
 title: "Intent Artifact 3: Deep Module Seams & Vertical-Slice TDD"
-step: Intent Artifact 3 of 3
 ---
 
 <!-- S23 -->
@@ -228,7 +220,6 @@ Once all seven Wayfinder tickets were closed, /to-spec and /to-tickets synthesis
 ---
 layout: hardware-callout
 title: "Skilled Run iOS App: Workbench & Inline Spec Accordion"
-subtitle: "parts_tracker_skilled · Final Production Build"
 image: /images/skilled-01-workbench-catalog.png
 imageCaption: "01-workbench-catalog.png — Variant B dark workbench with expanded 4.7kΩ 0603 inline accordion"
 ---
@@ -253,7 +244,6 @@ Here is the finished Skilled Run app running on the iOS Simulator. Look at the d
 ---
 layout: hardware-callout
 title: "Skilled Run iOS App: Live LCSC Lookup & Container Hierarchy"
-subtitle: "parts_tracker_skilled · Live API Fetch & 2-Level Storage"
 image: /images/skilled-03-add-part-lcsc-lookup.png
 imageCaption: "03-add-part-lcsc-lookup.png — Live LCSC fetch for C2878713 (TL074HIDR Op-Amp by TI)"
 ---

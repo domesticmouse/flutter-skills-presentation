@@ -159,9 +159,7 @@ This brings us to Act 0: The Hidden Variable. When I first recorded the Baseline
 ---
 layout: skill-breakdown
 way: 1
-skill: $HOME/.gemini/config/AGENTS.md
 title: The User-Level Global Rule
-step: Global Context
 ---
 
 <!-- S06 -->

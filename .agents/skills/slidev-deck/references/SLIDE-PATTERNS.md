@@ -180,15 +180,13 @@ Click to play: explain what the viewer is watching in the terminal session and w
 
 ## 6. Code / Architecture Zoom-In (`layout: skill-breakdown`)
 
-Used for multi-slide deep-dives (`Zoom-In 1 of 3`, `Zoom-In 2 of 3`, etc.) with color-coded card borders (`way: 1` cyan, `way: 2` amber, `way: 3` emerald, `way: mashup` purple):
+Used for multi-slide deep-dives with color-coded card borders (`way: 1` cyan, `way: 2` amber, `way: 3` emerald, `way: mashup` purple):
 
 ````markdown
 ---
 layout: skill-breakdown
 way: 1
-skill: .agents/skills/example-skill/SKILL.md
 title: Frontmatter & Activation Triggers
-step: Zoom-In 1 of 3
 ---
 
 <!-- S26 -->
@@ -229,7 +227,6 @@ Pairs a framed image and caption overlay on the left (6 columns) with rich HTML 
 ---
 layout: hardware-callout
 title: Visual Callout Title
-subtitle: Component or Subsystem Name
 image: /images/example-photo.png
 imageCaption: Concise caption describing the visual asset
 ---

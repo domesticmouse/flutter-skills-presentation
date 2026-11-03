@@ -72,9 +72,7 @@ Here is the Comprehension Run terminal cast, compressed into under two minutes a
 ---
 layout: skill-breakdown
 way: 3
-skill: experiments/parts_tracker_comprehension/tutorial/MISSION.md
 title: "Stateful Pedagogy on Disk: Mission & Learning Records"
-step: Curriculum Architecture 1 of 3
 ---
 
 <!-- S30 -->
@@ -115,9 +113,7 @@ Look at how /teach-code structures ./tutorial/ on disk. Just like Wayfinder pers
 ---
 layout: skill-breakdown
 way: 3
-skill: tutorial/reference/react-to-flutter-cheatsheet.html
 title: "Bridging Mental Models: React + TypeScript → Flutter + Dart 3"
-step: Curriculum Architecture 2 of 3
 ---
 
 <!-- S31 -->
@@ -164,9 +160,7 @@ Before we even start Lesson 1, /teach-code generates three reference sheets—in
 ---
 layout: skill-breakdown
 way: 3
-skill: experiments/parts_tracker_comprehension/tutorial/lessons/
 title: "Progressive Reconstruction: 5 Verified Lessons & Companion Apps"
-step: Curriculum Architecture 3 of 3
 ---
 
 <!-- S32 -->

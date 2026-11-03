@@ -28,10 +28,6 @@ function resolveUrl(rawSrc: string | undefined): string {
           {{ $frontmatter.title || 'Architecture Callout' }}
         </h2>
       </div>
-
-      <div v-if="$frontmatter.subtitle" class="text-xs text-gray-400 font-mono">
-        {{ $frontmatter.subtitle }}
-      </div>
     </div>
 
     <!-- 2-Column Split: Visual Asset Frame + Annotated Details -->
