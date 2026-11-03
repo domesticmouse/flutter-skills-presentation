@@ -30,8 +30,20 @@ Designed for a 45–50 minute university lecture for mobile development students
 | [`.scratch/flutter-skills-presentation/map.md`](./.scratch/flutter-skills-presentation/map.md) | Wayfinder map tracking the presentation specification, resolved decisions, and remaining open questions. |
 | [`.scratch/flutter-skills-presentation/issues/`](./.scratch/flutter-skills-presentation/issues/) | Resolved and open Wayfinder tickets covering talk thesis, canonical Q&A script, asciinema stop-points, operator runbook, and recording progress. |
 | [`.scratch/flutter-skills-presentation/prototypes/`](./.scratch/flutter-skills-presentation/prototypes/) | Interactive HTML prototypes ([`03-recording-runbook.html`](./.scratch/flutter-skills-presentation/prototypes/03-recording-runbook.html), [`05-stop-points.html`](./.scratch/flutter-skills-presentation/prototypes/05-stop-points.html), [`06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html)) and recording helpers ([`setup-workspaces.sh`](./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh), [`mark-cast.py`](./.scratch/flutter-skills-presentation/prototypes/mark-cast.py)). |
-| [`.agents/skills/`](./.agents/skills/) | Installed project Agent Skills for planning (`/wayfinder`, `/grilling`, `/domain-modeling`, `/prototype`), recording & trace analysis (`/asciinema`, `/agy-brain-explorer`), teaching (`/teach-code`), and deck authoring (`/bjm-voice`, `/slidev-deck`). |
+| [`.agents/skills/`](./.agents/skills/) | Installed project Agent Skills for planning (`/wayfinder`, `/grilling`, `/domain-modeling`, `/prototype`), recording, cast players & trace analysis (`/asciinema`, `/cast-player-html`, `/agy-brain-explorer`), teaching (`/teach-code`), and deck authoring (`/bjm-voice`, `/slidev-deck`). |
 | [`skills-lock.json`](./skills-lock.json) | Lockfile pinning installed Agent Skills. |
+
+---
+
+## Current Project Status
+
+| Workstream / Deliverable | Status | Details |
+| :--- | :--- | :--- |
+| **Wayfinder Planning (Tickets 01, 02, 03, 05)** | **Closed** | Audience & thesis ([`01`](./.scratch/flutter-skills-presentation/issues/01-audience-and-talk-thesis.md)), canonical Q&A & run boundaries ([`02`](./.scratch/flutter-skills-presentation/issues/02-demo-prompts-and-run-boundaries.md)), operator runbook & scripts ([`03`](./.scratch/flutter-skills-presentation/issues/03-recording-runbook-and-setup-script.md)), and stop-point / adaptive-speed player architecture ([`05`](./.scratch/flutter-skills-presentation/issues/05-asciinema-stop-points-and-slidev-navigation.md)) are complete. |
+| **Run 1 — Baseline Run (`parts_tracker_baseline`)** | **Complete & Verified** | Workspace built (`~/Demos/flutter-parts-experiment/parts_tracker_baseline`), [`recordings/final/01-baseline.cast`](./recordings/final/01-baseline.cast) processed with 15 stop points + tightened paste delays (`32m 57.2s` raw → `02m 33.5s` across 16 adaptive-speed segments), [`06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html) synced, and 2 **Session Traces** exported in [`artifacts/traces/parts_tracker_baseline/`](./artifacts/traces/parts_tracker_baseline/). |
+| **Run 2 — Skilled Run (`parts_tracker_skilled`)** | **Pending Recording** | Ready to record (`02-skilled.cast`) and extract traces via [`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md) Step 3 ([Ticket `04`](./.scratch/flutter-skills-presentation/issues/04-capture-casts-and-session-traces.md)). |
+| **Run 3 — Comprehension Run (`parts_tracker_comprehension`)** | **Pending Recording** | Ready to clone from `parts_tracker_skilled` and record `/teach-code` (`03-comprehension.cast`) via [`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md) Step 4 ([Ticket `04`](./.scratch/flutter-skills-presentation/issues/04-capture-casts-and-session-traces.md)). |
+| **Prior `/teach-code` Examples & Deck Spec** | **Open** | [Ticket `06`](./.scratch/flutter-skills-presentation/issues/06-reference-prior-teach-code-examples.md) (`learn-egui` and `BufferedMult-SKiDL` showcase in Act 3), trace curation, narrative script, and Slidev deck specification follow once Runs 2 & 3 are captured. |
 
 ---
 
@@ -50,7 +62,7 @@ The operator runbook ([`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md)) and work
    ```
 
 3. **Test Drive `01-baseline.cast` in a Browser**:
-   Open [`.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html) to preview the 16:9 Slidev `cast-full` player with 11 embedded stop points, adaptive per-segment speeds (`2x`–`29x`), and `[` / `]` / `p` stage controls.
+   Open [`.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html) to preview the 16:9 Slidev `cast-full` player with 15 embedded stop points (plus `0. Start` and `→ End`), adaptive per-segment speeds (`2x`–`29x`, `02m 33.5s` total warped playback), and `[` / `]` / `p` stage controls.
 
 4. **Check Overall Experiment Status**:
    ```bash

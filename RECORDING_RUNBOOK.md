@@ -149,7 +149,11 @@ Inside the recorded shell:
     ```text
     Please review the codebase
     ```
-11. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
+11. **Ask `agy` to fix the issues surfaced by the review**:
+    ```text
+    please fix
+    ```
+12. Exit `agy` and press `Ctrl+D` (or type `exit`) to finish the `asciinema` recording.
 
 ### 2.3 Process, Inspect & Decide: Good Capture or Redo Run 1?
 Immediately after exiting the recording shell, run `process-run` to sanitize/trim `01-baseline.cast`, auto-inject chapter stop-point markers via `mark-cast.py`, and export the Antigravity session logs for `parts_tracker_baseline`:
@@ -392,7 +396,8 @@ python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
 python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
   --add-pattern "Please review the codebase" "Codebase Review" --in-place
 
-# 6. Clear all markers and re-apply canonical markers cleanly
+# 6. Clear all markers, re-apply canonical markers, tighten paste/submit delays, and sync HTML player
 python3 "$MARK_SCRIPT" "$REPO_ROOT/recordings/final/01-baseline.cast" \
-  --clear --auto-baseline --in-place
+  --clear --auto-baseline --tighten-pastes --in-place \
+  --embed-html "$REPO_ROOT/.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html"
 ```

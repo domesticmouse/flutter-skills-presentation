@@ -53,11 +53,11 @@ process_single_cast() {
   echo "=== Processing $cast_name ==="
   python3 "$sanitize_script" "$raw_file" "$final_file"
   if [[ "$cast_name" == "01-baseline.cast" ]]; then
-    python3 "$mark_script" "$final_file" --auto-baseline --in-place
+    python3 "$mark_script" "$final_file" --auto-baseline --tighten-pastes --in-place
   elif [[ "$cast_name" == "02-skilled.cast" ]]; then
-    python3 "$mark_script" "$final_file" --auto-skilled --in-place
+    python3 "$mark_script" "$final_file" --auto-skilled --tighten-pastes --in-place
   elif [[ "$cast_name" == "03-comprehension.cast" ]]; then
-    python3 "$mark_script" "$final_file" --auto-comprehension --in-place
+    python3 "$mark_script" "$final_file" --auto-comprehension --tighten-pastes --in-place
   fi
   python3 "$trim_script" "$final_file" --in-place --hold 3.0 || true
   python3 "$mark_script" "$final_file" --list
@@ -115,8 +115,31 @@ show_status() {
     local raw_state="missing"
     local final_state="missing"
     [[ -f "$RECORDINGS_RAW/$cast_name" ]] && raw_state="present"
-    [[ -f "$RECORDINGS_FINAL/$cast_name" ]] && final_state="present"
+    if [[ -f "$RECORDINGS_FINAL/$cast_name" ]]; then
+      local marker_count
+      marker_count=$(grep -c '"m"' "$RECORDINGS_FINAL/$cast_name" || true)
+      final_state="present (markers: $marker_count)"
+    fi
     echo "  $cast_name: raw=$raw_state | final=$final_state"
+  done
+  echo "=== Session Traces ($TRACES_DIR) ==="
+  for proj in parts_tracker_baseline parts_tracker_skilled parts_tracker_comprehension; do
+    if [[ -d "$TRACES_DIR/$proj" ]]; then
+      local trace_count
+      trace_count=$(find "$TRACES_DIR/$proj" -maxdepth 1 -name "[0-9][0-9]-*.md" | wc -l | tr -d ' ')
+      echo "  [READY] $proj (sessions: $trace_count)"
+    else
+      echo "  [MISSING] $proj"
+    fi
+  done
+  echo "=== Cast-Player HTML Harnesses ($PRESENTATION_ROOT/.scratch/flutter-skills-presentation/prototypes) ==="
+  for html_name in 06-baseline-cast-player.html 07-skilled-cast-player.html 08-comprehension-cast-player.html; do
+    local html_path="$PRESENTATION_ROOT/.scratch/flutter-skills-presentation/prototypes/$html_name"
+    if [[ -f "$html_path" ]]; then
+      echo "  [READY] $html_name"
+    else
+      echo "  [MISSING] $html_name"
+    fi
   done
 }
 
