@@ -117,15 +117,18 @@ def sanitize(input_path, output_path, redact_map, strip_stdin=True, scrub_env=Tr
             try:
                 event = json.loads(trimmed)
             except json.JSONDecodeError:
-                # If a line cannot be parsed, pass it through
-                outfile.write(line)
+                # Skip corrupted/truncated lines instead of emitting invalid JSON
                 continue
 
             if not isinstance(event, list) or len(event) < 3:
-                outfile.write(line)
                 continue
 
             _event_time, event_type, event_data = event[0], event[1], event[2]
+
+            # Stop after the recording exit ('x') event so trailing output from an outer shell is ignored
+            if event_type == "x":
+                outfile.write(json.dumps(event) + "\n")
+                break
 
             # Strip stdin keystroke events
             if strip_stdin and event_type == "i":

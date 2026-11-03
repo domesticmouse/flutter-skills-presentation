@@ -184,9 +184,44 @@ CANONICAL_COMPREHENSION_MARKERS: list[tuple[str, re.Pattern[str]]] = [
         "1. Install Comprehension Skills",
         re.compile(r"npx skills@latest add domesticmouse/skills", re.DOTALL),
     ),
-    ("2. Launch agy", re.compile(r"\bagy\b", re.DOTALL)),
-    ("3. /teach-code Prompt", re.compile(r"/teach-code\s+I know React", re.DOTALL)),
-    ("4. Curriculum & Lesson 0001 Built", re.compile(r"build\.py --check", re.DOTALL)),
+    ("2. Launch agy", re.compile(r"a\x08agy$", re.DOTALL)),
+    (
+        "3. /teach-code Prompt",
+        re.compile(r"learnFlutterfromthiscodebase\.$", re.DOTALL),
+    ),
+    (
+        "4. Q1: Learning Goal",
+        re.compile(
+            r"evaluating Flutter vs\. React/React Native for an upcoming project\)\?\r\n\n\n\n\n\? for shortcuts$",
+            re.DOTALL,
+        ),
+    ),
+    (
+        "5. Q1: Answer (1)",
+        re.compile(r"^1\n\n G$", re.DOTALL),
+    ),
+    (
+        "6. Q2: Prior Stack & Dart Experience",
+        re.compile(
+            r"brand new t.*?o you too\?.*?, 232 tokens.*?\? for shortcuts$",
+            re.DOTALL,
+        ),
+    ),
+    (
+        "7. Q2: Answer (TypeScript, New to Dart)",
+        re.compile(r"Gypescript,neverwrittendart$", re.DOTALL),
+    ),
+    (
+        "8. Curriculum & Lesson 0001 Built",
+        re.compile(
+            r"0001-flutter-bootstrap-and-provider-scope\.html.*?\? for shortcutsGemini 4 Argon · medium\r$",
+            re.DOTALL,
+        ),
+    ),
+    (
+        "9. Prompt: Implement Lessons 0001–0005",
+        re.compile(r"Gleaseimplementthefirstfivelessons$", re.DOTALL),
+    ),
 ]
 
 ANSI_ESCAPE_RE = re.compile(

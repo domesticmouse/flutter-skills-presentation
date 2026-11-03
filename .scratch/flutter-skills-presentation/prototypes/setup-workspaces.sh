@@ -46,6 +46,7 @@ process_single_cast() {
 
   local raw_file="$RECORDINGS_RAW/$cast_name"
   local final_file="$RECORDINGS_FINAL/$cast_name"
+  local html_file=""
   if [[ ! -f "$raw_file" ]]; then
     echo "[SKIP] $raw_file not recorded yet"
     return 1
@@ -53,14 +54,21 @@ process_single_cast() {
   echo "=== Processing $cast_name ==="
   python3 "$sanitize_script" "$raw_file" "$final_file"
   if [[ "$cast_name" == "01-baseline.cast" ]]; then
+    html_file="$PRESENTATION_ROOT/.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html"
     python3 "$mark_script" "$final_file" --auto-baseline --tighten-pastes --in-place
   elif [[ "$cast_name" == "02-skilled.cast" ]]; then
+    html_file="$PRESENTATION_ROOT/.scratch/flutter-skills-presentation/prototypes/07-skilled-cast-player.html"
     python3 "$mark_script" "$final_file" --auto-skilled --tighten-pastes --in-place
   elif [[ "$cast_name" == "03-comprehension.cast" ]]; then
+    html_file="$PRESENTATION_ROOT/.scratch/flutter-skills-presentation/prototypes/08-comprehension-cast-player.html"
     python3 "$mark_script" "$final_file" --auto-comprehension --tighten-pastes --in-place
   fi
   python3 "$trim_script" "$final_file" --in-place --hold 3.0 || true
-  python3 "$mark_script" "$final_file" --list
+  if [[ -n "$html_file" ]] && [[ -f "$html_file" ]]; then
+    python3 "$mark_script" "$final_file" --list --embed-html "$html_file"
+  else
+    python3 "$mark_script" "$final_file" --list
+  fi
   python3 "$trim_script" "$final_file" --info
 }
 
