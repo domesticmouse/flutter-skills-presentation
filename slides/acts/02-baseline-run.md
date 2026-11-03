@@ -126,15 +126,52 @@ title: "Session Trace 01: What the Agent Did Under the Hood"
 
 <!-- S13 -->
 <div class="space-y-4">
+  <div class="p-4 rounded-lg bg-gray-950/90 border border-gray-800 space-y-2.5 text-xs text-gray-200">
+    <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+      <div class="font-bold text-white">
+        Session 01 <span class="font-mono font-normal text-cyan-300">(06523dd6)</span>
+      </div>
+      <div class="flex items-center gap-3 font-mono text-gray-400">
+        <span>Duration: <strong class="text-gray-200">19m 36s</strong></span>
+        <span>&middot;</span>
+        <span>Steps: <strong class="text-gray-200">94</strong></span>
+        <span>&middot;</span>
+        <span>Tool Calls: <strong class="text-cyan-300">48</strong></span>
+      </div>
+    </div>
 
-```text
-Session 01 (06523dd6) · Duration: 19m 36s · Steps: 94 · Tool Calls: 48
-├── ask_question: 3   (Steps 5, 7, 9 — triggered by Global Rule)
-├── read_file:    9   (Read 5 global Flutter plugin skills in ~/.gemini/config/plugins/flutter/)
-├── write_file:  21   (Created lib/models/, lib/repositories/, lib/view_models/, lib/ui/)
-├── edit_file:    7   (Fixed widget_test.dart and lints)
-└── run_command:  8   (flutter pub add, flutter analyze, flutter test, flutter run)
-```
+    <div class="grid grid-cols-[11rem_1fr] gap-y-1.5 gap-x-4 items-baseline pt-0.5">
+      <div class="font-mono flex items-center justify-between pr-2">
+        <span class="text-cyan-300">ask_question</span>
+        <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">3</span>
+      </div>
+      <div class="text-gray-300">Steps 5, 7, 9 &mdash; triggered by Global Rule</div>
+
+      <div class="font-mono flex items-center justify-between pr-2">
+        <span class="text-cyan-300">read_file</span>
+        <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">9</span>
+      </div>
+      <div class="text-gray-300">Read 5 global Flutter plugin skills in <code>~/.gemini/config/plugins/flutter/</code></div>
+
+      <div class="font-mono flex items-center justify-between pr-2">
+        <span class="text-cyan-300">write_file</span>
+        <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">21</span>
+      </div>
+      <div class="text-gray-300">Created <code>lib/models/</code>, <code>lib/repositories/</code>, <code>lib/view_models/</code>, <code>lib/ui/</code></div>
+
+      <div class="font-mono flex items-center justify-between pr-2">
+        <span class="text-cyan-300">edit_file</span>
+        <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">7</span>
+      </div>
+      <div class="text-gray-300">Fixed <code>widget_test.dart</code> and lints</div>
+
+      <div class="font-mono flex items-center justify-between pr-2">
+        <span class="text-cyan-300">run_command</span>
+        <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">8</span>
+      </div>
+      <div class="text-gray-300"><code>flutter pub add</code>, <code>flutter analyze</code>, <code>flutter test</code>, <code>flutter run</code></div>
+    </div>
+  </div>
 
   <div class="grid grid-cols-2 gap-4 text-xs pt-2">
     <div class="p-3.5 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
