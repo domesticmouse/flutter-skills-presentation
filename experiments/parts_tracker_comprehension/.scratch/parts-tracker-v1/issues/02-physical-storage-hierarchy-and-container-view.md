@@ -1,0 +1,16 @@
+# 02: Physical storage hierarchy (Container management, 1-to-1 Slot uniqueness, and By Container grouped view)
+
+**What to build:** End-to-end physical workbench storage organization using the fixed two-level `Container → Slot` hierarchy. Users can open the **Manage Containers** sheet from the command bar to view **Containers** with their assigned **Part** counts and create, rename, edit descriptions for, or delete **Containers** (atomically unassigning any **Parts** inside a deleted **Container**). In the Add / Edit **Part** sheet, users can assign a **Part** to `Unassigned (Loose / Inbox)`, to a bulk **Container** without a **Slot**, or to a specific `(Container, Slot)` pair with strict 1-to-1 uniqueness validation. On the Workbench screen, users can toggle the **`By Container`** chip to switch between the flat catalog list and a grouped view that pins `Unassigned (Loose / Inbox)` at the top, orders **Containers** alphabetically, sorts **Parts** inside each **Container** by natural alphanumeric **Slot** order (`"Page 2"` before `"Page 10"`), and lets users tap **`+ Add Slot`** on any **Container** header to add a **Part** pre-assigned to that **Container**.
+
+**Blocked by:** 01: Core Part catalog tracer bullet (JSON persistence, Workbench accordion list, stock adjustments, and manual Add/Edit Part)
+
+**Status:** completed
+
+- [x] The **Manage Containers** bottom sheet lists all **Containers** with their descriptions and assigned **Part** counts, and allows creating, renaming, editing descriptions for, and deleting **Containers**.
+- [x] Deleting a **Container** prompts for confirmation showing how many **Parts** are inside it and atomically unassigns those **Parts** (`containerId: null, slot: null`) in the same state and persistence update.
+- [x] In the Add / Edit **Part** sheet, users can select `Unassigned (Loose / Inbox)` or any existing **Container** from a dropdown and enter an optional on-the-fly **Slot** string label (if `containerId` is `null`, `slot` is cleared to `null`).
+- [x] Assigning a **Part** to a non-empty `(Container, Slot)` pair that is already occupied by another **Part** (compared case-insensitively after trimming) is rejected by the catalog store and surfaces an inline validation error naming the occupying **Part**, while allowing multiple unassigned **Parts** (`containerId: null, slot: null`) and multiple bulk slotless **Parts** in the same **Container** (`containerId != null, slot: null`).
+- [x] Toggling the **`By Container`** chip in the command bar groups the workbench list by physical storage: `Unassigned (Loose / Inbox)` is pinned first, followed by **Containers** sorted alphabetically by `name`.
+- [x] Within each **Container** in **`By Container`** mode, **Parts** are sorted by natural alphanumeric **Slot** order (so `"Page 2"` appears before `"Page 10"` and `"Drawer A2"` appears before `"Drawer A10"`, with slotless bulk **Parts** placed last).
+- [x] Each **Container** section header in **`By Container`** mode includes a **`+ Add Slot`** action that opens the Add **Part** sheet with that **Container** pre-selected.
+- [x] Automated tests verify **Container** CRUD, cascading unassignment on **Container** deletion, strict 1-to-1 `(Container, Slot)` uniqueness enforcement, natural alphanumeric **Slot** ordering, and the **`By Container`** UI workflow.
