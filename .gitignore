@@ -1,2 +1,9 @@
 # Python compiled code cache
 __pycache__/
+.ruff_cache/
+
+# Slidev deck build and server artifacts
+slides/node_modules/
+slides/dist/
+slides/.slidev.pid
+slides/.slidev.log

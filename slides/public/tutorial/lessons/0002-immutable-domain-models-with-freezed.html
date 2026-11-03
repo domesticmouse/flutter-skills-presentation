@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Lesson 0002 — Immutable Domain Models with Freezed &amp; JSON Serialization</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <script src="../assets/course.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"><nav class="course-nav" aria-label="Course navigation"><div class="nav-breadcrumbs"><a href="../index.html">Index</a><span class="nav-sep" aria-hidden="true">›</span><span class="nav-current" aria-current="page">Lesson 0002</span></div><div class="nav-controls"><span class="nav-pager-group" role="group" aria-label="Adjacent lessons"><a class="nav-pager-link" href="../lessons/0001-flutter-bootstrap-and-provider-scope.html" title="Lesson 0001: Flutter Bootstrap, ProviderScope &amp; Dark Workbench Shell">← Prev</a><span class="nav-sep" aria-hidden="true">·</span><a class="nav-pager-link" href="../lessons/0003-persistence-seam-and-atomic-file-storage.html" title="Lesson 0003: Persistence Seam &amp; Atomic Local File Storage">Next →</a></span><span class="nav-divider" aria-hidden="true">|</span><a class="nav-ref-link" href="../reference/glossary.html">Glossary</a><a class="nav-ref-link" href="../reference/react-to-flutter-cheatsheet.html">React → Flutter</a><a class="nav-ref-link" href="../reference/verification-and-testing.html">Verification &amp; Testing</a><span class="mission-badge">Flutter • Parts Tracker</span></div></nav></header>
+  <main id="main-content" class="page-main">
+    <article class="tufte-article">
+      <header class="article-header">
+        <div class="article-badge">Lesson 0002 • Freezed &amp; Domain Models</div>
+        <h1>Immutable Domain Models with Freezed &amp; JSON Serialization</h1>
+        <p class="article-subtitle">Replace TypeScript interfaces, object spread ({ ...part }), and JSON.parse with Dart 3 sound null safety, @freezed data classes, copyWith, and build_runner codegen.</p>
+      </header>
+      <h2 id="why-freezed">Why Plain Dart Classes Aren't Like TypeScript Interfaces</h2>
+<p>In TypeScript, modeling an immutable domain entity takes zero runtime code:</p>
+<div class="code-figure"><div class="code-caption">TypeScript interface + object spread in a React codebase</div><pre><code class="language-ts">export interface Part {
+  readonly id: string;
+  readonly name: string;
+  readonly quantity: number;
+  readonly containerId?: string | null;
+  readonly slot?: string | null;
+}
+
+// Cloning with an updated field uses JS object spread:
+const updated: Part = { ...part, quantity: part.quantity + 10 };</code></pre></div>
+<p>When you move to Dart, two language differences immediately stand out:</p>
+<ol>
+<li><strong>Dart is nominally typed and compiles to native machine code</strong>: Classes are real runtime types, not erased compile-time shapes. You cannot write <code>{ ...part, quantity: 10 }</code> on a class instance, and <code>JSON.parse()</code> returns an untyped <code>Map&lt;String, dynamic&gt;</code>, not a <code>Part</code>.</li>
+<li><strong>Dart <code>==</code> defaults to reference identity (like JS <code>===</code>)</strong>: Two separate <code>Part(id: 'p1', name: '10k')</code> instances are <strong>not</strong> <code>==</code> unless the class overrides <code>operator ==</code> and <code>hashCode</code>.</li>
+</ol>
+<p>Rather than hand-writing hundreds of lines of boilerplate <code>copyWith</code>, <code>operator ==</code>, <code>hashCode</code>, <code>toString()</code>, and <code>fromJson</code>/<code>toJson</code> methods, production Flutter apps use <strong><code>freezed</code></strong> + <strong><code>json_serializable</code></strong>.<span class="sidenote-number"></span><span class="sidenote">Both <code>freezed</code> and <code>riverpod</code> were created by Remi Rousselet and are designed to work together: because <code>@freezed</code> generates deep structural value equality (<code>==</code>), Riverpod providers and tests can compare snapshots and parts by value out of the box.</span></p>
+<p>In this lesson, you will build <a href="../reference/glossary.html"><code>lib/catalog/catalog_models.dart</code></a> in <code>./tutorial/apps/0002-immutable-domain-models-with-freezed/</code> with our three core domain models: <strong><code>Container</code></strong>, <strong><code>Part</code></strong>, and <strong><code>CatalogSnapshot</code></strong>.</p>
+<aside class="callout callout"><p><strong>Primary Sources for Lesson 0002</strong>: Consult the <a href="../reference/glossary.html">Glossary</a>, the <a href="../reference/react-to-flutter-cheatsheet.html">React → Flutter Cheat Sheet</a>, and the <a href="https://pub.dev/packages/freezed">official <code>package:freezed</code> documentation</a>.</p>
+</aside>
+<hr />
+<h2 id="pubspec">1. Adding Freezed &amp; JSON Codegen to <code>pubspec.yaml</code></h2>
+<figure class="mermaid-figure"><pre class="mermaid">flowchart LR
+  Src[&quot;lib/catalog/catalog_models.dart&lt;br/&gt;(@freezed classes)&quot;] --&gt; Runner[&quot;dart run build_runner build&quot;]
+  Runner --&gt; FreezedPart[&quot;catalog_models.freezed.dart&lt;br/&gt;(copyWith, ==, hashCode, toString)&quot;]
+  Runner --&gt; JsonPart[&quot;catalog_models.g.dart&lt;br/&gt;(_$PartFromJson / _$PartToJson)&quot;]</pre><figcaption class="mermaid-caption">Figure 2.1: How build_runner reads @freezed annotations in catalog_models.dart and emits part files.</figcaption></figure>
+<h3>Block 1: Updating <code>pubspec.yaml</code></h3>
+<p>We add two lightweight annotation packages to <code>dependencies:</code> and three code generators to <code>dev_dependencies:</code>:</p>
+<div class="code-figure"><div class="code-caption">Updated dependencies in tutorial/apps/0002-immutable-domain-models-with-freezed/pubspec.yaml</div><pre><code class="language-yaml">dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^3.4.3
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.12.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.16.2
+  freezed: ^4.0.3
+  json_serializable: ^6.15.2</code></pre></div>
+<ul>
+<li><strong><code>freezed_annotation</code> &amp; <code>json_annotation</code></strong>: Tiny runtime packages containing the <code>@freezed</code> and <code>@Default(...)</code> annotations.</li>
+<li><strong><code>build_runner</code>, <code>freezed</code>, &amp; <code>json_serializable</code></strong>: Compile-time code generators (only in <code>dev_dependencies</code>) that inspect your AST and write <code>.freezed.dart</code> and <code>.g.dart</code> companion files.</li>
+</ul>
+<hr />
+<h2 id="catalog-models">2. Building <code>lib/catalog/catalog_models.dart</code> Block by Block</h2>
+<h3>Block 1: <code>part</code> Directives and the <code>Container</code> Model</h3>
+<div class="code-figure"><div class="code-caption">Part directives and @freezed Container class in lib/catalog/catalog_models.dart</div><pre><code class="language-dart">import &#x27;package:freezed_annotation/freezed_annotation.dart&#x27;;
+
+part &#x27;catalog_models.freezed.dart&#x27;;
+part &#x27;catalog_models.g.dart&#x27;;
+
+@freezed
+abstract class Container with _$Container {
+  const Container._();
+
+  const factory Container({
+    required String id,
+    required String name,
+    String? description,
+  }) = _Container;
+
+  factory Container.fromJson(Map&lt;String, dynamic&gt; json) =&gt;
+      _$ContainerFromJson(json);
+}</code></pre></div>
+<p>Every line in this block teaches a core Dart 3 and Freezed idiom:</p>
+<ul>
+<li><strong><code>part 'catalog_models.freezed.dart';</code> and <code>part 'catalog_models.g.dart';</code></strong>:
+<ul>
+<li>In Dart, a <strong>Part File (<code>part</code> / <code>part of</code>)</strong> splits a single library across multiple physical files so generated code can share the exact same private scope (identifiers starting with <code>_</code>).</li>
+</ul>
+</li>
+<li><strong><code>abstract class Container with _$Container</code></strong>:
+<ul>
+<li>The <code>with</code> keyword applies a Dart <strong>mixin</strong> (<code>_$Container</code>, generated inside <code>catalog_models.freezed.dart</code>) that injects the field getters (<code>id</code>, <code>name</code>, <code>description</code>), <code>copyWith</code>, <code>toJson()</code>, <code>operator ==</code>, and <code>hashCode</code>.</li>
+</ul>
+</li>
+<li><strong><code>const Container._();</code></strong>:
+<ul>
+<li>A private, empty <code>const</code> constructor (<code>ClassName._()</code>). Whenever a Freezed class defines custom methods or getters, Freezed's generated <code>_Container</code> implementation class extends <code>Container</code>, which requires <code>Container</code> to have a generative constructor (<code>const Container._()</code>) for the subclass to call <code>super._()</code>.</li>
+</ul>
+</li>
+<li><strong><code>const factory Container({ required String id, required String name, String? description }) = _Container;</code></strong>:
+<ul>
+<li>A <strong>redirecting factory constructor</strong> that delegates construction to the generated <code>_Container</code> class.</li>
+<li>Notice Dart's <strong>sound null safety</strong>: <code>String id</code> and <code>String name</code> are guaranteed non-null (<code>required</code>), while <code>String? description</code> is explicitly nullable and defaults to <code>null</code> when omitted.</li>
+</ul>
+</li>
+<li><strong><code>factory Container.fromJson(Map&lt;String, dynamic&gt; json) =&gt; _$ContainerFromJson(json);</code></strong>:
+<ul>
+<li>Wires <code>json_serializable</code> so calling <code>Container.fromJson(map)</code> validates and constructs a <code>Container</code>, and calling <code>container.toJson()</code> serializes it back to a <code>Map&lt;String, dynamic&gt;</code>.</li>
+</ul>
+</li>
+</ul>
+<h3>Block 2: The <code>Part</code> Model (<code>@Default</code> &amp; Computed Getters)</h3>
+<p>Next, we model a workbench <strong>Part</strong> (<code>10kΩ 0603 1% Resistor</code>, <code>NE555P</code>, etc.) with its electrical <strong>Specs</strong> and computed stock/location getters:</p>
+<div class="code-figure"><div class="code-caption">@freezed Part class with @Default values and computed getters</div><pre><code class="language-dart">@freezed
+abstract class Part with _$Part {
+  const Part._();
+
+  const factory Part({
+    required String id,
+    required String name,
+    @Default(0) int quantity,
+    String? lcscCode,
+    String? mpn,
+    String? manufacturer,
+    String? category,
+    String? package,
+    String? datasheetUrl,
+    String? containerId,
+    String? slot,
+    int? lowStockThreshold,
+    String? notes,
+    @Default(&lt;String, String&gt;{}) Map&lt;String, String&gt; specs,
+  }) = _Part;
+
+  factory Part.fromJson(Map&lt;String, dynamic&gt; json) =&gt; _$PartFromJson(json);
+
+  bool get isLowStock =&gt; quantity &lt;= (lowStockThreshold ?? 0);
+
+  bool get isUnassigned =&gt; containerId == null;
+}</code></pre></div>
+<ul>
+<li><strong><code>@Default(0) int quantity</code></strong>: Tells both the Dart constructor and <code>fromJson</code> deserializer to default <code>quantity</code> to <code>0</code> if omitted—so <code>quantity</code> is always a non-nullable <code>int</code>!</li>
+<li><strong><code>@Default(&lt;String, String&gt;{}) Map&lt;String, String&gt; specs</code></strong>: Stores the ordered key-value <strong>Specs</strong> (<code>'Capacitance': '100nF'</code>, <code>'Voltage Rated': '50V'</code>). Notice that a <code>const</code> map literal in Dart is written <code>&lt;KeyType, ValueType&gt;{}</code>.</li>
+<li><strong><code>bool get isLowStock =&gt; quantity &lt;= (lowStockThreshold ?? 0);</code></strong>:
+<ul>
+<li>In Dart, <code>Type get propName =&gt; ...</code> defines a <strong>computed getter</strong> (just like <code>get isLowStock(): boolean</code> in a TypeScript class).</li>
+<li>If <code>lowStockThreshold</code> is <code>null</code>, <code>lowStockThreshold ?? 0</code> evaluates to <code>0</code>, meaning a part with no custom threshold is still flagged as low stock when its quantity hits <code>0</code>.</li>
+</ul>
+</li>
+<li><strong><code>copyWith</code> can set nullable fields back to <code>null</code>!</strong> Unlike hand-written <code>copyWith({String? slot}) =&gt; Part(slot: slot ?? this.slot)</code> methods (which cannot distinguish an omitted argument from <code>slot: null</code>), Freezed's generated <code>part.copyWith(containerId: null, slot: null)</code> cleanly resets nullable fields to <code>null</code>.</li>
+</ul>
+<h3>Block 3: <code>CatalogSnapshot</code> &amp; 1-to-1 <code>(Container, Slot)</code> Lookup</h3>
+<p>Finally, we model <code>CatalogSnapshot</code>—the versioned root state object—and its <code>findOccupyingSlotPart</code> domain method:</p>
+<div class="code-figure"><div class="code-caption">@freezed CatalogSnapshot class with empty factory, exportFileName, and findOccupyingSlotPart</div><pre><code class="language-dart">@freezed
+abstract class CatalogSnapshot with _$CatalogSnapshot {
+  const CatalogSnapshot._();
+
+  const factory CatalogSnapshot({
+    @Default(1) int schemaVersion,
+    required DateTime updatedAt,
+    @Default(&lt;Container&gt;[]) List&lt;Container&gt; containers,
+    @Default(&lt;Part&gt;[]) List&lt;Part&gt; parts,
+  }) = _CatalogSnapshot;
+
+  factory CatalogSnapshot.fromJson(Map&lt;String, dynamic&gt; json) =&gt;
+      _$CatalogSnapshotFromJson(json);
+
+  factory CatalogSnapshot.empty({DateTime? now}) =&gt; CatalogSnapshot(
+        schemaVersion: 1,
+        updatedAt: (now ?? DateTime.now()).toUtc(),
+        containers: const [],
+        parts: const [],
+      );
+
+  String get exportFileName {
+    final dateStr = updatedAt.toUtc().toIso8601String().split(&#x27;T&#x27;).first;
+    return &#x27;parts-catalog-$dateStr.json&#x27;;
+  }
+
+  Part? findOccupyingSlotPart(
+    String? containerId,
+    String? slot, {
+    String? excludingPartId,
+  }) {
+    final cleanContainerId = containerId?.trim();
+    final cleanSlot = slot?.trim();
+    if (cleanContainerId == null ||
+        cleanContainerId.isEmpty ||
+        cleanSlot == null ||
+        cleanSlot.isEmpty) {
+      return null;
+    }
+    final slotLower = cleanSlot.toLowerCase();
+    for (final existing in parts) {
+      if (existing.id == excludingPartId) continue;
+      if (existing.containerId == cleanContainerId &amp;&amp;
+          existing.slot != null &amp;&amp;
+          existing.slot!.toLowerCase() == slotLower) {
+        return existing;
+      }
+    }
+    return null;
+  }
+}</code></pre></div>
+<ul>
+<li><strong><code>factory CatalogSnapshot.empty({DateTime? now})</code></strong>: Creates an empty <code>schemaVersion: 1</code> catalog with a UTC timestamp (allowing tests to pass a deterministic <code>now</code> if needed).</li>
+<li><strong><code>exportFileName</code></strong>: Formats <code>updatedAt</code> into <code>parts-catalog-YYYY-MM-DD.json</code> using Dart's <code>$variable</code> string interpolation (equivalent to TypeScript <code>`parts-catalog-${dateStr}.json`</code>).</li>
+<li><strong><code>findOccupyingSlotPart(String? containerId, String? slot, {String? excludingPartId})</code></strong>:
+<ul>
+<li>Notice the mixed parameter list: <code>containerId</code> and <code>slot</code> are positional, while <code>{String? excludingPartId}</code> is an optional named parameter!</li>
+<li>Enforces our <a href="../reference/glossary.html">Glossary</a> domain rule: a <strong>Slot</strong> inside a <strong>Container</strong> holds at most one <strong>Part</strong> (compared case-insensitively after trimming), while bulk parts with <code>slot == null</code> (or unassigned parts with <code>containerId == null</code>) never collide. When editing an existing part, passing <code>excludingPartId: part.id</code> prevents the part from colliding with itself.</li>
+</ul>
+</li>
+</ul>
+<h3>Complete <code>lib/catalog/catalog_models.dart</code> Listing</h3>
+<div class="code-figure"><div class="code-caption">tutorial/apps/0002-immutable-domain-models-with-freezed/lib/catalog/catalog_models.dart</div><pre><code class="language-dart">import &#x27;package:freezed_annotation/freezed_annotation.dart&#x27;;
+
+part &#x27;catalog_models.freezed.dart&#x27;;
+part &#x27;catalog_models.g.dart&#x27;;
+
+@freezed
+abstract class Container with _$Container {
+  const Container._();
+
+  const factory Container({
+    required String id,
+    required String name,
+    String? description,
+  }) = _Container;
+
+  factory Container.fromJson(Map&lt;String, dynamic&gt; json) =&gt;
+      _$ContainerFromJson(json);
+}
+
+@freezed
+abstract class Part with _$Part {
+  const Part._();
+
+  const factory Part({
+    required String id,
+    required String name,
+    @Default(0) int quantity,
+    String? lcscCode,
+    String? mpn,
+    String? manufacturer,
+    String? category,
+    String? package,
+    String? datasheetUrl,
+    String? containerId,
+    String? slot,
+    int? lowStockThreshold,
+    String? notes,
+    @Default(&lt;String, String&gt;{}) Map&lt;String, String&gt; specs,
+  }) = _Part;
+
+  factory Part.fromJson(Map&lt;String, dynamic&gt; json) =&gt; _$PartFromJson(json);
+
+  bool get isLowStock =&gt; quantity &lt;= (lowStockThreshold ?? 0);
+
+  bool get isUnassigned =&gt; containerId == null;
+}
+
+@freezed
+abstract class CatalogSnapshot with _$CatalogSnapshot {
+  const CatalogSnapshot._();
+
+  const factory CatalogSnapshot({
+    @Default(1) int schemaVersion,
+    required DateTime updatedAt,
+    @Default(&lt;Container&gt;[]) List&lt;Container&gt; containers,
+    @Default(&lt;Part&gt;[]) List&lt;Part&gt; parts,
+  }) = _CatalogSnapshot;
+
+  factory CatalogSnapshot.fromJson(Map&lt;String, dynamic&gt; json) =&gt;
+      _$CatalogSnapshotFromJson(json);
+
+  factory CatalogSnapshot.empty({DateTime? now}) =&gt; CatalogSnapshot(
+        schemaVersion: 1,
+        updatedAt: (now ?? DateTime.now()).toUtc(),
+        containers: const [],
+        parts: const [],
+      );
+
+  String get exportFileName {
+    final dateStr = updatedAt.toUtc().toIso8601String().split(&#x27;T&#x27;).first;
+    return &#x27;parts-catalog-$dateStr.json&#x27;;
+  }
+
+  Part? findOccupyingSlotPart(
+    String? containerId,
+    String? slot, {
+    String? excludingPartId,
+  }) {
+    final cleanContainerId = containerId?.trim();
+    final cleanSlot = slot?.trim();
+    if (cleanContainerId == null ||
+        cleanContainerId.isEmpty ||
+        cleanSlot == null ||
+        cleanSlot.isEmpty) {
+      return null;
+    }
+    final slotLower = cleanSlot.toLowerCase();
+    for (final existing in parts) {
+      if (existing.id == excludingPartId) continue;
+      if (existing.containerId == cleanContainerId &amp;&amp;
+          existing.slot != null &amp;&amp;
+          existing.slot!.toLowerCase() == slotLower) {
+        return existing;
+      }
+    }
+    return null;
+  }
+}</code></pre></div>
+<hr />
+<h2 id="unit-tests">3. Unit Testing the Domain Models (<code>test/catalog_models_test.dart</code>)</h2>
+<p>Unlike widget tests (<code>testWidgets</code>), pure Dart domain logic is tested with <code>test('...', () { ... })</code>—identical to Vitest/Jest unit tests.</p>
+<div class="code-figure"><div class="code-caption">tutorial/apps/0002-immutable-domain-models-with-freezed/test/catalog_models_test.dart</div><pre><code class="language-dart">import &#x27;package:flutter_test/flutter_test.dart&#x27;;
+import &#x27;package:parts_tracker_skilled/catalog/catalog_models.dart&#x27;;
+
+void main() {
+  group(&#x27;Catalog Freezed Domain Models&#x27;, () {
+    test(&#x27;Part supports value equality, copyWith (including setting nullable fields to null), isLowStock, and JSON round-trip&#x27;, () {
+      const resistor = Part(
+        id: &#x27;p-r10k&#x27;,
+        name: &#x27;10kΩ 0603 1% Resistor&#x27;,
+        quantity: 8,
+        lowStockThreshold: 10,
+        containerId: &#x27;c-binder-1&#x27;,
+        slot: &#x27;Page 1&#x27;,
+        specs: {&#x27;Resistance&#x27;: &#x27;10kΩ&#x27;, &#x27;Tolerance&#x27;: &#x27;±1%&#x27;},
+      );
+
+      expect(resistor.isLowStock, isTrue);
+      expect(resistor.isUnassigned, isFalse);
+
+      final restocked = resistor.copyWith(quantity: 50);
+      expect(restocked.isLowStock, isFalse);
+      expect(restocked.name, &#x27;10kΩ 0603 1% Resistor&#x27;);
+
+      final unassigned = restocked.copyWith(containerId: null, slot: null);
+      expect(unassigned.isUnassigned, isTrue);
+      expect(unassigned.slot, isNull);
+
+      final roundTripped = Part.fromJson(resistor.toJson());
+      expect(roundTripped, equals(resistor));
+    });
+
+    test(&#x27;CatalogSnapshot computes exportFileName and detects case-insensitive (Container, Slot) collisions&#x27;, () {
+      final snapshot = CatalogSnapshot(
+        updatedAt: DateTime.utc(2026, 11, 3, 14, 30),
+        containers: const [
+          Container(id: &#x27;c-1&#x27;, name: &#x27;SMD Binder #1&#x27;),
+        ],
+        parts: const [
+          Part(
+            id: &#x27;p-1&#x27;,
+            name: &#x27;100nF 0603 Cap&#x27;,
+            containerId: &#x27;c-1&#x27;,
+            slot: &#x27;Page 4&#x27;,
+          ),
+        ],
+      );
+
+      expect(snapshot.exportFileName, &#x27;parts-catalog-2026-11-03.json&#x27;);
+      expect(
+        snapshot.findOccupyingSlotPart(&#x27;c-1&#x27;, &#x27;  page 4 &#x27;)?.id,
+        &#x27;p-1&#x27;,
+      );
+      expect(
+        snapshot.findOccupyingSlotPart(&#x27;c-1&#x27;, &#x27;page 4&#x27;, excludingPartId: &#x27;p-1&#x27;),
+        isNull,
+      );
+      expect(snapshot.findOccupyingSlotPart(&#x27;c-1&#x27;, null), isNull);
+    });
+  });
+}</code></pre></div>
+<hr />
+<h2 id="practice">4. Interactive Practice &amp; Verification</h2>
+<section class="exercise-card" id="ex-0002" data-hint="" data-success="All blanks matched!"><div class="widget-header"><h3 class="widget-title">Interactive Lab: Authoring a @freezed Model with Null Safety</h3><span class="widget-badge">Skill Practice • Tight Feedback Loop</span></div><p>Complete the missing Freezed and Dart 3 tokens for <code>Part</code> below:</p>
+<div class="code-figure"><pre><code class="language-dart">part &#x27;catalog_models.freezed.dart&#x27;;
+part &#x27;catalog_models.g.dart&#x27;;
+
+@freezed
+abstract class Part <input type="text" class="code-blank" data-answer="with" data-error-hint="Use the Dart keyword that applies the generated _$Part mixin." placeholder="with" style="width:6ch" aria-label="Fill in the blank: with" autocomplete="off" spellcheck="false" /> _$Part {
+  const Part.<input type="text" class="code-blank" data-answer="_" data-error-hint="Declare the private generative constructor required for custom getters." placeholder="_" style="width:3ch" aria-label="Fill in the blank: _" autocomplete="off" spellcheck="false" />();
+
+  const factory Part({
+    required String id,
+    required String name,
+    @<input type="text" class="code-blank" data-answer="Default(0)" data-error-hint="Provide a default integer value of 0 when quantity is omitted." placeholder="Default(0)" style="width:12ch" aria-label="Fill in the blank: Default(0)" autocomplete="off" spellcheck="false" /> int quantity,
+    String? containerId,
+    int? lowStockThreshold,
+  }) = _Part;
+
+  bool get isLowStock =&gt; quantity &lt;= (lowStockThreshold <input type="text" class="code-blank" data-answer="??" data-error-hint="Use the null-coalescing operator to fall back to 0." placeholder="??" style="width:4ch" aria-label="Fill in the blank: ??" autocomplete="off" spellcheck="false" /> 0);
+}</code></pre></div>
+<p>:::prompts
+hint: &quot;Mixins use the 'with' keyword, private named constructors use '._()', Freezed default values use '@Default(0)', and null-coalescing uses '??'.&quot;
+success: &quot;Excellent! You can now read and author @freezed data classes with custom computed getters and sound null safety.&quot;</p>
+<div class="widget-actions"><button type="button" class="btn btn-primary" data-action="check-exercise">Check Answers</button><button type="button" class="btn" data-action="hint-exercise">Show Hint</button></div><div class="widget-feedback" role="status" aria-live="polite"></div></section>
+<p>:::</p>
+<section class="quiz-card" id="quiz-0002"><div class="widget-header"><h3 class="widget-title">Retrieval Practice: Freezed, Part Files &amp; Null Safety</h3><span class="widget-badge">3 Questions • Equal-Length Options</span></div><div class="quiz-question-block" data-wrong-hint="Compare how JavaScript objects support `{ ...obj }` spread and structural equality in tests versus default Dart classes."><div class="quiz-question-title">1. Why do we use <code>@freezed</code> classes in Dart instead of plain classes like TypeScript interfaces?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! `@freezed` synthesizes `copyWith` (including nullable resets), deep value `==` / `hashCode`, and `toString()`."><span class="quiz-option-letter">A.</span><span>Dart classes lack object spread syntax and default to reference equality without codegen.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Standard Dart classes support `final` fields natively, but they do not auto-generate `copyWith` or value equality."><span class="quiz-option-letter">B.</span><span>Dart forbids defining final fields on classes unless the freezed package is installed.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Freezed is purely a compile-time code generator for immutable value classes and sealed unions."><span class="quiz-option-letter">C.</span><span>Freezed automatically syncs every model instance to a remote cloud database at runtime.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Freezed operates on data models and has no involvement in how Flutter renders widgets."><span class="quiz-option-letter">D.</span><span>Freezed replaces the Flutter widget tree with native platform UI views on iOS.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div><div class="quiz-question-block" data-wrong-hint="Think about how the generated `_Part` class inherits custom getters like `isLowStock`."><div class="quiz-question-title">2. Why must <code>Part</code> and <code>CatalogSnapshot</code> declare a private <code>const Part._()</code> constructor inside their class bodies?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="false" data-explain="External callers still construct instances normally via the public `const factory Part(...)` constructor."><span class="quiz-option-letter">A.</span><span>It prevents any external widget or test file from ever calling the factory constructor.</span></button><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! When a Freezed class has custom getters or methods, `_Part` extends `Part` and calls `super._()`."><span class="quiz-option-letter">B.</span><span>It allows the generated _Part subclass to inherit custom getters and instance methods cleanly.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="JSON field handling is controlled by `@JsonKey` annotations, not by the private `._()` constructor."><span class="quiz-option-letter">C.</span><span>It instructs the JSON serializer to ignore all null fields when writing disk files.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Freezed models are plain immutable Dart value objects and do not self-register with Riverpod."><span class="quiz-option-letter">D.</span><span>It registers the model class inside the global Riverpod provider container during app startup.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div><div class="quiz-question-block" data-wrong-hint="Check how `cleanContainerId`, `cleanSlot`, and `excludingPartId` are handled in `findOccupyingSlotPart`."><div class="quiz-question-title">3. How does <code>CatalogSnapshot.findOccupyingSlotPart</code> enforce the 1-to-1 <code>(Container, Slot)</code> workbench storage rule?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Parts with `containerId == null` (unassigned) or `slot == null` (bulk container storage) are valid and return `null`."><span class="quiz-option-letter">A.</span><span>It rejects any Part that does not specify both a containerId and slot.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Multiple parts can live in the same `Container` as long as they occupy distinct slots or have `slot == null`."><span class="quiz-option-letter">B.</span><span>It throws a runtime database exception whenever two parts share a container name.</span></button><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! Only non-empty `(containerId, slot)` pairs are checked case-insensitively, skipping `excludingPartId` during edits."><span class="quiz-option-letter">C.</span><span>It compares containerId and trimmed lowercase slot while ignoring null slots and excludingPartId.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`findOccupyingSlotPart` is a pure read-only lookup that returns the existing occupying `Part?` without mutating state."><span class="quiz-option-letter">D.</span><span>It sorts all parts alphabetically by manufacturer before overwriting the older slot entry.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div></section>
+<section class="verify-card" id="verify-0002"><div class="widget-header"><h3 class="widget-title">Verification Lab: Generate Freezed Part Files &amp; Run Model Tests</h3><span class="widget-badge">CLI Gate • Zero Warnings &amp; 100% Green</span></div><p>Run static analysis and the unit + widget test suite inside <code>tutorial/apps/0002-immutable-domain-models-with-freezed</code>:</p>
+<div class="code-figure"><div class="code-caption">Terminal verification commands for Lesson 0002</div><pre><code class="language-bash">cd tutorial/apps/0002-immutable-domain-models-with-freezed
+flutter analyze
+flutter test</code></pre></div>
+<p>Expected terminal output:</p>
+<div class="code-figure"><div class="code-caption">Verified output of flutter analyze &amp;&amp; flutter test</div><pre><code class="language-text">Analyzing 0002-immutable-domain-models-with-freezed...
+No issues found!
+00:01 +3: All tests passed!</code></pre></div><ul class="verify-checklist"><li class="verify-item"><input type="checkbox" id="verify-0002-chk-1" data-storage-key="verify:0002-immutable-domain-models-with-freezed:verify-0002:1" /><label for="verify-0002-chk-1">Inspected <code>lib/catalog/catalog_models.dart</code> and its generated companion files (<code>catalog_models.freezed.dart</code> and <code>catalog_models.g.dart</code>).</label></li><li class="verify-item"><input type="checkbox" id="verify-0002-chk-2" data-storage-key="verify:0002-immutable-domain-models-with-freezed:verify-0002:2" /><label for="verify-0002-chk-2">Verified <code>flutter analyze</code> passes with <code>No issues found!</code>.</label></li><li class="verify-item"><input type="checkbox" id="verify-0002-chk-3" data-storage-key="verify:0002-immutable-domain-models-with-freezed:verify-0002:3" /><label for="verify-0002-chk-3">Verified <code>flutter test</code> passes both <code>test/catalog_models_test.dart</code> (2 unit tests) and <code>test/widget_test.dart</code> (1 widget test).</label></li></ul></section>
+<aside class="teacher-prompt"><p><strong>Up next</strong>: In <a href="0003-persistence-seam-and-atomic-file-storage.html">Lesson 0003: Persistence Seam &amp; Atomic Local File Storage</a>, we'll design <code>CatalogPersistence</code>, an in-memory test double (<code>InMemoryCatalogPersistence</code>), and <code>FileCatalogPersistence</code> with a serialized write queue and atomic <code>.tmp</code> file rename!</p>
+</aside>
+      <nav class="lesson-pager" aria-label="Lesson pagination"><a class="pager-card pager-card-prev" href="../lessons/0001-flutter-bootstrap-and-provider-scope.html"><span class="pager-meta">← Previous • Lesson 0001</span><span class="pager-title">Flutter Bootstrap, ProviderScope &amp; Dark Workbench Shell</span></a><a class="pager-card pager-card-next" href="../lessons/0003-persistence-seam-and-atomic-file-storage.html"><span class="pager-meta">Next • Lesson 0003 →</span><span class="pager-title">Persistence Seam &amp; Atomic Local File Storage</span></a></nav>
+    </article>
+  </main>
+  <footer class="site-footer">
+    <span>Electronics Parts Tracker — Interactive Flutter &amp; Riverpod Course for React + TypeScript Developers</span>
+  </footer>
+</body>
+</html>

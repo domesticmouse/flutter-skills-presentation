@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Lesson 0004 — Reactive Catalog State with Riverpod AsyncNotifier</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <script src="../assets/course.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"><nav class="course-nav" aria-label="Course navigation"><div class="nav-breadcrumbs"><a href="../index.html">Index</a><span class="nav-sep" aria-hidden="true">›</span><span class="nav-current" aria-current="page">Lesson 0004</span></div><div class="nav-controls"><span class="nav-pager-group" role="group" aria-label="Adjacent lessons"><a class="nav-pager-link" href="../lessons/0003-persistence-seam-and-atomic-file-storage.html" title="Lesson 0003: Persistence Seam &amp; Atomic Local File Storage">← Prev</a><span class="nav-sep" aria-hidden="true">·</span><a class="nav-pager-link" href="../lessons/0005-engineering-unit-search-and-filter-providers.html" title="Lesson 0005: Engineering Unit Search Engine &amp; Derived Filter Providers">Next →</a></span><span class="nav-divider" aria-hidden="true">|</span><a class="nav-ref-link" href="../reference/glossary.html">Glossary</a><a class="nav-ref-link" href="../reference/react-to-flutter-cheatsheet.html">React → Flutter</a><a class="nav-ref-link" href="../reference/verification-and-testing.html">Verification &amp; Testing</a><span class="mission-badge">Flutter • Parts Tracker</span></div></nav></header>
+  <main id="main-content" class="page-main">
+    <article class="tufte-article">
+      <header class="article-header">
+        <div class="article-badge">Lesson 0004 • Riverpod AsyncNotifier</div>
+        <h1>Reactive Catalog State with Riverpod AsyncNotifier</h1>
+        <p class="article-subtitle">Combine TanStack Query&#x27;s async lifecycle and Zustand/Redux&#x27;s immutable actions into a single @Riverpod AsyncNotifier (lib/catalog/catalog_provider.dart) and connect it to WorkbenchScreen via ConsumerWidget.</p>
+      </header>
+      <h2 id="why-riverpod">How Riverpod Unifies TanStack Query and Zustand/Redux</h2>
+<p>In a modern React application, you typically split state management across two different mental models:</p>
+<ol>
+<li><strong>Async / I/O state (<code>useQuery</code> / TanStack Query)</strong>: Manages loading spinners, error states, and async resolution (<code>{ data, isLoading, error }</code>).</li>
+<li><strong>Client store actions (Zustand / Redux Toolkit)</strong>: Holds synchronous domain mutations (<code>upsertPart</code>, <code>adjustQuantity</code>, <code>deleteContainer</code>).</li>
+</ol>
+<p>In Flutter with <strong>Riverpod</strong>, <strong><code>AsyncNotifier</code></strong> unifies both! A class annotated with <code>@Riverpod(keepAlive: true)</code> defines an <code>async</code> <code>build()</code> method that loads initial state (returning a <code>Future&lt;CatalogSnapshot&gt;</code>), automatically wraps the state in a sealed <strong><code>AsyncValue&lt;CatalogSnapshot&gt;</code></strong> (<code>AsyncLoading</code>, <code>AsyncData</code>, <code>AsyncError</code>), and exposes typed mutation methods right on the notifier (<code>ref.read(catalogProvider.notifier).adjustQuantity(...)</code>).</p>
+<figure class="mermaid-figure"><pre class="mermaid">flowchart LR
+  Persist[&quot;catalogPersistenceProvider&lt;br/&gt;(FileCatalogPersistence or InMemory override)&quot;] --&gt; Build[&quot;Catalog.build()&lt;br/&gt;(Future&amp;lt;CatalogSnapshot&amp;gt;)&quot;]
+  Build --&gt; State[&quot;state: AsyncValue&amp;lt;CatalogSnapshot&amp;gt;&lt;br/&gt;(AsyncLoading | AsyncData | AsyncError)&quot;]
+  Mut[&quot;Mutations: upsertPart, adjustQuantity,&lt;br/&gt;deleteContainer, importSnapshot&quot;] --&gt; Commit[&quot;_commit(next)&lt;br/&gt;(await persistence.save → state = AsyncData)&quot;]
+  Commit --&gt; State
+  State --&gt; UI[&quot;ConsumerWidget / ProviderContainer&lt;br/&gt;(ref.watch(catalogProvider))&quot;]</pre><figcaption class="mermaid-caption">Figure 4.1: How Riverpod&#x27;s catalogPersistenceProvider and Catalog AsyncNotifier wire persistence to ConsumerWidgets and headless tests.</figcaption></figure>
+<aside class="callout callout"><p><strong>Primary Sources for Lesson 0004</strong>: Keep the <a href="../reference/glossary.html">Glossary</a>, the <a href="../reference/verification-and-testing.html">Verification &amp; Testing Reference</a>, and the <a href="https://riverpod.dev/docs/introduction/getting_started">Riverpod Official Documentation</a> open alongside this lesson.</p>
+</aside>
+<hr />
+<h2 id="catalog-provider">1. Building <code>lib/catalog/catalog_provider.dart</code> Block by Block</h2>
+<h3>Block 1: Domain Exceptions &amp; <code>catalogPersistenceProvider</code></h3>
+<p>First, we define typed domain exceptions for <code>(Container, Slot)</code> collisions and invalid JSON backups, plus the <code>catalogPersistence</code> provider seam:</p>
+<div class="code-figure"><div class="code-caption">Domain exceptions and @Riverpod catalogPersistenceProvider in lib/catalog/catalog_provider.dart</div><pre><code class="language-dart">import &#x27;dart:convert&#x27;;
+import &#x27;dart:math&#x27; as math;
+
+import &#x27;package:riverpod_annotation/riverpod_annotation.dart&#x27;;
+
+import &#x27;catalog_models.dart&#x27;;
+import &#x27;catalog_persistence.dart&#x27;;
+import &#x27;file_catalog_persistence.dart&#x27;;
+
+part &#x27;catalog_provider.g.dart&#x27;;
+
+class SlotOccupiedException implements Exception {
+  const SlotOccupiedException({
+    required this.containerId,
+    required this.slot,
+    required this.occupyingPart,
+  });
+
+  final String containerId;
+  final String slot;
+  final Part occupyingPart;
+
+  @override
+  String toString() =&gt;
+      &#x27;Slot &quot;$slot&quot; is already occupied by &quot;${occupyingPart.name}&quot;.&#x27;;
+}
+
+class CatalogImportValidationException implements Exception {
+  const CatalogImportValidationException(this.message);
+
+  final String message;
+
+  @override
+  String toString() =&gt; message;
+}
+
+@Riverpod(keepAlive: true)
+CatalogPersistence catalogPersistence(Ref ref) {
+  return FileCatalogPersistence();
+}</code></pre></div>
+<ul>
+<li><strong><code>@Riverpod(keepAlive: true)</code></strong>:
+<ul>
+<li>By default, <code>@riverpod</code> enables <code>autoDispose</code>: if no widget is currently watching a provider, Riverpod disposes its state to free memory (similar to unmounting a component in React).</li>
+<li>For our application-wide catalog store and persistence service, <code>keepAlive: true</code> tells Riverpod to keep the cached catalog alive across screen and modal sheet transitions.</li>
+<li><code>riverpod_generator</code> reads <code>CatalogPersistence catalogPersistence(Ref ref)</code> and generates <strong><code>catalogPersistenceProvider</code></strong> inside <code>catalog_provider.g.dart</code>.</li>
+</ul>
+</li>
+</ul>
+<h3>Block 2: <code>Catalog</code> <code>AsyncNotifier</code>, <code>upsertPart</code>, and <code>(Container, Slot)</code> Enforcement</h3>
+<div class="code-figure"><div class="code-caption">Catalog AsyncNotifier build() and upsertPart() with 1-to-1 slot conflict checking</div><pre><code class="language-dart">@Riverpod(keepAlive: true)
+class Catalog extends _$Catalog {
+  @override
+  Future&lt;CatalogSnapshot&gt; build() async {
+    final persistence = ref.watch(catalogPersistenceProvider);
+    return persistence.load();
+  }
+
+  Future&lt;void&gt; upsertPart(Part part) async {
+    final current = await future;
+    final normalized = _normalizePart(part);
+    if (normalized.containerId != null &amp;&amp;
+        !current.containers.any((c) =&gt; c.id == normalized.containerId)) {
+      throw ArgumentError(
+        &#x27;Unknown containerId &quot;${normalized.containerId}&quot;.&#x27;,
+      );
+    }
+    final occupying = current.findOccupyingSlotPart(
+      normalized.containerId,
+      normalized.slot,
+      excludingPartId: normalized.id,
+    );
+    if (occupying != null) {
+      throw SlotOccupiedException(
+        containerId: normalized.containerId!,
+        slot: normalized.slot!,
+        occupyingPart: occupying,
+      );
+    }
+    final updatedParts = [...current.parts];
+    final existingIdx = updatedParts.indexWhere((p) =&gt; p.id == normalized.id);
+    if (existingIdx &gt;= 0) {
+      updatedParts[existingIdx] = normalized;
+    } else {
+      updatedParts.add(normalized);
+    }
+    await _commit(current.copyWith(parts: updatedParts));
+  }</code></pre></div>
+<p>Unpacking how <code>AsyncNotifier</code> works compared to React hooks:</p>
+<ul>
+<li><strong><code>class Catalog extends _$Catalog</code></strong>: Because <code>build()</code> returns <code>Future&lt;CatalogSnapshot&gt;</code>, <code>riverpod_generator</code> makes <code>_$Catalog</code> an <strong><code>AsyncNotifier&lt;CatalogSnapshot&gt;</code></strong> and exports <strong><code>catalogProvider</code></strong>.</li>
+<li><strong><code>final current = await future;</code></strong>: Inside an <code>AsyncNotifier</code>, the <code>future</code> getter awaits the completion of <code>build()</code> (if it is still loading) and returns the unwrapped <code>CatalogSnapshot</code>.</li>
+<li><strong><code>final updatedParts = [...current.parts];</code></strong>: Just like JavaScript array spread (<code>[...current.parts]</code>), Dart supports the spread operator <code>...</code> inside list, set, and map literals to shallow-clone a collection before mutating or appending!</li>
+<li><strong><code>await _commit(current.copyWith(parts: updatedParts));</code></strong>: Stamps <code>updatedAt</code> in UTC, persists atomically via <code>catalogPersistenceProvider</code>, and updates <code>state = AsyncData(stamped)</code>.</li>
+</ul>
+<h3>Block 3: Container Management, Cascading Unassignment &amp; Quantity Clamping</h3>
+<div class="code-figure"><div class="code-caption">Container CRUD with cascading part unassignment and clamped stock adjustments</div><pre><code class="language-dart">  Future&lt;void&gt; upsertContainer(Container container) async {
+    final current = await future;
+    final name = container.name.trim();
+    if (name.isEmpty) {
+      throw ArgumentError(&#x27;Container name is required.&#x27;);
+    }
+    final normalized = container.copyWith(
+      name: name,
+      description: _nullIfEmpty(container.description),
+    );
+    final updatedContainers = [...current.containers];
+    final existingIdx =
+        updatedContainers.indexWhere((c) =&gt; c.id == normalized.id);
+    if (existingIdx &gt;= 0) {
+      updatedContainers[existingIdx] = normalized;
+    } else {
+      updatedContainers.add(normalized);
+    }
+    await _commit(current.copyWith(containers: updatedContainers));
+  }
+
+  Future&lt;void&gt; deleteContainer(String containerId) async {
+    final current = await future;
+    final updatedContainers =
+        current.containers.where((c) =&gt; c.id != containerId).toList();
+    final updatedParts = current.parts.map((part) {
+      if (part.containerId == containerId) {
+        return part.copyWith(containerId: null, slot: null);
+      }
+      return part;
+    }).toList();
+    await _commit(
+      current.copyWith(
+        containers: updatedContainers,
+        parts: updatedParts,
+      ),
+    );
+  }
+
+  Future&lt;void&gt; adjustQuantity(String partId, int delta) async {
+    await _updatePartQuantity(partId, (currentQty) =&gt; currentQty + delta);
+  }
+
+  Future&lt;void&gt; setQuantity(String partId, int exactQuantity) async {
+    await _updatePartQuantity(partId, (_) =&gt; exactQuantity);
+  }
+
+  Future&lt;void&gt; _updatePartQuantity(
+    String partId,
+    int Function(int currentQty) computeNext,
+  ) async {
+    final current = await future;
+    final idx = current.parts.indexWhere((p) =&gt; p.id == partId);
+    if (idx &lt; 0) return;
+    final part = current.parts[idx];
+    final nextQty = math.max(0, computeNext(part.quantity));
+    final updatedParts = [...current.parts];
+    updatedParts[idx] = part.copyWith(quantity: nextQty);
+    await _commit(current.copyWith(parts: updatedParts));
+  }</code></pre></div>
+<ul>
+<li><strong>Lazy <code>Iterable</code> vs. <code>List</code> (<code>.where(...).toList()</code> and <code>.map(...).toList()</code>)</strong>:<span class="sidenote-number"></span><span class="sidenote">In JavaScript, <code>array.filter(...)</code> and <code>array.map(...)</code> immediately allocate and return a new <code>Array</code>. In Dart, <code>.where(...)</code> and <code>.map(...)</code> return a lazy <code>Iterable&lt;T&gt;</code>—you call <code>.toList()</code> at the end of the pipeline to materialize a <code>List&lt;T&gt;</code>.</span></li>
+<li><strong>Cascading container deletion</strong>: Deleting a <strong>Container</strong> never deletes your <strong>Parts</strong>; it atomically resets <code>containerId: null, slot: null</code> on any part stored in that container so those parts move safely back to <code>Unassigned (Loose / Inbox)</code>.</li>
+<li><strong>Clamping at zero (<code>math.max(0, ...)</code>)</strong>: Whether you tap <code>-10</code> on a resistor with <code>quantity: 5</code> or call <code>setQuantity('p-1', -5)</code>, <code>_updatePartQuantity</code> clamps the resulting quantity to <code>&gt;= 0</code>.</li>
+</ul>
+<h3>Block 4: Normalization &amp; All-or-Nothing JSON Import Validation</h3>
+<div class="code-figure"><div class="code-caption">LCSC normalization (Cxxxxxx), part field cleanup, and _commit</div><pre><code class="language-dart">  static String? normalizeLcscCodeOrNull(String? raw) {
+    if (raw == null) return null;
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+    final upper = trimmed.toUpperCase();
+    final withPrefix = upper.startsWith(&#x27;C&#x27;) ? upper : &#x27;C$upper&#x27;;
+    return RegExp(r&#x27;^C\d+$&#x27;).hasMatch(withPrefix) ? withPrefix : null;
+  }
+
+  Future&lt;void&gt; _commit(CatalogSnapshot next) async {
+    final stamped = next.copyWith(updatedAt: DateTime.now().toUtc());
+    final persistence = ref.read(catalogPersistenceProvider);
+    await persistence.save(stamped);
+    state = AsyncData(stamped);
+  }</code></pre></div>
+<ul>
+<li><strong><code>normalizeLcscCodeOrNull</code></strong>: Accepts <code>'14663'</code>, <code>'c14663'</code>, or <code>' C14663 '</code> and normalizes it to <code>'C14663'</code> (or returns <code>null</code> if it doesn't match <code>^C\d+$</code>).</li>
+<li><strong>All-or-nothing <code>validateCatalogJson(String rawJson)</code></strong>: Parses and validates incoming JSON backups before touching live state—checking <code>schemaVersion == 1</code>, ISO-8601 <code>updatedAt</code>, unique container and part IDs, non-negative quantities, valid <code>containerId</code> references, and zero duplicate <code>(containerId, slot)</code> pairs. Notice how it uses a <strong>Dart 3 anonymous Record type</strong> <code>final occupiedSlots = &lt;String, ({String slot, String partName})&gt;{};</code>—equivalent to an inline TypeScript object type <code>{ slot: string; partName: string }</code> without needing to declare a class!</li>
+</ul>
+<hr />
+<h2 id="consumer-widget">2. Connecting <code>WorkbenchScreen</code> via <code>ConsumerWidget</code> (<code>lib/main.dart</code>)</h2>
+<p>In React, a component subscribes to store state by calling a hook like <code>const catalog = useSelector(...)</code> or <code>useQuery(...)</code>. In Flutter with Riverpod, you change <code>extends StatelessWidget</code> to <strong><code>extends ConsumerWidget</code></strong>, which adds <code>WidgetRef ref</code> as the second parameter to <code>build(BuildContext context, WidgetRef ref)</code>:</p>
+<div class="code-figure"><div class="code-caption">Upgrading WorkbenchScreen to ConsumerWidget in lib/main.dart</div><pre><code class="language-dart">class WorkbenchScreen extends ConsumerWidget {
+  const WorkbenchScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncCatalog = ref.watch(catalogProvider);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(&#x27;Electronics Parts Tracker&#x27;),
+      ),
+      body: Center(
+        child: switch (asyncCatalog) {
+          AsyncData(:final value) =&gt; Text(
+              &#x27;Workbench Ready — ${value.parts.length} parts cataloged&#x27;,
+            ),
+          AsyncError(:final error) =&gt; Text(&#x27;Error loading catalog: $error&#x27;),
+          _ =&gt; const CircularProgressIndicator(),
+        },
+      ),
+    );
+  }
+}</code></pre></div>
+<ul>
+<li><strong><code>final asyncCatalog = ref.watch(catalogProvider);</code></strong>: Subscribes this widget's <code>Element</code> to <code>catalogProvider</code>. Whenever <code>Catalog</code> assigns a new <code>state = AsyncData(stamped)</code>, only widgets watching <code>catalogProvider</code> rebuild!</li>
+<li><strong>Dart 3 <code>switch</code> expression with pattern destructuring</strong>:
+<ul>
+<li><code>switch (asyncCatalog) { ... }</code> is an <strong>expression</strong> that returns a <code>Widget</code> directly (unlike JavaScript's statement-only <code>switch</code>).</li>
+<li><code>AsyncData(:final value)</code> destructures the <code>value</code> getter (<code>CatalogSnapshot</code>) out of <code>AsyncData</code>—equivalent to <code>const { value } = asyncCatalog</code> in TypeScript!</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="practice">3. Interactive Practice &amp; Verification</h2>
+<section class="exercise-card" id="ex-0004" data-hint="" data-success="All blanks matched!"><div class="widget-header"><h3 class="widget-title">Interactive Lab: Wiring Riverpod AsyncNotifier &amp; ConsumerWidget</h3><span class="widget-badge">Skill Practice • Tight Feedback Loop</span></div><p>Fill in the missing Riverpod and Dart 3 tokens below:</p>
+<div class="code-figure"><pre><code class="language-dart">@Riverpod(<input type="text" class="code-blank" data-answer="keepAlive: true" data-error-hint="Prevent Riverpod from auto-disposing the catalog state between screens." placeholder="keepAlive: true" style="width:17ch" aria-label="Fill in the blank: keepAlive: true" autocomplete="off" spellcheck="false" />)
+class Catalog extends _$Catalog {
+  @override
+  Future&lt;CatalogSnapshot&gt; build() async {
+    final persistence = ref.<input type="text" class="code-blank" data-answer="watch" data-error-hint="Subscribe to catalogPersistenceProvider inside build()." placeholder="watch" style="width:8ch" aria-label="Fill in the blank: watch" autocomplete="off" spellcheck="false" />(catalogPersistenceProvider);
+    return persistence.load();
+  }
+
+  Future&lt;void&gt; _commit(CatalogSnapshot next) async {
+    final stamped = next.copyWith(updatedAt: DateTime.now().toUtc());
+    final persistence = ref.read(catalogPersistenceProvider);
+    await persistence.save(stamped);
+    state = <input type="text" class="code-blank" data-answer="AsyncData(stamped)" data-error-hint="" placeholder="AsyncData&lt;CatalogSnapshot&gt;(stamped)" style="width:Wrap the persisted CatalogSnapshot in Riverpod&#x27;s data state.ch" aria-label="Fill in the blank: AsyncData&lt;CatalogSnapshot&gt;(stamped)" autocomplete="off" spellcheck="false" />;
+  }
+}
+
+class WorkbenchScreen extends <input type="text" class="code-blank" data-answer="ConsumerWidget" data-error-hint="Extend Riverpod&#x27;s stateless widget subclass that provides WidgetRef." placeholder="ConsumerWidget" style="width:16ch" aria-label="Fill in the blank: ConsumerWidget" autocomplete="off" spellcheck="false" /> {
+  const WorkbenchScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, <input type="text" class="code-blank" data-answer="WidgetRef" data-error-hint="Specify the Riverpod reference parameter type for ConsumerWidget.build." placeholder="WidgetRef" style="width:11ch" aria-label="Fill in the blank: WidgetRef" autocomplete="off" spellcheck="false" /> ref) {
+    final asyncCatalog = ref.watch(catalogProvider);
+    // ...
+  }
+}</code></pre></div>
+<p>:::prompts
+hint: &quot;Keep global providers alive with 'keepAlive: true', subscribe inside build() with 'ref.watch', wrap resolved state in 'AsyncData(stamped)', and use 'ConsumerWidget' with 'WidgetRef ref'.&quot;
+success: &quot;Awesome! You've connected Riverpod's AsyncNotifier lifecycle to a reactive ConsumerWidget.&quot;</p>
+<div class="widget-actions"><button type="button" class="btn btn-primary" data-action="check-exercise">Check Answers</button><button type="button" class="btn" data-action="hint-exercise">Show Hint</button></div><div class="widget-feedback" role="status" aria-live="polite"></div></section>
+<p>:::</p>
+<section class="quiz-card" id="quiz-0004"><div class="widget-header"><h3 class="widget-title">Retrieval Practice: Riverpod AsyncNotifier, Immutability &amp; Store Seams</h3><span class="widget-badge">3 Questions • Equal-Length Options</span></div><div class="quiz-question-block" data-wrong-hint="Think about how `AsyncNotifier` handles both initial async loading and subsequent state mutations."><div class="quiz-question-title">1. How does a Riverpod <code>AsyncNotifier</code> like <code>class Catalog extends _$Catalog</code> compare to React state management?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! `AsyncNotifier` unifies async initialization (`build()`) and mutation methods inside `ProviderScope` / `ProviderContainer`."><span class="quiz-option-letter">A.</span><span>It combines async query loading with reducer actions inside an isolated, testable provider container.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Riverpod providers live inside `ProviderScope` outside individual widget subtrees, and `@Riverpod(keepAlive: true)` persists across routes."><span class="quiz-option-letter">B.</span><span>It stores mutable state inside a specific DOM node that unmounts during route changes.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Only a single root `ProviderScope` is needed; any descendant `ConsumerWidget` watches providers directly via `ref.watch`."><span class="quiz-option-letter">C.</span><span>It requires wrapping every individual component in a separate nested Context.Consumer render prop callback.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Only the specific `ConsumerWidget` elements calling `ref.watch(catalogProvider)` rebuild when `state` changes."><span class="quiz-option-letter">D.</span><span>It forces the entire application widget tree to rebuild from scratch on every mutation.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div><div class="quiz-question-block" data-wrong-hint="Check how `updatedParts` is computed inside `deleteContainer`."><div class="quiz-question-title">2. What happens inside <code>Catalog.deleteContainer(String containerId)</code> when a user deletes a <code>Container</code> that holds parts?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Deleting a storage container never destroys part inventory records; parts are kept in the catalog."><span class="quiz-option-letter">A.</span><span>It permanently deletes every Part stored inside that Container from the catalog file.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`SlotOccupiedException` is only thrown when assigning two parts to the same `(Container, Slot)`."><span class="quiz-option-letter">B.</span><span>It throws a SlotOccupiedException and refuses to remove the Container until emptied manually.</span></button><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! Any part whose `containerId` matches the deleted container has both `containerId` and `slot` reset to `null` (unassigned)."><span class="quiz-option-letter">C.</span><span>It removes the Container and resets matching parts' containerId and slot to null.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Unassigned parts are placed in the `Unassigned (Loose / Inbox)` bucket (`containerId: null`), not moved into another container."><span class="quiz-option-letter">D.</span><span>It moves all affected parts into the first alphabetical Container in the list.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div><div class="quiz-question-block" data-wrong-hint="Consider what happens if `persistence.save` fails or is awaited by a caller."><div class="quiz-question-title">3. Why does <code>Catalog._commit(CatalogSnapshot next)</code> update <code>state = AsyncData(stamped)</code> only after <code>await persistence.save(stamped)</code> completes?</div><div class="quiz-options"><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Dart allows synchronous `state = ...` assignments at any point inside a notifier method."><span class="quiz-option-letter">A.</span><span>Dart forbids assigning to state before at least one await expression has executed.</span></button><button type="button" class="quiz-option-btn" data-correct="true" data-explain="Correct! Awaiting `persistence.save(stamped)` first ensures memory state and disk state never diverge."><span class="quiz-option-letter">B.</span><span>It guarantees UI subscribers only observe catalog changes that have been durably persisted.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="Riverpod has no built-in knowledge of disk files; persistence is handled through our `catalogPersistenceProvider`."><span class="quiz-option-letter">C.</span><span>Riverpod automatically deletes the disk file whenever AsyncData is assigned before save completes.</span></button><button type="button" class="quiz-option-btn" data-correct="false" data-explain="`AsyncData` simply wraps the immutable `CatalogSnapshot` instance without altering its type."><span class="quiz-option-letter">D.</span><span>Assigning AsyncData first would convert the CatalogSnapshot back into a mutable JSON map.</span></button></div><div class="widget-feedback" role="status" aria-live="polite"></div></div></section>
+<section class="verify-card" id="verify-0004"><div class="widget-header"><h3 class="widget-title">Verification Lab: Run the Riverpod Catalog Store Test Suite</h3><span class="widget-badge">CLI Gate • Zero Warnings &amp; 100% Green</span></div><p>Run static analysis and the test suite in <code>tutorial/apps/0004-reactive-catalog-state-with-riverpod</code>:</p>
+<div class="code-figure"><div class="code-caption">Terminal verification commands for Lesson 0004</div><pre><code class="language-bash">cd tutorial/apps/0004-reactive-catalog-state-with-riverpod
+flutter analyze
+flutter test</code></pre></div>
+<p>Expected terminal output:</p>
+<div class="code-figure"><div class="code-caption">Verified output of flutter analyze &amp;&amp; flutter test</div><pre><code class="language-text">Analyzing 0004-reactive-catalog-state-with-riverpod...
+No issues found!
+00:01 +8: All tests passed!</code></pre></div><ul class="verify-checklist"><li class="verify-item"><input type="checkbox" id="verify-0004-chk-1" data-storage-key="verify:0004-reactive-catalog-state-with-riverpod:verify-0004:1" /><label for="verify-0004-chk-1">Inspected <code>lib/catalog/catalog_provider.dart</code> and traced <code>upsertPart</code>, <code>deleteContainer</code>, <code>adjustQuantity</code>, and <code>validateCatalogJson</code>.</label></li><li class="verify-item"><input type="checkbox" id="verify-0004-chk-2" data-storage-key="verify:0004-reactive-catalog-state-with-riverpod:verify-0004:2" /><label for="verify-0004-chk-2">Verified <code>flutter analyze</code> reports <code>No issues found!</code>.</label></li><li class="verify-item"><input type="checkbox" id="verify-0004-chk-3" data-storage-key="verify:0004-reactive-catalog-state-with-riverpod:verify-0004:3" /><label for="verify-0004-chk-3">Verified <code>flutter test</code> passes all 8 tests (<code>catalog_store_test.dart</code>, <code>file_catalog_persistence_test.dart</code>, <code>catalog_models_test.dart</code>, and <code>widget_test.dart</code>).</label></li></ul></section>
+<aside class="teacher-prompt"><p><strong>Up next</strong>: In <a href="0005-engineering-unit-search-and-filter-providers.html">Lesson 0005: Engineering Unit Search Engine &amp; Derived Filter Providers</a>, we'll build <code>PartSearchEngine</code> (<code>0.1uF == 100nF</code>, <code>4k7 == 4.7kΩ</code>, 3-tier ranking, natural slot sorting) and our derived <code>filteredWorkbenchViewProvider</code> selector using Dart 3 <code>@freezed sealed class</code> pattern matching!</p>
+</aside>
+      <nav class="lesson-pager" aria-label="Lesson pagination"><a class="pager-card pager-card-prev" href="../lessons/0003-persistence-seam-and-atomic-file-storage.html"><span class="pager-meta">← Previous • Lesson 0003</span><span class="pager-title">Persistence Seam &amp; Atomic Local File Storage</span></a><a class="pager-card pager-card-next" href="../lessons/0005-engineering-unit-search-and-filter-providers.html"><span class="pager-meta">Next • Lesson 0005 →</span><span class="pager-title">Engineering Unit Search Engine &amp; Derived Filter Providers</span></a></nav>
+    </article>
+  </main>
+  <footer class="site-footer">
+    <span>Electronics Parts Tracker — Interactive Flutter &amp; Riverpod Course for React + TypeScript Developers</span>
+  </footer>
+</body>
+</html>

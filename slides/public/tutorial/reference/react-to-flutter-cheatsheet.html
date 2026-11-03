@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>React → Flutter Cheat Sheet</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <script src="../assets/course.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"><nav class="course-nav" aria-label="Course navigation"><div class="nav-breadcrumbs"><a href="../index.html">Index</a><span class="nav-sep" aria-hidden="true">›</span><span class="nav-current" aria-current="page">React → Flutter</span></div><div class="nav-controls"><a class="nav-ref-link" href="../reference/glossary.html">Glossary</a><a class="nav-ref-link" href="../reference/react-to-flutter-cheatsheet.html" aria-current="page">React → Flutter</a><a class="nav-ref-link" href="../reference/verification-and-testing.html">Verification &amp; Testing</a><span class="mission-badge">Flutter • Parts Tracker</span></div></nav></header>
+  <main id="main-content" class="page-main">
+    <article class="tufte-article">
+      <header class="article-header">
+        <div class="article-badge">Mission: Parts Tracker in Flutter</div>
+        <h1>React &amp; TypeScript to Flutter &amp; Dart Cheat Sheet</h1>
+        <p class="article-subtitle">Side-by-side mental model and syntax translation from React + TypeScript to Flutter + Dart 3 + Riverpod + Freezed.</p>
+      </header>
+      <h2>1. Project &amp; Tooling Anatomy</h2>
+<p>Table: Project Manifest, Compiler, Linter, and Codegen Equivalents</p>
+<div class="table-wrapper"><table class="ref-table">
+<thead>
+<tr>
+<th style="text-align:left">React + TypeScript (<code>npm</code> / <code>pnpm</code>)</th>
+<th style="text-align:left">Flutter + Dart (<code>flutter</code> / <code>dart</code>)</th>
+<th style="text-align:left">Purpose in <code>parts_tracker_skilled</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>package.json</code> + <code>pnpm-lock.yaml</code></td>
+<td style="text-align:left"><code>pubspec.yaml</code> + <code>pubspec.lock</code></td>
+<td style="text-align:left">Declares SDK constraints, dependencies (<code>flutter_riverpod</code>, <code>freezed_annotation</code>), and dev tools (<code>flutter_test</code>, <code>build_runner</code>).</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>tsconfig.json</code> + <code>eslint.config.js</code></td>
+<td style="text-align:left"><code>analysis_options.yaml</code></td>
+<td style="text-align:left">Configures the Dart static analyzer and linter rules (<code>package:flutter_lints/flutter.yaml</code>).</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>tsc --noEmit &amp;&amp; eslint .</code></td>
+<td style="text-align:left"><code>flutter analyze</code></td>
+<td style="text-align:left">Verifies zero type errors, null-safety violations, or lint warnings across <code>lib/</code> and <code>test/</code>.</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>vitest run</code> / <code>jest</code></td>
+<td style="text-align:left"><code>flutter test</code></td>
+<td style="text-align:left">Runs unit tests and headless <code>testWidgets</code> UI tests in the Dart VM without needing a browser or simulator.</td>
+</tr>
+<tr>
+<td style="text-align:left">GraphQL / OpenAPI / Prisma codegen</td>
+<td style="text-align:left"><code>dart run build_runner build</code></td>
+<td style="text-align:left">Generates <code>*.freezed.dart</code> (<code>copyWith</code>, <code>==</code>, <code>toString</code>) and <code>*.g.dart</code> (<code>fromJson</code>/<code>toJson</code>, Riverpod providers).</td>
+</tr>
+</tbody>
+</table></div>
+<h2>2. TypeScript vs. Dart 3 Language Essentials</h2>
+<p><span class="sidenote-number"></span><span class="sidenote">Unlike TypeScript—where types are erased at compile time and <code>any</code> or unsound casts can let <code>undefined</code> slip through at runtime—Dart has <strong>sound null safety</strong> enforced both at compile time and in the runtime VM.</span></p>
+<p>Table: TypeScript vs. Dart 3 Type System and Syntax</p>
+<div class="table-wrapper"><table class="ref-table">
+<thead>
+<tr>
+<th style="text-align:left">Concept</th>
+<th style="text-align:left">TypeScript</th>
+<th style="text-align:left">Dart 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Non-nullable vs. nullable type</td>
+<td style="text-align:left"><code>name: string</code> / <code>slot?: string | null</code></td>
+<td style="text-align:left"><code>String name</code> / <code>String? slot</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Nullish coalescing &amp; optional chaining</td>
+<td style="text-align:left"><code>val ?? 0</code> / <code>slot?.trim()</code></td>
+<td style="text-align:left"><code>val ?? 0</code> / <code>slot?.trim()</code> (identical!)</td>
+</tr>
+<tr>
+<td style="text-align:left">Non-null assertion</td>
+<td style="text-align:left"><code>slot!.toLowerCase()</code></td>
+<td style="text-align:left"><code>slot!.toLowerCase()</code> (identical!)</td>
+</tr>
+<tr>
+<td style="text-align:left">Type system discipline</td>
+<td style="text-align:left"><strong>Structural</strong> (duck typing by shape)</td>
+<td style="text-align:left"><strong>Nominal</strong> (explicit <code>class</code>, <code>implements</code>, or <code>with</code> mixin)</td>
+</tr>
+<tr>
+<td style="text-align:left">Immutable compile-time constant</td>
+<td style="text-align:left"><code>Object.freeze({...})</code> (runtime only)</td>
+<td style="text-align:left"><code>const Part(id: 'p1', name: '10k')</code> (canonicalized at compile time)</td>
+</tr>
+<tr>
+<td style="text-align:left">Named parameters (props object)</td>
+<td style="text-align:left"><code>function Card({ title, count = 0 }: Props)</code></td>
+<td style="text-align:left"><code>const Card({super.key, required this.title, this.count = 0});</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Async return type</td>
+<td style="text-align:left"><code>Promise&lt;CatalogSnapshot&gt;</code></td>
+<td style="text-align:left"><code>Future&lt;CatalogSnapshot&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Array / Dictionary literals</td>
+<td style="text-align:left"><code>const items: Part[] = []</code>, <code>Record&lt;string, string&gt;</code></td>
+<td style="text-align:left"><code>const &lt;Part&gt;[]</code>, <code>&lt;String, String&gt;{}</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Private module visibility</td>
+<td style="text-align:left"><code>private</code> keyword or non-exported symbol</td>
+<td style="text-align:left">Leading underscore (<code>_PartsTrackerApp</code>, <code>_commit()</code>) is library-private</td>
+</tr>
+</tbody>
+</table></div>
+<h2>3. React Components vs. Flutter Widgets</h2>
+<figure class="mermaid-figure"><pre class="mermaid">flowchart LR
+  subgraph React[&quot;React Runtime&quot;]
+    R1[&quot;JSX Element&lt;br/&gt;(Immutable Blueprint)&quot;] --&gt; R2[&quot;Fiber Node&lt;br/&gt;(State &amp; Context)&quot;]
+    R2 --&gt; R3[&quot;Browser DOM Node&lt;br/&gt;(Layout &amp; Paint)&quot;]
+  end
+  subgraph Flutter[&quot;Flutter Runtime&quot;]
+    F1[&quot;Widget&lt;br/&gt;(Immutable Config)&quot;] --&gt; F2[&quot;Element / BuildContext&lt;br/&gt;(Lifecycle &amp; Tree Lookup)&quot;]
+    F2 --&gt; F3[&quot;RenderObject&lt;br/&gt;(Layout &amp; Skia/Impeller Paint)&quot;]
+  end</pre><figcaption class="mermaid-caption">Figure R.1: How React&#x27;s Component + Virtual DOM tree maps to Flutter&#x27;s Widget + Element (BuildContext) + RenderObject trees.</figcaption></figure>
+<p>Table: UI Tree, Props, Local State, and Riverpod Equivalents</p>
+<div class="table-wrapper"><table class="ref-table">
+<thead>
+<tr>
+<th style="text-align:left">React Pattern</th>
+<th style="text-align:left">Flutter + Riverpod Pattern</th>
+<th style="text-align:left">Key Difference to Remember</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>createRoot(el).render(&lt;App /&gt;)</code></td>
+<td style="text-align:left"><code>runApp(const ProviderScope(child: PartsTrackerApp()))</code></td>
+<td style="text-align:left"><code>runApp</code> inflates the root <code>Widget</code> to fill the screen; <code>ProviderScope</code> holds all Riverpod state.</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>function App({ key }: Props)</code></td>
+<td style="text-align:left"><code>class PartsTrackerApp extends StatelessWidget</code></td>
+<td style="text-align:left">Every widget class has a <code>const</code> constructor accepting <code>{super.key}</code> and overrides <code>Widget build(BuildContext context)</code>.</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>React.memo(MyComponent)</code></td>
+<td style="text-align:left"><code>const MyWidget()</code></td>
+<td style="text-align:left">Marking a widget constructor call <code>const</code> tells Flutter to reuse the exact same instance and skip rebuilding its subtree.</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>useContext(ThemeContext)</code></td>
+<td style="text-align:left"><code>Theme.of(context)</code></td>
+<td style="text-align:left">Instead of hooks that rely on call-order index, Flutter walks up the <code>BuildContext</code> (<code>Element</code>) tree in $O(1)$ via <code>InheritedWidget</code>.</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>useState(false)</code></td>
+<td style="text-align:left"><code>StatefulWidget</code> + <code>State&lt;T&gt;</code> (<code>setState(() { ... })</code>)</td>
+<td style="text-align:left">Local ephemeral UI state (like whether a card's inline accordion is expanded or a <code>TextEditingController</code>) lives in a <code>State</code> object.</td>
+</tr>
+<tr>
+<td style="text-align:left">Zustand / Redux + TanStack Query</td>
+<td style="text-align:left"><code>@Riverpod</code> <code>AsyncNotifier</code> + <code>ref.watch(...)</code></td>
+<td style="text-align:left">Providers live outside the widget tree inside <code>ProviderScope</code>, automatically caching async <code>Future</code> states as <code>AsyncValue&lt;T&gt;</code> (<code>AsyncData</code>, <code>AsyncLoading</code>, <code>AsyncError</code>).</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>{ ...part, quantity: nextQty }</code></td>
+<td style="text-align:left"><code>part.copyWith(quantity: nextQty)</code></td>
+<td style="text-align:left">Dart classes do not have object-spread syntax; <code>@freezed</code> generates type-safe <code>copyWith(...)</code> methods and deep value equality (<code>==</code>).</td>
+</tr>
+</tbody>
+</table></div>
+
+      
+    </article>
+  </main>
+  <footer class="site-footer">
+    <span>Electronics Parts Tracker — Interactive Flutter &amp; Riverpod Course for React + TypeScript Developers</span>
+  </footer>
+</body>
+</html>

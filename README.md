@@ -6,16 +6,49 @@ A technical presentation and live-recorded experiment demonstrating how Agent Sk
 
 ---
 
+## Live Presentation & Hosted Tutorial (GitHub Pages)
+
+- **Slidev Presentation Deck**: [`https://domesticmouse.github.io/flutter-skills-presentation/`](https://domesticmouse.github.io/flutter-skills-presentation/)
+- **Interactive React + TypeScript → Flutter + Dart Course (`/teach-code` Output)**: [`https://domesticmouse.github.io/flutter-skills-presentation/tutorial/index.html`](https://domesticmouse.github.io/flutter-skills-presentation/tutorial/index.html)
+  - [Lesson 0001: Flutter Bootstrap, `ProviderScope` & Dark Workbench Shell](https://domesticmouse.github.io/flutter-skills-presentation/tutorial/lessons/0001-flutter-bootstrap-and-provider-scope.html)
+  - [Lesson 0002: Immutable Domain Models with Freezed & JSON Serialization](https://domesticmouse.github.io/flutter-skills-presentation/tutorial/lessons/0002-immutable-domain-models-with-freezed.html)
+  - [Lesson 0003: Persistence Seam & Atomic Local File Storage](https://domesticmouse.github.io/flutter-skills-presentation/tutorial/lessons/0003-persistence-seam-and-atomic-file-storage.html)
+  - [Lesson 0004: Reactive Catalog State with Riverpod `AsyncNotifier`](https://domesticmouse.github.io/flutter-skills-presentation/tutorial/lessons/0004-reactive-catalog-state-with-riverpod.html)
+  - [Lesson 0005: Engineering Unit Search Engine & Derived Filter Providers](https://domesticmouse.github.io/flutter-skills-presentation/tutorial/lessons/0005-engineering-unit-search-and-filter-providers.html)
+  - [Reference Sheet: React & TypeScript → Flutter & Dart Cheat Sheet](https://domesticmouse.github.io/flutter-skills-presentation/tutorial/reference/react-to-flutter-cheatsheet.html)
+  - [Reference Sheet: Glossary of Parts Tracker & Flutter Terms](https://domesticmouse.github.io/flutter-skills-presentation/tutorial/reference/glossary.html)
+  - [Reference Sheet: Verification & Widget Testing Reference](https://domesticmouse.github.io/flutter-skills-presentation/tutorial/reference/verification-and-testing.html)
+
+---
+
 ## The Three-Run Experiment
 
 Designed for a 45–50 minute university lecture for mobile development students coming from React, the presentation compares three recorded `agy` CLI workflows initiated from the same prompt:
 
 > `"I'd like to build a Flutter app for iOS that enables me to track my electronics parts"`
 
-1. **Act 0 — The Hidden Variable**: Exposes the user-level **Global Rule** in `$HOME/.gemini/config/AGENTS.md` (`You are a helpful assistant. When something is unclear, please ask clarifying questions, one at a time.`) and explains how it alters baseline agent behavior before any project skills are introduced.
-2. **Act 1 — Baseline Run**: Building the electronics component catalog app with only the **Global Rule** active and no project-level Agent Skills installed. Produces a working Flutter app, but leaves domain vocabulary and architectural decisions trapped in ephemeral chat history rather than durable **Intent Artifacts**.
-3. **Act 2 — Skilled Run**: Building the same app across the Matt Pocock skill chain (`/setup-matt-pocock-skills` → `/wayfinder` → `/to-spec` → `/to-tickets` → `/implement`), producing both a working Flutter app and repo-committed **Intent Artifacts** (`GLOSSARY.md`, `map.md`, resolved decision tickets, and spec).
-4. **Act 3 — Comprehension Run**: Running `/teach-code` against the **Skilled Run** codebase to dig out of **Comprehension Debt** via generated HTML lessons, printable reference sheets, and verification exercises tailored to bridge React concepts to Flutter/Dart.
+1. **Act 0 — The Hidden Variable** ([`slides/acts/01-hidden-variable.md`](./slides/acts/01-hidden-variable.md)): Exposes the user-level **Global Rule** in `$HOME/.gemini/config/AGENTS.md` (`You are a helpful assistant. When something is unclear, please ask clarifying questions, one at a time.`) and explains how it alters baseline agent behavior before any project skills are introduced.
+2. **Act 1 — Baseline Run** ([`slides/acts/02-baseline-run.md`](./slides/acts/02-baseline-run.md)): Building the electronics component catalog app with only the **Global Rule** active and no project-level Agent Skills installed. Produces a working Flutter app, but leaves domain vocabulary and architectural decisions trapped in ephemeral chat history rather than durable **Intent Artifacts**.
+3. **Act 2 — Skilled Run** ([`slides/acts/03-skilled-run.md`](./slides/acts/03-skilled-run.md)): Building the same app across the Matt Pocock skill chain (`npx skills@latest add mattpocock/skills` → `/wayfinder` → `/to-spec` → `/to-tickets` → `/implement`), producing both a working Flutter app and repo-committed **Intent Artifacts** (`GLOSSARY.md`, `map.md`, resolved decision tickets, and `spec.md`).
+4. **Act 3 — Comprehension Run** ([`slides/acts/04-comprehension-run.md`](./slides/acts/04-comprehension-run.md)): Running `/teach-code` (`npx skills@latest add domesticmouse/skills`) against the **Skilled Run** codebase to dig out of **Comprehension Debt** via generated HTML lessons, printable reference sheets, and runnable companion exercises in [`experiments/parts_tracker_comprehension/tutorial/`](./experiments/parts_tracker_comprehension/tutorial/) tailored to bridge React + TypeScript concepts to Flutter + Dart.
+
+---
+
+## Running & Building the Slidev Deck Locally
+
+```bash
+# Install dependencies (and sync experiments/parts_tracker_comprehension/tutorial into slides/public/tutorial)
+npm --prefix slides install
+
+# Start the local Slidev dev server on http://localhost:3030/
+.agents/skills/slidev-deck/scripts/slides-server.sh start
+
+# Check dev server status
+.agents/skills/slidev-deck/scripts/slides-server.sh status
+
+# Build static production site (slides/dist/, including slides/dist/tutorial/)
+npm --prefix slides run build
+```
 
 ---
 
@@ -23,51 +56,16 @@ Designed for a 45–50 minute university lecture for mobile development students
 
 | Path | Description |
 | :--- | :--- |
+| [`slides/`](./slides/) | Slidev presentation deck (`slides.md`, modular `acts/*.md`, `AsciinemaPlayer.vue`, custom layouts, embedded `.cast` recordings, iOS screenshots, and synced `/tutorial/` portal). |
+| [`.github/workflows/deploy-slides.yml`](./.github/workflows/deploy-slides.yml) | GitHub Actions workflow deploying `slides/dist` (including `/tutorial/`) to GitHub Pages on push to `main`. |
+| [`experiments/`](./experiments/) | Completed Flutter iOS project workspaces for all three runs (`parts_tracker_baseline`, `parts_tracker_skilled`, and `parts_tracker_comprehension`, including [`tutorial/`](./experiments/parts_tracker_comprehension/tutorial/)). |
+| [`recordings/`](./recordings/) | Captured raw (`recordings/raw/`) and sanitized/marked/trimmed (`recordings/final/`) `.cast` **Terminal Casts** (`01-baseline.cast`, `02-skilled.cast`, `03-comprehension.cast`). |
+| [`artifacts/traces/`](./artifacts/traces/) | Exported per-session Antigravity Markdown **Session Traces** across all three runs (`parts_tracker_baseline`, `parts_tracker_skilled`, `parts_tracker_comprehension`). |
+| [`artifacts/screenshots/`](./artifacts/screenshots/) | Captured `1206×2622 px` iOS Simulator screenshots for `parts_tracker_baseline` (6 views) and `parts_tracker_skilled` (3 `/prototype` options + 7 final views). |
 | [`GLOSSARY.md`](./GLOSSARY.md) | Canonical domain terminology (**Baseline Run**, **Skilled Run**, **Comprehension Run**, **Intent Artifacts**, **Comprehension Debt**, **Global Rule**, **Session Trace**, **Terminal Cast**). |
 | [`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md) | Step-by-step operator runbook for recording the three `asciinema` **Terminal Casts**, processing stop points, and exporting **Session Traces**. |
-| [`recordings/`](./recordings/) | Captured raw (`recordings/raw/`) and sanitized/marked/trimmed (`recordings/final/`) `.cast` terminal recordings (`01-baseline.cast` captured & verified). |
-| [`artifacts/traces/`](./artifacts/traces/) | Exported per-session Antigravity Markdown **Session Traces** (`artifacts/traces/parts_tracker_baseline/` captured & verified). |
-| [`.scratch/flutter-skills-presentation/map.md`](./.scratch/flutter-skills-presentation/map.md) | Wayfinder map tracking the presentation specification, resolved decisions, and remaining open questions. |
-| [`.scratch/flutter-skills-presentation/issues/`](./.scratch/flutter-skills-presentation/issues/) | Resolved and open Wayfinder tickets covering talk thesis, canonical Q&A script, asciinema stop-points, operator runbook, and recording progress. |
-| [`.scratch/flutter-skills-presentation/prototypes/`](./.scratch/flutter-skills-presentation/prototypes/) | Interactive HTML prototypes ([`03-recording-runbook.html`](./.scratch/flutter-skills-presentation/prototypes/03-recording-runbook.html), [`05-stop-points.html`](./.scratch/flutter-skills-presentation/prototypes/05-stop-points.html), [`06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html)) and recording helpers ([`setup-workspaces.sh`](./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh), [`mark-cast.py`](./.scratch/flutter-skills-presentation/prototypes/mark-cast.py)). |
-| [`.agents/skills/`](./.agents/skills/) | Installed project Agent Skills for planning (`/wayfinder`, `/grilling`, `/domain-modeling`, `/prototype`), recording, cast players & trace analysis (`/asciinema`, `/cast-player-html`, `/agy-brain-explorer`), teaching (`/teach-code`), and deck authoring (`/bjm-voice`, `/slidev-deck`). |
-| [`skills-lock.json`](./skills-lock.json) | Lockfile pinning installed Agent Skills. |
-
----
-
-## Current Project Status
-
-| Workstream / Deliverable | Status | Details |
-| :--- | :--- | :--- |
-| **Wayfinder Planning (Tickets 01, 02, 03, 05)** | **Closed** | Audience & thesis ([`01`](./.scratch/flutter-skills-presentation/issues/01-audience-and-talk-thesis.md)), canonical Q&A & run boundaries ([`02`](./.scratch/flutter-skills-presentation/issues/02-demo-prompts-and-run-boundaries.md)), operator runbook & scripts ([`03`](./.scratch/flutter-skills-presentation/issues/03-recording-runbook-and-setup-script.md)), and stop-point / adaptive-speed player architecture ([`05`](./.scratch/flutter-skills-presentation/issues/05-asciinema-stop-points-and-slidev-navigation.md)) are complete. |
-| **Run 1 — Baseline Run (`parts_tracker_baseline`)** | **Complete & Verified** | Workspace built (`~/Demos/flutter-parts-experiment/parts_tracker_baseline`), [`recordings/final/01-baseline.cast`](./recordings/final/01-baseline.cast) processed with 15 stop points + tightened paste delays (`32m 57.2s` raw → `02m 33.5s` across 16 adaptive-speed segments), [`06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html) synced, and 2 **Session Traces** exported in [`artifacts/traces/parts_tracker_baseline/`](./artifacts/traces/parts_tracker_baseline/). |
-| **Run 2 — Skilled Run (`parts_tracker_skilled`)** | **Pending Recording** | Ready to record (`02-skilled.cast`) and extract traces via [`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md) Step 3 ([Ticket `04`](./.scratch/flutter-skills-presentation/issues/04-capture-casts-and-session-traces.md)). |
-| **Run 3 — Comprehension Run (`parts_tracker_comprehension`)** | **Pending Recording** | Ready to clone from `parts_tracker_skilled` and record `/teach-code` (`03-comprehension.cast`) via [`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md) Step 4 ([Ticket `04`](./.scratch/flutter-skills-presentation/issues/04-capture-casts-and-session-traces.md)). |
-| **Prior `/teach-code` Examples & Deck Spec** | **Open** | [Ticket `06`](./.scratch/flutter-skills-presentation/issues/06-reference-prior-teach-code-examples.md) (`learn-egui` and `BufferedMult-SKiDL` showcase in Act 3), trace curation, narrative script, and Slidev deck specification follow once Runs 2 & 3 are captured. |
-
----
-
-## Reproducing the Demo Workspaces & Recordings
-
-The operator runbook ([`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md)) and workspace helper script ([`setup-workspaces.sh`](./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh)) walk through recording isolated demo directories under `~/Demos/flutter-parts-experiment/` (`parts_tracker_baseline`, `parts_tracker_skilled`, and `parts_tracker_comprehension`), post-processing `asciinema` **Terminal Casts** (with embedded stop points and adaptive per-segment playback speeds), and extracting `/agy-brain-explorer` **Session Traces**.
-
-1. **Follow the Operator Runbook**:
-   See [`RECORDING_RUNBOOK.md`](./RECORDING_RUNBOOK.md) (or open [`.scratch/flutter-skills-presentation/prototypes/03-recording-runbook.html`](./.scratch/flutter-skills-presentation/prototypes/03-recording-runbook.html)) for the step-by-step commands and copyable canonical Q&A prompts.
-
-2. **Process & Verify Each Run Immediately After Recording**:
-   ```bash
-   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh process-run 01-baseline.cast parts_tracker_baseline
-   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh process-run 02-skilled.cast parts_tracker_skilled
-   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh process-run 03-comprehension.cast parts_tracker_comprehension
-   ```
-
-3. **Test Drive `01-baseline.cast` in a Browser**:
-   Open [`.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html`](./.scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html) to preview the 16:9 Slidev `cast-full` player with 15 embedded stop points (plus `0. Start` and `→ End`), adaptive per-segment speeds (`2x`–`29x`, `02m 33.5s` total warped playback), and `[` / `]` / `p` stage controls.
-
-4. **Check Overall Experiment Status**:
-   ```bash
-   ./.scratch/flutter-skills-presentation/prototypes/setup-workspaces.sh status
-   ```
+| [`.scratch/flutter-skills-presentation/`](./.scratch/flutter-skills-presentation/) | Wayfinder `map.md`, resolved decision tickets (`issues/01`–`08`), and standalone HTML cast-player prototypes (`06-baseline-cast-player.html`, `07-skilled-cast-player.html`, `08-comprehension-cast-player.html`). |
+| [`.agents/skills/`](./.agents/skills/) | Installed project Agent Skills (`/wayfinder`, `/grilling`, `/domain-modeling`, `/prototype`, `/asciinema`, `/cast-player-html`, `/agy-brain-explorer`, `/teach-code`, `/bjm-voice`, `/slidev-deck`). |
 
 ---
 

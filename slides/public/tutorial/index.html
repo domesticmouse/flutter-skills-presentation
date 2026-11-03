@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Course Index — Flutter &amp; Dart via Electronics Parts Tracker</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="assets/course.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"><nav class="course-nav" aria-label="Course navigation"><div class="nav-breadcrumbs"><span class="nav-current" aria-current="page">Index</span></div><div class="nav-controls"><a class="nav-ref-link" href="reference/glossary.html">Glossary</a><a class="nav-ref-link" href="reference/react-to-flutter-cheatsheet.html">React → Flutter</a><a class="nav-ref-link" href="reference/verification-and-testing.html">Verification &amp; Testing</a><span class="mission-badge">Flutter • Parts Tracker</span></div></nav></header>
+  <main id="main-content" class="page-main">
+    <article class="tufte-article">
+      <header class="article-header">
+        <div class="article-badge">Mission: Rebuild the Electronics Parts Tracker</div>
+        <h1>Flutter &amp; Dart for React + TypeScript Developers</h1>
+        <p class="article-subtitle">Learn Dart 3, Flutter Widgets, Riverpod, and Freezed by progressively reconstructing a production-grade Electronics Parts Tracker from scratch—anchored at every step to the React and TypeScript mental models you already know.</p>
+      </header>
+      <h2>Course Mission</h2>
+<p>You already know how to model state with TypeScript interfaces, compose declarative UIs with React function components, manage server/client state with Context, Zustand, or TanStack Query, and verify behavior with React Testing Library.</p>
+<p>In this course, you will rebuild the <strong>Electronics Parts Tracker</strong> (<code>parts_tracker_skilled</code>) step by step inside <code>./tutorial/apps/</code>. Every lesson pairs one focused slice of the real application with an interactive code exercise, a retrieval quiz, and a runnable companion app verified via <code>flutter analyze</code> and <code>flutter test</code>.</p>
+<figure class="mermaid-figure"><pre class="mermaid">flowchart LR
+  L1[&quot;0001: Bootstrap,&lt;br/&gt;ProviderScope &amp; Shell&quot;] --&gt; L2[&quot;0002: Freezed Domain&lt;br/&gt;Models &amp; JSON&quot;]
+  L2 --&gt; L3[&quot;0003: Persistence Seam&lt;br/&gt;&amp; Atomic File I/O&quot;]
+  L3 --&gt; L4[&quot;0004: Riverpod AsyncNotifier&lt;br/&gt;&amp; Slot Uniqueness&quot;]
+  L4 --&gt; L5[&quot;0005: Unit-Aware Search&lt;br/&gt;&amp; Filter Providers&quot;]
+  L5 --&gt; L6[&quot;0006: LCSC HTTP Client&lt;br/&gt;&amp; Fake Injection&quot;]
+  L6 --&gt; L7[&quot;0007: Workbench UI&lt;br/&gt;&amp; Inline Accordion&quot;]
+  L7 --&gt; L8[&quot;0008: Bottom Sheets,&lt;br/&gt;Forms &amp; Full Suite&quot;]</pre><figcaption class="mermaid-caption">Figure 0.1: Progressive reconstruction of the Electronics Parts Tracker across lessons.</figcaption></figure>
+<h2 id="lessons">Published Lessons</h2>
+<div class="card-grid">
+<a class="lesson-card" href="lessons/0001-flutter-bootstrap-and-provider-scope.html"><div><div class="lesson-card-meta">LESSON 0001 • Bootstrap &amp; ProviderScope</div><div class="lesson-card-title">Flutter Bootstrap, ProviderScope &amp; Dark Workbench Shell</div><p class="lesson-card-summary">Initialize the Parts Tracker foundation: pubspec.yaml, void main(), ProviderScope, StatelessWidget with const constructors, Material 3 dark theme, and your first headless widget test.</p></div></a>
+<a class="lesson-card" href="lessons/0002-immutable-domain-models-with-freezed.html"><div><div class="lesson-card-meta">LESSON 0002 • Freezed &amp; Domain Models</div><div class="lesson-card-title">Immutable Domain Models with Freezed &amp; JSON Serialization</div><p class="lesson-card-summary">Model Container, Part, and CatalogSnapshot in lib/catalog/catalog_models.dart using @freezed, json_serializable, computed getters, and the 1-to-1 (Container, Slot) lookup.</p></div></a>
+<a class="lesson-card" href="lessons/0003-persistence-seam-and-atomic-file-storage.html"><div><div class="lesson-card-meta">LESSON 0003 • Persistence Seam &amp; Atomic I/O</div><div class="lesson-card-title">Persistence Seam &amp; Atomic Local File Storage</div><p class="lesson-card-summary">Build CatalogPersistence, InMemoryCatalogPersistence, and FileCatalogPersistence with a serialized Completer write queue, atomic .tmp rename, and backup/export support.</p></div></a>
+<a class="lesson-card" href="lessons/0004-reactive-catalog-state-with-riverpod.html"><div><div class="lesson-card-meta">LESSON 0004 • Riverpod AsyncNotifier</div><div class="lesson-card-title">Reactive Catalog State with Riverpod AsyncNotifier</div><p class="lesson-card-summary">Build the Catalog AsyncNotifier with upsertPart, (Container, Slot) uniqueness, quantity clamping, cascading container deletion, all-or-nothing JSON import validation, and ConsumerWidget UI binding.</p></div></a>
+<a class="lesson-card" href="lessons/0005-engineering-unit-search-and-filter-providers.html"><div><div class="lesson-card-meta">LESSON 0005 • Unit Search &amp; Derived Providers</div><div class="lesson-card-title">Engineering Unit Search Engine &amp; Derived Filter Providers</div><p class="lesson-card-summary">Implement PartSearchEngine (lib/search/part_search_engine.dart) and reactive workbench filter providers (lib/search/workbench_filter_provider.dart) with @freezed sealed class pattern matching.</p></div></a>
+</div>
+<h2 id="reference-sheets">Reference Sheets &amp; Printable Guides</h2>
+<p>Keep these reference sheets open alongside the lessons—or print them directly (<code>Cmd+P</code>), which automatically switches to a high-contrast light print stylesheet:</p>
+<div class="card-grid">
+<a class="ref-card" href="reference/glossary.html"><div><div class="lesson-card-meta">REFERENCE SHEET • Glossary</div><div class="lesson-card-title">Glossary of Parts Tracker &amp; Flutter Terms</div><p class="lesson-card-summary">Canonical definitions for the Electronics Parts Tracker domain (`Part`, `Spec`, `Container`, `Slot`) and core Flutter/Riverpod architecture.</p></div></a>
+<a class="ref-card" href="reference/react-to-flutter-cheatsheet.html"><div><div class="lesson-card-meta">REFERENCE SHEET • React → Flutter</div><div class="lesson-card-title">React &amp; TypeScript → Flutter &amp; Dart Cheat Sheet</div><p class="lesson-card-summary">Side-by-side mapping of TypeScript types, JSX components, hooks, Context/Zustand, and React Testing Library to Dart 3, Widgets, Riverpod, and Freezed.</p></div></a>
+<a class="ref-card" href="reference/verification-and-testing.html"><div><div class="lesson-card-meta">REFERENCE SHEET • Verification &amp; Testing</div><div class="lesson-card-title">Verification &amp; Widget Testing Reference</div><p class="lesson-card-summary">CLI verification commands (`flutter analyze`, `flutter test`) and side-by-side translations from React Testing Library to `WidgetTester` and `ProviderContainer`.</p></div></a>
+</div>
+<aside class="teacher-prompt"><p><strong>Ready to begin?</strong> Start with <a href="lessons/0001-flutter-bootstrap-and-provider-scope.html">Lesson 0001: Flutter Bootstrap, <code>ProviderScope</code> &amp; Dark Workbench Shell</a>, and ask me any questions whenever a Dart syntax rule or Flutter concept feels unfamiliar!</p>
+</aside>
+      
+    </article>
+  </main>
+  <footer class="site-footer">
+    <span>Electronics Parts Tracker — Interactive Flutter &amp; Riverpod Course for React + TypeScript Developers</span>
+  </footer>
+</body>
+</html>

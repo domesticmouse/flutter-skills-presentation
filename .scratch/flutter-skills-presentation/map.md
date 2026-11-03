@@ -30,10 +30,11 @@ A complete **Presentation Script & Slidev Deck Specification** demonstrating the
 - [Capture and Process Baseline Run iOS App Screenshots](./issues/07-baseline-ios-screenshots.md): All 6 `1206x2622 px` iOS Simulator screenshots (`01-parts-inventory.png` through `06-import-export-sheet.png`) captured via `xcrun simctl` and verified in `artifacts/screenshots/parts_tracker_baseline/`.
 - [Reference Prior Training Material Examples (learn-egui and BufferedMult-SKiDL)](./issues/06-reference-prior-teach-code-examples.md): Present `learn-egui` (Rust `egui` GUI) and `BufferedMult-SKiDL` (Python SKiDL electronics CAD) in the Act 3 wrap-up on a `Take-Home Links & Further Reading` slide (`layout: default`, clickable URLs + domain descriptions, no extra screenshots) alongside `mattpocock/skills` and `domesticmouse/skills`.
 - [Capture and Process Skilled Run iOS App Screenshots](./issues/08-skilled-ios-screenshots.md): All 10 `1206x2622 px` iOS Simulator screenshots (`OptionA.png`–`OptionC.png` `/prototype` variants + `01-workbench-catalog.png` through `07-backup-export-sheet.png` final built app views, including live LCSC lookup for `C2878713` and native iOS share sheet backup export) captured via `xcrun simctl` and verified in `artifacts/screenshots/parts_tracker_skilled/`.
+- [Capture Terminal Casts and Extract Session Traces](./issues/04-capture-casts-and-session-traces.md): All 3 runs (`parts_tracker_baseline`, `parts_tracker_skilled`, and `parts_tracker_comprehension`) captured, post-processed into `recordings/final/{01-baseline,02-skilled,03-comprehension}.cast` with adaptive-speed chapter stop points, exported into 16 **Session Traces** under `artifacts/traces/`, and embedded into the 4-act Slidev deck (`slides/`) with `experiments/parts_tracker_comprehension/tutorial` exposed at `/tutorial/`.
 
 ## Open Issues
 
-- [Capture Terminal Casts and Extract Session Traces](./issues/04-capture-casts-and-session-traces.md): **Run 1 (`parts_tracker_baseline`) & Run 2 (`parts_tracker_skilled`) complete & verified** (`01-baseline.cast` with 14 stop points + `06-baseline-cast-player.html` + 2 baseline traces; `02-skilled.cast` with 17 stop points + tightened paste delays, `07-skilled-cast-player.html` synced, and 13 skilled session traces exported); **Run 3 (`parts_tracker_comprehension`)** raw cast recorded (`recordings/raw/03-comprehension.cast`), pending `process-run` post-processing and trace export.
+<!-- All tickets resolved and Slidev deck + tutorial portal authored in slides/ -->
 
 ## Not yet specified
 

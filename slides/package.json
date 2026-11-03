@@ -1,0 +1,18 @@
+{
+  "name": "flutter-skills-presentation-deck",
+  "private": true,
+  "scripts": {
+    "sync-tutorial": "mkdir -p public/tutorial && cp -R ../experiments/parts_tracker_comprehension/tutorial/{index.html,index.md,MISSION.md,NOTES.md,README.md,RESOURCES.md,assets,lessons,reference,learning-records} public/tutorial/",
+    "predev": "npm run sync-tutorial",
+    "dev": "slidev",
+    "prebuild": "npm run sync-tutorial",
+    "build": "slidev build --base /flutter-skills-presentation/",
+    "export": "slidev export"
+  },
+  "dependencies": {
+    "@slidev/cli": "^0.48.0",
+    "@slidev/theme-default": "^0.25.0",
+    "asciinema-player": "^3.8.0",
+    "vue": "^3.4.0"
+  }
+}

@@ -2,7 +2,7 @@
 
 Type: task
 Label: `wayfinder:task`
-Status: open
+Status: closed
 Assignee: brett
 Blocked by: 03
 
@@ -102,6 +102,23 @@ Following the runbook produced in [Recording Runbook and Workspace Setup Script]
     - **Throwaway UI Prototyping (`/prototype`)**: Session 04 built 3 live Flutter workbench variants (`Variant A: High-Density Table`, `Variant B: Dark Command Bar & Inline Accordion`, `Variant C: Split Master-Inspector`) in `lib/prototype_workbench.dart`, ran them on the iOS Simulator, fixed layout overflows, and locked `Variant B` before writing a single line of production architecture.
     - **Deep Modules & Red-Green-Refactor TDD (`/implement`)**: Session 08 implemented the 5 vertical slices behind 3 deep module seams (`Catalog` over `CatalogPersistence`, `LcscClient`, `PartSearchEngine`) with 27 passing automated tests (`test/catalog_store_test.dart`, `test/lcsc_client_test.dart`, `test/part_search_engine_test.dart`, `test/widget_test.dart`) and two rounds of parallel two-axis `/code-review` subagents (Standards vs. Spec).
 
-### 3. Run 3 — Comprehension Run (`parts_tracker_comprehension`) — **PENDING**
-- Target cast: `recordings/raw/03-comprehension.cast` → `recordings/final/03-comprehension.cast`
-- Target trace export: `artifacts/traces/parts_tracker_comprehension/`
+### 3. Run 3 — Comprehension Run (`parts_tracker_comprehension`) — **COMPLETE & VERIFIED**
+- **Terminal Casts**:
+  - Raw: [recordings/raw/03-comprehension.cast](../../../recordings/raw/03-comprehension.cast) (`35m 14.2s` raw / `27m 09.2s` at 1x with `2.0s` idle cap, `20,299` events)
+  - Final (sanitized, 9 stop points injected via `mark-cast.py --auto-comprehension`, cut-and-paste & prompt submit delays tightened via `--tighten-pastes`, exit-trimmed with `3.0s` hold): [recordings/final/03-comprehension.cast](../../../recordings/final/03-comprehension.cast) (**`01m 52.7s` (`112.7s`) total across 10 adaptive-speed segments**, `20,299` events)
+  - Browser Test-Drive Harness: [08-comprehension-cast-player.html](../prototypes/08-comprehension-cast-player.html)
+- **Embedded Stop Points & Adaptive Segment Speeds (`mark-cast.py --list`)**:
+  - Intro (`00:00` → `00:01.53` 1x): `2x` (`0.8s` scaled, warped `0.8s`) → `[1] 1. Install Comprehension Skills` (event `#0008`: `npx skills@latest add domesticmouse/skills` entered)
+  - `[1]` → `[2] 2. Launch agy` (`00:01.53` → `00:09.75` 1x): `2x` (`4.1s` scaled, warped `4.9s`, event `#0107`)
+  - `[2]` → `[3] 3. /teach-code Prompt` (`00:09.75` → `00:36.62` 1x): `2x` (`13.4s` scaled, warped `18.3s`, event `#0202`)
+  - `[3]` → `[4] 4. Q1: Learning Goal` (`00:36.62` → `01:16.92` 1x): `2x` (`20.2s` scaled, warped `38.5s`, event `#0817`)
+  - `[4]` → `[5] 5. Q1: Answer (1)` (`01:16.92` → `01:17.94` 1x): `2x` (`0.5s` scaled, warped `39.0s`, event `#0820`)
+  - `[5]` → `[6] 6. Q2: Prior Stack & Dart Experience` (`01:17.94` → `01:27.87` 1x): `2x` (`5.0s` scaled, warped `43.9s`, event `#0938`)
+  - `[6]` → `[7] 7. Q2: Answer (TypeScript, New to Dart)` (`01:27.87` → `01:35.78` 1x): `2x` (`4.0s` scaled, warped `47.9s`, event `#0970`)
+  - `[7]` → `[8] 8. Curriculum & Lesson 0001 Built` (`01:35.78` → `14:01.63` 1x): `25x` (`29.8s` scaled, warped `77.7s`, event `#9612`)
+  - `[8]` → `[9] 9. Prompt: Implement Lessons 0001–0005` (`14:01.63` → `14:11.70` 1x): `2x` (`5.0s` scaled, warped `82.8s`, event `#9653`)
+  - `[9]` → `[End] Lessons 0001–0005 Verified` (`14:11.70` → `27:09.24` 1x): `26x` (`29.9s` scaled, total warped `112.7s` / `01m 52.7s`)
+- **Canonical Session Trace**:
+  - Index: [artifacts/traces/parts_tracker_comprehension/README.md](../../../artifacts/traces/parts_tracker_comprehension/README.md)
+  - **Session 01 (`/teach-code` — Curriculum + Lessons 0001–0005)**: [01-c66c6ef0-i-know-react-but-i-d-like.md](../../../artifacts/traces/parts_tracker_comprehension/01-c66c6ef0-i-know-react-but-i-d-like.md)
+    - Session ID: `c66c6ef0-aaca-41e4-8f5b-ca26c586e97c` (`112` steps, `MISSION.md`, `NOTES.md`, `learning-records/0001-react-typescript-starting-point.md`, 3 reference sheets, 5 HTML lessons, and 5 runnable companion Flutter apps in `tutorial/apps/0001*`–`0005*` verified with `flutter analyze`, `flutter test`, and `build.py --check`).
