@@ -137,83 +137,52 @@ layout: default
 </div>
 
 <div class="grid grid-cols-12 gap-6 items-center h-88">
-  <div class="col-span-5 h-full flex items-center justify-center rounded-2xl bg-gray-950/60 border border-gray-800/80 p-3 relative overflow-hidden">
-    <svg viewBox="0 0 320 380" class="w-full h-full max-h-[340px]" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g opacity="0.35" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 52 H24 L28 44 L35 60 L42 44 L49 60 L56 44 L60 52 H72" />
-        <text x="26" y="38" fill="#22d3ee" font-family="monospace" font-size="9" stroke="none">10k&Omega;</text>
+  <div class="col-span-5 h-full flex items-center justify-center rounded-2xl bg-gray-950/60 border border-gray-800/80 p-4 relative overflow-hidden">
+    <svg viewBox="0 0 260 380" class="w-full h-full max-h-[340px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="38" y="10" width="184" height="360" rx="28" fill="#0b0c10" stroke="#374151" stroke-width="3" />
+      <rect x="43" y="15" width="174" height="350" rx="24" fill="#121317" stroke="#1f2937" stroke-width="1.5" />
+      <rect x="102" y="23" width="56" height="11" rx="5.5" fill="#050507" />
+      <circle cx="148" cy="28.5" r="2.5" fill="#1e293b" />
+      <rect x="56" y="46" width="148" height="22" rx="7" fill="#181b22" stroke="#374151" stroke-width="1.2" />
+      <circle cx="68" cy="56.5" r="4" stroke="#22d3ee" stroke-width="1.5" />
+      <line x1="71" y1="59.5" x2="74.5" y2="63" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" />
+      <rect x="82" y="54" width="64" height="5" rx="2.5" fill="#374151" />
+      <rect x="56" y="80" width="148" height="78" rx="10" fill="#161920" stroke="#0891b2" stroke-width="1.2" />
+      <g stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="78" y="96" width="44" height="46" rx="4" fill="#083344" />
+        <path d="M93 96 A7 7 0 0 0 107 96" fill="#161920" />
+        <line x1="68" y1="104" x2="78" y2="104" />
+        <line x1="68" y1="114" x2="78" y2="114" />
+        <line x1="68" y1="124" x2="78" y2="124" />
+        <line x1="68" y1="134" x2="78" y2="134" />
+        <line x1="122" y1="104" x2="132" y2="104" />
+        <line x1="122" y1="114" x2="132" y2="114" />
+        <line x1="122" y1="124" x2="132" y2="124" />
+        <line x1="122" y1="134" x2="132" y2="134" />
       </g>
-      <g opacity="0.35" stroke="#fbbf24" stroke-width="1.5">
-        <rect x="256" y="34" width="36" height="46" rx="3" fill="#121317" />
-        <path d="M268 34 A6 6 0 0 0 280 34" />
-        <path d="M248 42 H256 M248 52 H256 M248 62 H256 M248 72 H256" />
-        <path d="M292 42 H300 M292 52 H300 M292 62 H300 M292 72 H300" />
-        <text x="257" y="92" fill="#fbbf24" font-family="monospace" font-size="8" stroke="none">DIP-8</text>
+      <rect x="144" y="98" width="46" height="7" rx="3.5" fill="#cbd5e1" opacity="0.8" />
+      <rect x="144" y="112" width="34" height="6" rx="3" fill="#22d3ee" opacity="0.5" />
+      <rect x="144" y="130" width="24" height="10" rx="4" fill="#083344" stroke="#06b6d4" stroke-width="1" />
+      <rect x="56" y="168" width="148" height="78" rx="10" fill="#161920" stroke="#b45309" stroke-width="1.2" />
+      <g stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M68 207 H78 L83 195 L91 219 L99 195 L107 219 L115 195 L120 207 H132" />
       </g>
-      <g opacity="0.35" stroke="#34d399" stroke-width="1.5" stroke-linecap="round">
-        <path d="M22 310 H38 M38 298 V322 M46 298 V322 M46 310 H62" />
-        <text x="24" y="334" fill="#34d399" font-family="monospace" font-size="8" stroke="none">100nF</text>
+      <rect x="144" y="186" width="46" height="7" rx="3.5" fill="#cbd5e1" opacity="0.8" />
+      <rect x="144" y="200" width="38" height="6" rx="3" fill="#fbbf24" opacity="0.5" />
+      <rect x="144" y="218" width="24" height="10" rx="4" fill="#451a03" stroke="#d97706" stroke-width="1" />
+      <rect x="56" y="256" width="148" height="78" rx="10" fill="#161920" stroke="#047857" stroke-width="1.2" />
+      <g stroke="#34d399" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="68" y1="295" x2="94" y2="295" />
+        <line x1="94" y1="277" x2="94" y2="313" />
+        <path d="M108 277 C101 285 101 305 108 313" />
+        <line x1="104" y1="295" x2="132" y2="295" />
+        <line x1="82" y1="281" x2="88" y2="281" stroke-width="1.8" />
+        <line x1="85" y1="278" x2="85" y2="284" stroke-width="1.8" />
       </g>
-      <g opacity="0.35">
-        <rect x="252" y="296" width="54" height="36" rx="4" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="3 3" fill="#121317" />
-        <text x="262" y="318" fill="#9ca3af" font-family="monospace" font-size="9">Drawer?</text>
-      </g>
-      <rect x="68" y="10" width="184" height="360" rx="28" fill="#0b0c10" stroke="#374151" stroke-width="3" />
-      <rect x="73" y="15" width="174" height="350" rx="24" fill="#121317" stroke="#1f2937" stroke-width="1" />
-      <rect x="132" y="22" width="56" height="12" rx="6" fill="#050507" />
-      <circle cx="178" cy="28" r="2.5" fill="#1e293b" />
-      <text x="86" y="52" fill="#f9fafb" font-family="sans-serif" font-size="11" font-weight="bold">Workbench Parts</text>
-      <rect x="196" y="41" width="38" height="14" rx="7" fill="#164e63" />
-      <text x="203" y="51" fill="#67e8f9" font-family="monospace" font-size="8">142</text>
-      <rect x="84" y="60" width="152" height="22" rx="6" fill="#1f2937" stroke="#06b6d4" stroke-width="1" />
-      <circle cx="94" cy="71" r="3.5" stroke="#67e8f9" stroke-width="1.2" />
-      <line x1="96.5" y1="73.5" x2="99.5" y2="76.5" stroke="#67e8f9" stroke-width="1.2" stroke-linecap="round" />
-      <text x="105" y="74" fill="#e5e7eb" font-family="monospace" font-size="8.5">10k 0603</text>
-      <rect x="84" y="88" width="34" height="13" rx="6.5" fill="#0891b2" />
-      <text x="95" y="97" fill="#ffffff" font-family="sans-serif" font-size="7" font-weight="bold">All</text>
-      <rect x="122" y="88" width="44" height="13" rx="6.5" fill="#1f2937" />
-      <text x="129" y="97" fill="#9ca3af" font-family="sans-serif" font-size="7">Passives</text>
-      <rect x="170" y="88" width="32" height="13" rx="6.5" fill="#1f2937" />
-      <text x="178" y="97" fill="#9ca3af" font-family="sans-serif" font-size="7">MCU</text>
-      <rect x="206" y="88" width="28" height="13" rx="6.5" fill="#1f2937" />
-      <text x="214" y="97" fill="#9ca3af" font-family="sans-serif" font-size="7">ICs</text>
-      <rect x="84" y="108" width="152" height="68" rx="8" fill="#181b22" stroke="#06b6d4" stroke-width="1" />
-      <text x="92" y="122" fill="#ffffff" font-family="sans-serif" font-size="9" font-weight="bold">10k&Omega; SMD Resistor</text>
-      <rect x="198" y="113" width="30" height="12" rx="4" fill="#1e293b" stroke="#475569" stroke-width="0.8" />
-      <text x="204" y="121.5" fill="#cbd5e1" font-family="monospace" font-size="7.5">0603</text>
-      <rect x="92" y="129" width="118" height="14" rx="4" fill="#083344" />
-      <text x="97" y="138.5" fill="#67e8f9" font-family="monospace" font-size="7.5">SMD Binder #1 &middot; Page 4</text>
-      <text x="92" y="164" fill="#9ca3af" font-family="monospace" font-size="7.5">C25804</text>
-      <rect x="176" y="153" width="14" height="14" rx="3.5" fill="#1f2937" />
-      <text x="180.5" y="162.5" fill="#d1d5db" font-family="monospace" font-size="9">-</text>
-      <text x="195" y="163" fill="#34d399" font-family="monospace" font-size="8.5" font-weight="bold">85</text>
-      <rect x="214" y="153" width="14" height="14" rx="3.5" fill="#1f2937" />
-      <text x="218" y="162.5" fill="#d1d5db" font-family="monospace" font-size="9">+</text>
-      <rect x="84" y="184" width="152" height="68" rx="8" fill="#181b22" stroke="#374151" stroke-width="1" />
-      <text x="92" y="198" fill="#ffffff" font-family="sans-serif" font-size="9" font-weight="bold">ESP32-WROOM-32E</text>
-      <rect x="196" y="189" width="32" height="12" rx="4" fill="#451a03" stroke="#d97706" stroke-width="0.8" />
-      <text x="203" y="197.5" fill="#fcd34d" font-family="sans-serif" font-size="7">Low</text>
-      <rect x="92" y="205" width="114" height="14" rx="4" fill="#1f2937" />
-      <text x="97" y="214.5" fill="#fde68a" font-family="monospace" font-size="7.5">Cabinet A &middot; Drawer 2</text>
-      <text x="92" y="240" fill="#9ca3af" font-family="monospace" font-size="7.5">Wi-Fi / BLE MCU</text>
-      <rect x="176" y="229" width="14" height="14" rx="3.5" fill="#1f2937" />
-      <text x="180.5" y="238.5" fill="#d1d5db" font-family="monospace" font-size="9">-</text>
-      <text x="198" y="239" fill="#fbbf24" font-family="monospace" font-size="8.5" font-weight="bold">2</text>
-      <rect x="214" y="229" width="14" height="14" rx="3.5" fill="#1f2937" />
-      <text x="218" y="238.5" fill="#d1d5db" font-family="monospace" font-size="9">+</text>
-      <rect x="84" y="260" width="152" height="68" rx="8" fill="#181b22" stroke="#374151" stroke-width="1" />
-      <text x="92" y="274" fill="#ffffff" font-family="sans-serif" font-size="9" font-weight="bold">NE555P Precision Timer</text>
-      <rect x="196" y="265" width="32" height="12" rx="4" fill="#1e293b" stroke="#475569" stroke-width="0.8" />
-      <text x="201" y="273.5" fill="#cbd5e1" font-family="monospace" font-size="7.5">DIP-8</text>
-      <rect x="92" y="281" width="112" height="14" rx="4" fill="#064e3b" />
-      <text x="97" y="290.5" fill="#6ee7b7" font-family="monospace" font-size="7.5">IC Cabinet &middot; Slot B3</text>
-      <text x="92" y="316" fill="#9ca3af" font-family="monospace" font-size="7.5">4.5V&ndash;16V</text>
-      <rect x="176" y="305" width="14" height="14" rx="3.5" fill="#1f2937" />
-      <text x="180.5" y="314.5" fill="#d1d5db" font-family="monospace" font-size="9">-</text>
-      <text x="195" y="315" fill="#34d399" font-family="monospace" font-size="8.5" font-weight="bold">14</text>
-      <rect x="214" y="305" width="14" height="14" rx="3.5" fill="#1f2937" />
-      <text x="218" y="314.5" fill="#d1d5db" font-family="monospace" font-size="9">+</text>
-      <rect x="128" y="352" width="64" height="4" rx="2" fill="#4b5563" />
+      <rect x="144" y="274" width="46" height="7" rx="3.5" fill="#cbd5e1" opacity="0.8" />
+      <rect x="144" y="288" width="32" height="6" rx="3" fill="#34d399" opacity="0.5" />
+      <rect x="144" y="306" width="24" height="10" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+      <rect x="98" y="352" width="64" height="4" rx="2" fill="#4b5563" />
     </svg>
   </div>
   <div class="col-span-7 flex flex-col justify-center">
