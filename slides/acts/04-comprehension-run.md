@@ -43,7 +43,7 @@ layout: default
   <div class="p-5 rounded-xl bg-gray-900/90 border border-cyan-500/30 flex flex-col justify-between space-y-3">
     <div class="space-y-2">
       <div class="text-xs font-mono text-cyan-400 uppercase tracking-wide">Canonical Source &amp; Documentation</div>
-      <div class="text-base font-bold font-mono">
+      <div class="text-sm font-bold font-mono whitespace-nowrap">
         <a href="https://github.com/domesticmouse/skills/" target="_blank" class="text-cyan-300 hover:underline">
           https://github.com/domesticmouse/skills/ &nearr;
         </a>
@@ -53,7 +53,7 @@ layout: default
       </p>
     </div>
     <div class="text-xs font-mono text-gray-400 pt-2 border-t border-gray-800">
-      Focus of Act 3: <code class="text-emerald-300">/teach-code</code> (<code>.agents/skills/teach-code/SKILL.md</code>)
+      Focus of Act 3: <code class="text-emerald-300">/teach-code</code>
     </div>
   </div>
 
