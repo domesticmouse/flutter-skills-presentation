@@ -1,5 +1,6 @@
 {
   "name": "flutter-skills-presentation-deck",
+  "type": "module",
   "private": true,
   "scripts": {
     "sync-tutorial": "mkdir -p public/tutorial && cd ../experiments/parts_tracker_comprehension/tutorial && cp -R index.html index.md MISSION.md NOTES.md README.md RESOURCES.md assets lessons reference learning-records ../../../slides/public/tutorial/",
@@ -13,6 +14,6 @@
     "@slidev/cli": "^53.0.0",
     "@slidev/theme-default": "^0.25.0",
     "asciinema-player": "^3.8.0",
-    "vue": "^3.4.0"
+    "vue": "^3.5.0"
   }
 }
