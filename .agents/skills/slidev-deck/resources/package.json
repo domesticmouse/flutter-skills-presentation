@@ -3,7 +3,10 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "sync-casts": "mkdir -p public/casts && cp ../recordings/final/*.cast public/casts/ 2>/dev/null || true",
+    "predev": "npm run sync-casts",
     "dev": "slidev",
+    "prebuild": "npm run sync-casts",
     "build": "slidev build --base /<repo-name>/",
     "export": "slidev export"
   },

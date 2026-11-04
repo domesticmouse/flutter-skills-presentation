@@ -27,7 +27,7 @@ Each HTML player embeds a gzipped, base64-encoded copy (`const EMBEDDED_CAST_GZ_
 | **3. Comprehension Run** | `08-comprehension-cast-player.html` | `recordings/final/03-comprehension.cast` |
 
 ### Core Rules
-1. **Treat `recordings/final/<run>.cast` as the single source of truth** for terminal events and `"m"` stop points. Always mutate the `.cast` file and re-embed `EMBEDDED_CAST_GZ_B64` using `.agents/skills/asciinema/scripts/mark-cast.py --embed-html <html-path>`.
+1. **Treat `recordings/final/<run>.cast` as the single source of truth** for terminal events and `"m"` stop points. Always mutate the `.cast` file in `recordings/final/`, re-embed `EMBEDDED_CAST_GZ_B64` using `.agents/skills/asciinema/scripts/mark-cast.py --embed-html <html-path>`, and sync `slides/public/casts/<run>.cast` via `npm --prefix slides run sync-casts` so both the standalone HTML player and the Slidev deck stay in sync.
 2. **Skip the `EMBEDDED_CAST_GZ_B64` line when reading HTML**: Line ~454 is a ~500 KB single-line base64 string that triggers the 46 KB `read_file` byte cap. Read the HTML in two ranges around it:
    - Header, CSS, and DOM layout: `StartLine: 1, EndLine: 453`
    - JS compiler, chapter pills, and event handlers: `StartLine: 455`
@@ -76,8 +76,8 @@ Place every `"m"` marker **immediately after** the `"o"` stdout event that compl
 - **D. Synchronized TUI Frame Flushes**:
   When the TUI writes a synchronized frame (`\x1b[?2026h`…`\x1b[?2026l`) across multiple `dt = 0.0` PTY chunks, `mark-cast.py` automatically advances past trailing `dt = 0.0` `"o"` chunks so the marker sits after the complete frame flush.
 
-#### Step 3: Update the `.cast` File, Relabel Sequentially, and Sync the HTML Player
-Keep chapter labels numbered sequentially (`1. ...`, `2. ...`, ..., `N. ...`) and sync `EMBEDDED_CAST_GZ_B64` into the HTML file:
+#### Step 3: Update the `.cast` File, Relabel Sequentially, and Sync the HTML Player & Slidev Deck
+Keep chapter labels numbered sequentially (`1. ...`, `2. ...`, ..., `N. ...`), sync `EMBEDDED_CAST_GZ_B64` into the HTML file, and sync `slides/public/casts/`:
 
 ```bash
 # 1. Insert, move, or remove the stop point in the backing .cast file
@@ -104,6 +104,9 @@ python3 .agents/skills/asciinema/scripts/mark-cast.py recordings/final/01-baseli
     "14. Apply Review Fixes" \
   --in-place \
   --embed-html .scratch/flutter-skills-presentation/prototypes/06-baseline-cast-player.html
+
+# 3. Sync recordings/final/*.cast into slides/public/casts/
+npm --prefix slides run sync-casts
 ```
 
 Also update `CANONICAL_*_MARKERS` in `.agents/skills/asciinema/scripts/mark-cast.py` if the canonical marker list for that run changed.

@@ -128,7 +128,7 @@ Follow the slide design conventions below. For copy-pasteable HTML/Markdown temp
 Consult [`references/ASCIINEMA-INTEGRATION.md`](references/ASCIINEMA-INTEGRATION.md) for component props, Vite SSR rules, and base-path normalization details.
 
 1. **Prepare & Embed `.cast` Recordings**:
-   - Use `/asciinema` to sanitize secrets (`sanitize-cast.py`), strip trailing shell exit prompts (`trim-cast.py --in-place`), and place/verify `"m"` chapter stop points (`mark-cast.py --list` / `--set`) before copying `.cast` files into `slides/public/casts/`.
+   - Treat `recordings/final/<name>.cast` as the single source of truth. Use `/asciinema` to sanitize secrets (`sanitize-cast.py`), strip trailing shell exit prompts (`trim-cast.py --in-place`), and place/verify `"m"` chapter stop points (`mark-cast.py --list` / `--set`) on the canonical recording in `recordings/final/`, then run `npm --prefix slides run sync-casts` (also executed automatically by `predev` and `prebuild`) to sync `recordings/final/*.cast` into `slides/public/casts/`.
    - For shell commands and TUI launchers in `zsh` (e.g. `flutter create ...`, `git init && ...`, `agy`), place command-entry stop points on the typed/pasted command text rather than post-launch banners; `mark-cast.py` automatically advances past bracketed-paste reverse video (`[REV]`) to the un-reversed redraw (`[UNREV]`) and splits trailing `\x1b[1B\r\x1b[K` cursor-down sequences into a post-marker `"o"` event (`dt=0.02s`) so the cursor stays on the same line at the end of the command.
    - Reference recordings with root-relative paths in slide frontmatter:
      ```yaml
@@ -192,5 +192,6 @@ Manage the background Slidev development server using the bundled [`scripts/slid
    mkdir -p .github/workflows
    cp .agents/skills/slidev-deck/resources/deploy-slides.yml .github/workflows/deploy-slides.yml
    ```
+   Ensure `on.push.paths` in `.github/workflows/deploy-slides.yml` includes every upstream directory synced by `prebuild` (e.g., `'slides/**'`, `'recordings/final/**'`, and any external tutorial or asset folders) so pushing changes to those files triggers the GitHub Pages workflow.
 3. Ensure repository GitHub Pages settings are configured with **Build and deployment > Source: GitHub Actions**.
 4. *Completion Criterion*: `npm --prefix slides run build` exits with returncode 0 and generates `slides/dist/index.html`.
