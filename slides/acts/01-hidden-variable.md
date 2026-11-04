@@ -8,7 +8,7 @@ class: text-center
     Shaping AI Coding Agents with Skills
   </h1>
   <p class="text-2xl text-gray-300 font-light max-w-3xl">
-    How <code class="text-cyan-300">AGENTS.md</code> &amp; <code class="text-cyan-300">SKILL.md</code> Turn <strong class="text-white font-semibold">Google Antigravity</strong> (<code class="text-cyan-300">agy</code>) from Vibe-Coder into Design Partner (<code class="text-amber-300">/wayfinder</code>) &amp; Personal Tutor (<code class="text-emerald-300">/teach-code</code>)
+    Intro to <strong class="text-white font-semibold">Google Antigravity</strong> &amp; <strong class="text-cyan-300 font-semibold">Agent Skills</strong>: From Vibe-Coding to <span class="text-amber-300">Design Partner</span> and <span class="text-emerald-300">Personal Tutor</span>
   </p>
   <div class="mt-7 flex items-center justify-center gap-8">
     <div class="flex flex-col items-center sm:items-start text-left">

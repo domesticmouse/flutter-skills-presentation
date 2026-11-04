@@ -6,7 +6,7 @@ highlighter: shiki
 lineNumbers: false
 info: |
   ## Shaping AI Coding Agents with Skills
-  Intro to Google Antigravity (`agy`) & Agent Skills: From Vibe-Coding to Design Partner (`/wayfinder`) and Personal Tutor (`/teach-code`)
+  Intro to Google Antigravity & Agent Skills: From Vibe-Coding to Design Partner and Personal Tutor
 drawings:
   persist: false
 transition: slide-left
