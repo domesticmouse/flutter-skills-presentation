@@ -251,14 +251,29 @@ title: "Intent Artifact 3: Deep Module Seams & Vertical-Slice TDD"
 
 <!-- S23 -->
 <div class="space-y-4">
-
-```text
-lib/
-├── catalog/   Catalog (Riverpod AsyncNotifier) + CatalogPersistence seam (atomic .tmp rename + write queue)
-├── lcsc/      LcscClient over injected http.Client (unauthenticated C-code metadata & paramVOList parser)
-├── search/    PartSearchEngine (pure SI & EE-infix normaliser: "4k7" == "4.7kΩ" == "4700R", "0.1uF" == "100nF")
-└── ui/        Dark Material 3 WorkbenchScreen + inline accordions + LCSC-first AddOrEditPartSheet
-```
+  <div class="p-4 rounded-lg bg-gray-950/90 border border-gray-800 space-y-2 text-xs text-gray-200 leading-relaxed">
+    <div class="text-sm font-bold font-mono text-white border-b border-gray-800 pb-1.5">
+      lib/ <span class="text-xs font-mono font-normal text-gray-400">(.scratch/parts-tracker-v1/spec.md)</span>
+    </div>
+    <div class="grid grid-cols-[6rem_1fr] gap-y-2 gap-x-4 items-baseline pt-0.5">
+      <div class="font-mono font-semibold text-amber-300">catalog/</div>
+      <div class="text-gray-300">
+        <code>Catalog</code> (Riverpod <code>AsyncNotifier</code>) + <code>CatalogPersistence</code> seam (atomic <code>.tmp</code> rename + write queue)
+      </div>
+      <div class="font-mono font-semibold text-amber-300">lcsc/</div>
+      <div class="text-gray-300">
+        <code>LcscClient</code> over injected <code>http.Client</code> (unauthenticated C-code metadata &amp; <code>paramVOList</code> parser)
+      </div>
+      <div class="font-mono font-semibold text-amber-300">search/</div>
+      <div class="text-gray-300">
+        <code>PartSearchEngine</code> (pure SI &amp; EE-infix normaliser: <code>"4k7" == "4.7k&Omega;" == "4700R"</code>, <code>"0.1uF" == "100nF"</code>)
+      </div>
+      <div class="font-mono font-semibold text-amber-300">ui/</div>
+      <div class="text-gray-300">
+        Dark Material 3 <code>WorkbenchScreen</code> + inline accordions + LCSC-first <code>AddOrEditPartSheet</code>
+      </div>
+    </div>
+  </div>
 
   <div class="grid grid-cols-2 gap-4 text-xs pt-1">
     <div class="p-3 rounded-lg bg-gray-900/80 border border-gray-800">
