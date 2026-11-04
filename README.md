@@ -30,16 +30,17 @@ A 45-minute hackathon presentation and live-recorded experiment demonstrating ho
 
 Installable into `.agents/skills/` across Google Antigravity (`agy`), Claude Code, Cursor, and other harnesses via `npx skills`:
 
-```bash
-# Act 2 — Design Partner & Engineering Workflow Skills (/wayfinder, /grilling, /domain-modeling, /research, /prototype, /tdd, /code-review, /to-spec, /to-tickets, /implement)
-npx skills@latest add mattpocock/skills
+- **[`mattpocock/skills`](https://github.com/mattpocock/skills)** — Act 2 Design Partner & Engineering Workflow Skills (`/wayfinder`, `/grilling`, `/domain-modeling`, `/research`, `/prototype`, `/tdd`, `/code-review`, `/to-spec`, `/to-tickets`, `/implement`):
 
-# Act 3 & Presentation Tooling — Personal Tutor & Reproducibility Skills (/teach-code, /slidev-deck, /asciinema, /cast-player-html, /agy-brain-explorer, /ios-simulator-screenshot, /crop-image)
-npx skills@latest add domesticmouse/skills
-```
+  ```bash
+  npx skills@latest add mattpocock/skills
+  ```
 
-- [`github.com/mattpocock/skills`](https://github.com/mattpocock/skills)
-- [`github.com/domesticmouse/skills`](https://github.com/domesticmouse/skills)
+- **[`domesticmouse/skills`](https://github.com/domesticmouse/skills)** — Act 3 Personal Tutor & Presentation Reproducibility Skills (`/teach-code`, `/slidev-deck`, `/asciinema`, `/cast-player-html`, `/agy-brain-explorer`, `/ios-simulator-screenshot`, `/crop-image`):
+
+  ```bash
+  npx skills@latest add domesticmouse/skills
+  ```
 
 ---
 
@@ -58,20 +59,29 @@ Designed as a 45-minute introduction to Google Antigravity and Agent Skills, the
 
 ## Running & Building the Slidev Deck Locally
 
-```bash
-# Install dependencies in slides/
-npm --prefix slides install
+1. **Install dependencies in `slides/`**:
 
-# Start the local Slidev dev server on http://localhost:3030/
-# (predev automatically syncs tutorial/ -> slides/public/tutorial/ and recordings/final/*.cast -> slides/public/casts/)
-.agents/skills/slidev-deck/scripts/slides-server.sh start
+   ```bash
+   npm --prefix slides install
+   ```
 
-# Check dev server status
-.agents/skills/slidev-deck/scripts/slides-server.sh status
+2. **Start the local Slidev dev server on `http://localhost:3030/`** (`predev` automatically syncs `tutorial/` into `slides/public/tutorial/` and `recordings/final/*.cast` into `slides/public/casts/`):
 
-# Build static production site (slides/dist/, including synced casts and /tutorial/)
-npm --prefix slides run build
-```
+   ```bash
+   .agents/skills/slidev-deck/scripts/slides-server.sh start
+   ```
+
+3. **Check dev server status**:
+
+   ```bash
+   .agents/skills/slidev-deck/scripts/slides-server.sh status
+   ```
+
+4. **Build static production site** (`slides/dist/`, including synced casts and `/tutorial/`):
+
+   ```bash
+   npm --prefix slides run build
+   ```
 
 ---
 
