@@ -4,29 +4,36 @@ class: text-center
 
 <!-- S01 -->
 <div class="h-full flex flex-col items-center justify-center">
-
   <h1 class="text-5xl font-extrabold tracking-tight text-white mb-3">
     Shaping AI Coding Agents with Skills
   </h1>
   <p class="text-2xl text-gray-300 font-light max-w-3xl">
     From <strong class="text-cyan-300 font-semibold">Comprehension Debt</strong> to Design Partner (<code class="text-amber-300">/wayfinder</code>) and Personal Tutor (<code class="text-emerald-300">/teach-code</code>) in Flutter
   </p>
-
-  <div class="mt-8 text-gray-400 text-base">
-    <span class="font-semibold text-gray-200">Brett Morgan</span> &middot; Developer Relations, Google
-  </div>
-
-  <div class="mt-6 flex items-center gap-4 text-xs font-mono">
-    <a href="https://github.com/domesticmouse/flutter-skills-presentation" target="_blank" class="px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-700 text-cyan-300 hover:underline">
-      github.com/domesticmouse/flutter-skills-presentation
+  <div class="mt-7 flex items-center justify-center gap-8">
+    <div class="flex flex-col items-center sm:items-start text-left">
+      <div class="text-gray-400 text-base">
+        <span class="font-semibold text-gray-200">Brett Morgan</span> &middot; Developer Relations, Google Cloud
+      </div>
+      <div class="mt-4 flex flex-col gap-2.5 text-xs font-mono">
+        <a href="https://domesticmouse.github.io/flutter-skills-presentation/" target="_blank" class="px-3 py-1.5 rounded-lg bg-cyan-950/40 border border-cyan-500/40 text-cyan-300 hover:underline">
+          domesticmouse.github.io/flutter-skills-presentation &nearr;
+        </a>
+        <a href="https://github.com/domesticmouse/flutter-skills-presentation" target="_blank" class="px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-700 text-gray-300 hover:underline">
+          github.com/domesticmouse/flutter-skills-presentation
+        </a>
+        <a href="./tutorial/index.html" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 hover:underline">
+          Interactive React &rarr; Flutter Tutorial &nearr;
+        </a>
+      </div>
+      <div class="mt-4 text-xs text-gray-500">
+        Press <kbd>Space</kbd> or <kbd>&rarr;</kbd> to advance
+      </div>
+    </div>
+    <a href="https://domesticmouse.github.io/flutter-skills-presentation/" target="_blank" class="flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-gray-900/80 border border-gray-700/80 shadow-lg hover:border-cyan-500/50 transition no-underline">
+      <img src="/images/qrcode_domesticmouse.github.io.png" alt="QR Code for Live Presentation Deck" class="w-36 h-36 rounded-lg bg-white p-1 object-contain" />
+      <span class="text-[11px] font-mono text-cyan-300 tracking-wide">Scan for Live Deck</span>
     </a>
-    <a href="./tutorial/index.html" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 hover:underline">
-      Interactive React &rarr; Flutter Tutorial &nearr;
-    </a>
-  </div>
-
-  <div class="mt-8 text-xs text-gray-500">
-    Press <kbd>Space</kbd> or <kbd>&rarr;</kbd> to advance
   </div>
 </div>
 
