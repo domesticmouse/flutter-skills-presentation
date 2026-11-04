@@ -17,7 +17,64 @@ class: text-center
 </div>
 
 <!--
-Welcome to Act 2: The Skilled Run. We start from the exact same empty Flutter iOS template, but before launching agy, we run one command: npx skills@latest add mattpocock/skills.
+Welcome to Act 2: The Skilled Run. We start from the exact same empty Flutter iOS template, but before launching agy, we install Matt Pocock's engineering skill suite into the project.
+-->
+
+---
+layout: default
+---
+
+<!-- S16a -->
+<div class="flex items-center gap-3 mb-6">
+  <h2 class="text-2xl font-bold m-0">Installing Matt Pocock&rsquo;s Skills</h2>
+</div>
+
+<div class="p-6 rounded-2xl bg-amber-950/20 border border-amber-500/40 space-y-3 mb-6">
+  <div class="flex items-center justify-between">
+    <span class="text-xs font-mono text-amber-400 uppercase tracking-widest">One-Command Project Setup</span>
+    <span class="text-xs font-mono text-gray-400">Run inside your project root</span>
+  </div>
+  <div class="p-4 rounded-xl bg-gray-950/90 border border-gray-800 font-mono text-xl font-bold tracking-tight">
+    <span class="text-gray-500 select-none">$ </span><span class="text-amber-300">npx skills@latest add mattpocock/skills</span>
+  </div>
+</div>
+
+<div class="grid grid-cols-2 gap-6">
+  <div class="p-5 rounded-xl bg-gray-900/90 border border-cyan-500/30 flex flex-col justify-between space-y-3">
+    <div class="space-y-2">
+      <div class="text-xs font-mono text-cyan-400 uppercase tracking-wide">Canonical Documentation</div>
+      <div class="text-lg font-bold font-mono">
+        <a href="https://www.aihero.dev/skills" target="_blank" class="text-cyan-300 hover:underline">
+          https://www.aihero.dev/skills &nearr;
+        </a>
+      </div>
+      <p class="text-xs text-gray-300 leading-relaxed m-0">
+        Matt Pocock&rsquo;s canonical guide and reference documentation covering each skill&rsquo;s philosophy, trigger phrases, and multi-session workflows.
+      </p>
+    </div>
+    <div class="text-xs font-mono text-gray-400 pt-2 border-t border-gray-800">
+      Source repo: <a href="https://github.com/mattpocock/skills" target="_blank" class="text-gray-300 hover:underline">github.com/mattpocock/skills</a>
+    </div>
+  </div>
+
+  <div class="p-5 rounded-xl bg-gray-900/90 border border-gray-800 space-y-2.5">
+    <div class="text-xs font-mono text-amber-400 uppercase tracking-wide">What It Configures on Disk</div>
+    <ul class="text-xs text-gray-300 space-y-2 list-disc pl-4 m-0 leading-relaxed">
+      <li>
+        Downloads composable <code>SKILL.md</code> playbooks into <code>.agents/skills/</code> and records content hashes in <code>skills-lock.json</code>.
+      </li>
+      <li>
+        Works out of the box with Google Antigravity (<code>agy</code>), Claude Code, Cursor, and any <code>AGENTS.md</code>-compatible agent.
+      </li>
+      <li>
+        Unlocks the full engineering workflow: <code>/wayfinder</code>, <code>/grilling</code>, <code>/domain-modeling</code>, <code>/research</code>, <code>/prototype</code>, <code>/to-spec</code>, <code>/to-tickets</code>, <code>/implement</code>, <code>/tdd</code>, and <code>/code-review</code>.
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!--
+Before we launch agy in our new Flutter project, we run a single command in the terminal: npx skills@latest add mattpocock/skills. That pulls Matt Pocock's skill catalog directly into .agents/skills/ and locks the versions in skills-lock.json so any coding agent—including Antigravity—immediately discovers them as slash commands. If you want to explore the full catalog and read how each skill works, head to https://www.aihero.dev/skills, which is the canonical documentation source.
 -->
 
 ---
