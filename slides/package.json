@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "sync-tutorial": "mkdir -p public/tutorial && cd ../experiments/parts_tracker_comprehension/tutorial && cp -R index.html index.md MISSION.md NOTES.md README.md RESOURCES.md assets lessons reference learning-records ../../../slides/public/tutorial/",
-    "predev": "npm run sync-tutorial",
+    "sync-casts": "mkdir -p public/casts && cp ../recordings/final/*.cast public/casts/",
+    "predev": "npm run sync-tutorial && npm run sync-casts",
     "dev": "slidev",
-    "prebuild": "npm run sync-tutorial",
+    "prebuild": "npm run sync-tutorial && npm run sync-casts",
     "build": "slidev build --base /flutter-skills-presentation/",
     "export": "slidev export"
   },
