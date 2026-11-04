@@ -731,14 +731,6 @@ watch(
 
     <div class="asciinema-speed-hint" :class="getSpeedTier(currentSpeed)">
       <span>Playback speed: <strong>{{ currentSpeed }}x</strong></span>
-      <template v-if="currentSegment">
-        <span>·</span>
-        <span>
-          Segment {{ currentSegment.index + 1 }}/{{ segments.length }}:
-          {{ currentSegment.fromLabel }} → {{ currentSegment.toLabel }}
-          ({{ currentSegment.warpedDuration.toFixed(1) }}s @ {{ currentSegment.speed }}x)
-        </span>
-      </template>
     </div>
   </div>
 </template>
