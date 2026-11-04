@@ -6,7 +6,7 @@ highlighter: shiki
 lineNumbers: false
 info: |
   ## Shaping AI Coding Agents with Skills
-  From Comprehension Debt to Design Partner (`/wayfinder`) and Personal Tutor (`/teach-code`) in Flutter
+  Intro to Google Antigravity (`agy`) & Agent Skills: From Vibe-Coding to Design Partner (`/wayfinder`) and Personal Tutor (`/teach-code`)
 drawings:
   persist: false
 transition: slide-left

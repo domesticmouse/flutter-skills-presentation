@@ -169,9 +169,9 @@ title: "Session Trace 01: What the Agent Did Under the Hood"
   </div>
   <div class="grid grid-cols-2 gap-4 text-xs pt-2">
     <div class="p-3.5 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
-      <div class="text-cyan-300 font-semibold">Auto-Loaded Flutter Plugin Skills</div>
+      <div class="text-cyan-300 font-semibold">Reference Skills &ne; Workflow Skills</div>
       <p class="text-gray-300 leading-relaxed m-0">
-        Even without project skills, <code>agy</code> read <code>flutter-apply-architecture-best-practices</code> and <code>flutter-implement-json-serialization</code> from the global Flutter plugin, giving it a clean MVVM folder layout.
+        <code>agy</code> auto-read <code>flutter-apply-architecture-best-practices</code> from the global Flutter plugin—giving Gemini a clean MVVM folder layout, but <em>not</em> an engineering process.
       </p>
     </div>
     <div class="p-3.5 rounded-lg bg-gray-900/80 border border-gray-800 space-y-1">
@@ -184,13 +184,13 @@ title: "Session Trace 01: What the Agent Did Under the Hood"
 </div>
 
 <!--
-Using our agy-brain-explorer skill, we extracted the full Session Trace from ~/.gemini/antigravity/brain/. In Session 01, agy executed 94 steps and 48 tool calls. Notice something fascinating in the read_file calls: Antigravity automatically consulted five skills from the global Flutter plugin—which is why it organised the code into models, repositories, and view_models. Yet it wrote zero documentation or Intent Artifacts to the repository.
+Using our agy-brain-explorer skill, we extracted the full Session Trace from ~/.gemini/antigravity/brain/. In Session 01, agy executed 94 steps and 48 tool calls. Notice something really important in those read_file calls: Antigravity automatically consulted five Reference Skills from the global Flutter plugin—which is why Gemini organised the code cleanly into models, repositories, and view_models instead of dumping everything into main.dart. Reference skills are great for teaching an LLM idiomatic folder layout or API syntax, but they don't change its engineering workflow: it still wrote zero documentation, zero domain specs, and only one trivial smoke test.
 -->
 
 ---
 layout: skill-breakdown
 way: 2
-title: "Session Trace 02: What Happens After <code>/clear</code> + 'Please review the codebase'"
+title: "Session Trace 02: The <code>/clear</code> + 'Please review the codebase' Trick"
 ---
 
 <!-- S14 -->
@@ -213,7 +213,7 @@ title: "Session Trace 02: What Happens After <code>/clear</code> + 'Please revie
         <span class="text-amber-300">read_file</span>
         <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">23</span>
       </div>
-      <div class="text-gray-300">Audited all <code>lib/</code> models, services, views &amp; <code>test/</code> files after <code>/clear</code></div>
+      <div class="text-gray-300">Audited all <code>lib/</code> models, services, views &amp; <code>test/</code> files with zero sunk-cost bias after <code>/clear</code></div>
       <div class="font-mono flex items-center justify-between pr-2">
         <span class="text-amber-300">edit_file</span>
         <span class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-200">26</span>
@@ -247,7 +247,7 @@ title: "Session Trace 02: What Happens After <code>/clear</code> + 'Please revie
 </div>
 
 <!--
-And here is the kicker. Right after the app launched on the simulator, we typed /clear to start a fresh session and simply prompted: "Please review the codebase." Without any context bias from having just written the code, agy audited its own work and found eight genuine bugs—including a broken iOS sandbox file path using Platform.environment['HOME'], silent data wipe if the JSON file was ever corrupted, and concurrent file-write race conditions when tapping the stock stepper buttons rapidly!
+And here is a tactical trick every single person in this room can use in agy today. Right after the app launched on the simulator, we typed /clear to wipe the conversation history and simply prompted: "Please review the codebase." If you ask an LLM to review code inside the same session where it just wrote that code, it suffers from sunk-cost context bias and tells you everything looks great. Once you run /clear, the exact same model looks at those files with fresh eyes and finds eight genuine bugs—including a broken iOS sandbox file path, silent data wipe on corrupt JSON, and concurrent file-write race conditions when tapping the stock buttons rapidly!
 -->
 
 ---

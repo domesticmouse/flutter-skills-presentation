@@ -12,12 +12,12 @@ class: text-center
     parts_tracker_comprehension &middot; /teach-code &middot; 03-comprehension.cast
   </p>
   <p class="text-base text-gray-400 max-w-xl mx-auto">
-    Paying down Comprehension Debt by turning the generated Flutter codebase into a personalised React-to-Flutter course
+    Paying down Comprehension Debt by having <code>agy</code> turn its newly built codebase into a personalised course bridged from your existing stack
   </p>
 </div>
 
 <!--
-This brings us to Act 3: The Comprehension Run. Even after the Skilled Run gives us a clean, well-tested Flutter architecture, if our background is React and TypeScript, we still have Comprehension Debt. What are @freezed mixins? How does a Riverpod AsyncNotifier differ from TanStack Query or Zustand? Why is const everywhere? Let's install the /teach-code skill and make the agent teach us the codebase it just built.
+This brings us to Act 3: The Comprehension Run. Even after the Skilled Run gives us a clean, well-tested architecture, if you or a teammate used agy to build in a stack you don't know—say, our React and TypeScript developer shipping a Flutter, Riverpod, and Freezed app—you still have Comprehension Debt. How do you onboard your teammates or answer deep architectural questions from the judges? Let's install the /teach-code skill and make agy teach us the exact codebase it just built.
 -->
 
 ---
@@ -327,32 +327,32 @@ layout: default
 
 <!-- S34 -->
 <div class="flex items-center gap-3 mb-6">
-  <h2 class="text-2xl font-bold m-0">Synthesis: Three Layers of Shaping Your Coding Agent</h2>
+  <h2 class="text-2xl font-bold m-0">Synthesis: Getting Professional Engineering Out of <code>agy</code> &amp; Skills</h2>
 </div>
 
 <ol class="space-y-4 text-sm text-gray-200 list-decimal pl-6 mt-5 leading-relaxed">
   <li>
-    <strong class="text-white">Global Rules (<code>~/.gemini/config/AGENTS.md</code>) Set Conversational Posture</strong>
+    <strong class="text-white">Global Rules (<code>~/.gemini/config/AGENTS.md</code>) Stop Premature Code Dumps</strong>
     <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
-      <li><em>&ldquo;When something is unclear, please ask clarifying questions, one at a time.&rdquo;</em> stops premature code dumps across every project on your laptop.</li>
+      <li><em>&ldquo;When something is unclear, please ask clarifying questions, one at a time.&rdquo;</em> shifts Gemini from guessing requirements to interviewing you via <code>ask_question</code> across every project.</li>
     </ul>
   </li>
   <li>
-    <strong class="text-white">Design &amp; Engineering Skills (<code>/wayfinder</code>, <code>/prototype</code>, <code>/tdd</code>) Create Durable Intent</strong>
+    <strong class="text-white">Workflow Skills (<code>/wayfinder</code>, <code>/prototype</code>, <code>/tdd</code>) Externalize Intent Across <code>/clear</code></strong>
     <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
-      <li>Externalise domain terms (<code>GLOSSARY.md</code>), decision maps (<code>map.md</code>), API research, and specs onto disk so context survives <code>/clear</code> and code ships behind deep module seams.</li>
+      <li>Reference skills teach syntax, but workflow skills enforce senior engineering habits: committing domain terms (<code>GLOSSARY.md</code>), subagent research, simulator prototypes, and specs to disk so context survives <code>/clear</code>.</li>
     </ul>
   </li>
   <li>
-    <strong class="text-white">Pedagogical Skills (<code>/teach-code</code>) Turn Codebases into Personal Curricula</strong>
+    <strong class="text-white">Pedagogical Skills (<code>/teach-code</code>) Turn Generated Code into Team Mastery</strong>
     <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
-      <li>Don&rsquo;t settle for Comprehension Debt—have the agent build a progressive, test-verified course anchored to the frameworks you already know.</li>
+      <li>When <code>agy</code> builds in a stack you haven&rsquo;t mastered yet, run <code>/teach-code</code> to generate a test-verified course bridged directly from the languages and frameworks you already know.</li>
     </ul>
   </li>
 </ol>
 
 <!--
-Let's pull the three threads together. First, put a simple Global Rule in ~/.gemini/config/AGENTS.md so your agent asks clarifying questions one at a time instead of guessing. Second, use planning and engineering skills like /wayfinder, /domain-modeling, /prototype, and /tdd so your design decisions live in git as Intent Artifacts rather than vanishing when you type /clear. And third, whenever you use an agent to build in an unfamiliar stack, follow up with /teach-code so you graduate with both a working app and genuine engineering mastery.
+Let's pull the three threads together for your hackathon projects today. The difference between an LLM acting like an impulsive vibe-coder versus a senior engineering partner isn't a secret prompt—it's how you shape the harness with Rules and Skills. First, put a simple Global Rule in ~/.gemini/config/AGENTS.md so agy asks clarifying questions one at a time instead of hallucinating assumptions. Second, install workflow skills like mattpocock/skills—whether you run the full /wayfinder pipeline or cherry-pick /grilling, /research, /prototype, and /code-review after /clear—so your architectural decisions live in git as Intent Artifacts. And third, whenever agy helps you ship in an unfamiliar stack, follow up with /teach-code so you walk onto the demo stage owning both a working app and the mental model behind it.
 -->
 
 ---

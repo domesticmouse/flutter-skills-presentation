@@ -8,7 +8,7 @@ class: text-center
     Shaping AI Coding Agents with Skills
   </h1>
   <p class="text-2xl text-gray-300 font-light max-w-3xl">
-    From <strong class="text-cyan-300 font-semibold">Comprehension Debt</strong> to Design Partner (<code class="text-amber-300">/wayfinder</code>) and Personal Tutor (<code class="text-emerald-300">/teach-code</code>) in Flutter
+    How <code class="text-cyan-300">AGENTS.md</code> &amp; <code class="text-cyan-300">SKILL.md</code> Turn <strong class="text-white font-semibold">Google Antigravity</strong> (<code class="text-cyan-300">agy</code>) from Vibe-Coder into Design Partner (<code class="text-amber-300">/wayfinder</code>) &amp; Personal Tutor (<code class="text-emerald-300">/teach-code</code>)
   </p>
   <div class="mt-7 flex items-center justify-center gap-8">
     <div class="flex flex-col items-center sm:items-start text-left">
@@ -23,7 +23,7 @@ class: text-center
           github.com/domesticmouse/flutter-skills-presentation
         </a>
         <a href="./tutorial/index.html" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 hover:underline">
-          Interactive React &rarr; Flutter Tutorial &nearr;
+          Generated React &rarr; Flutter Tutorial &nearr;
         </a>
       </div>
       <div class="mt-4 text-xs text-gray-500">
@@ -38,7 +38,7 @@ class: text-center
 </div>
 
 <!--
-G'day everyone! Today we are going to look at what actually happens when you hand an AI coding agent a terse prompt for an app in a framework you haven't mastered yet. More importantly, we're going to explore how small, composable markdown files—Rules and Agent Skills—completely reshape how that agent collaborates with you.
+G'day everyone, and welcome to the hackathon! Many of you have already used agentic coding harnesses like Claude Code, Cursor, or OpenAI's CLI tooling. Today I want to introduce you to Google Antigravity—agy—and show you the dramatic difference that Agent Skills make when you're building with LLMs in general and Antigravity and Gemini in particular. We're going to look at what happens when you hand an agent a terse prompt in a stack you haven't mastered yet, and how small, portable markdown files—Rules and Skills—upgrade an eager vibe-coder into a disciplined engineering partner.
 -->
 
 ---
@@ -47,16 +47,16 @@ layout: default
 
 <!-- S02a -->
 <div class="flex items-center gap-3 mb-6">
-  <h2 class="text-2xl font-bold m-0">The Core Thesis &mdash; Part 1: The Trap</h2>
+  <h2 class="text-2xl font-bold m-0">The Core Thesis &mdash; Part 1: The Vibe-Coding Trap</h2>
 </div>
 
 <div class="flex flex-col justify-between gap-6 p-7 rounded-2xl bg-red-950/15 border border-red-500/30">
   <div class="text-xs font-mono text-red-400 uppercase tracking-widest">
-    Out-of-the-Box Coding Agent
+    Out-of-the-Box Agent Harness (Zero Skills)
   </div>
 
   <div class="text-3xl font-extrabold text-white tracking-tight leading-snug max-w-4xl">
-    An unshaped agent will happily generate a working app in a framework you don&rsquo;t know&mdash;and hand you a pile of <span class="text-red-400">Comprehension Debt</span>.
+    An unshaped agent will happily generate a working app in a stack you don&rsquo;t know&mdash;and hand you a pile of <span class="text-red-400">Comprehension Debt</span>.
   </div>
 
   <div class="grid grid-cols-3 gap-4 pt-5 border-t border-red-500/20 text-sm">
@@ -70,13 +70,13 @@ layout: default
     </div>
     <div class="p-3.5 rounded-xl bg-gray-950/70 border border-gray-800">
       <div class="text-red-300 font-bold mb-1">Zero Mental Model</div>
-      <div class="text-gray-300 text-xs leading-relaxed">You own the bugs in production, but not the domain seams to fix them.</div>
+      <div class="text-gray-300 text-xs leading-relaxed">At hour 6 of the hackathon, you own the bugs—but not the domain seams to fix them.</div>
     </div>
   </div>
 </div>
 
 <!--
-Here is the first half of our core thesis. Out of the box, modern coding agents are almost too eager to please. Give them a one-line prompt in a language or framework you don't know, and they will hand you a working app in fifteen minutes—along with a massive pile of Comprehension Debt. You have two thousand lines of code that runs on the simulator, but zero Intent Artifacts in the repo and zero mental model when you need to maintain it.
+Here is the first half of our core thesis, and if you've used any AI coding harness at a hackathon, you've probably felt this firsthand. Out of the box, modern LLMs and agent harnesses are almost too eager to please. Give them a one-line prompt—even in a language or framework you don't know—and they will hand you a working app in fifteen minutes, along with a massive pile of Comprehension Debt. You get two thousand lines of code that runs in the simulator, but zero Intent Artifacts in git, and zero mental model when things break three hours before demos.
 -->
 
 ---
@@ -89,7 +89,7 @@ layout: default
 </div>
 
 <div class="text-2xl font-semibold text-gray-200 leading-snug mb-6">
-  Shaping the agent with rules and Agent Skills (<code class="text-cyan-300">SKILL.md</code>) turns an eager code generator into:
+  Shaping <code class="text-cyan-300">agy</code> (or any harness) with <code class="text-cyan-300">AGENTS.md</code> and Agent Skills (<code class="text-cyan-300">SKILL.md</code>) turns an eager code generator into:
 </div>
 
 <div class="grid grid-cols-2 gap-6 h-68">
@@ -103,11 +103,11 @@ layout: default
         A <span class="text-amber-300">Design Partner</span>
       </h3>
       <p class="text-base text-gray-200 leading-relaxed m-0">
-        Interviews you first, stress-tests domain boundaries, and commits durable <strong>Intent Artifacts</strong> (<code>SPEC.md</code>, tickets) to the repository before generating a single widget.
+        Interviews you first, stress-tests domain boundaries, prototypes options, and commits durable <strong>Intent Artifacts</strong> (<code>GLOSSARY.md</code>, <code>spec.md</code>, tickets) to git before writing production code.
       </p>
     </div>
     <div class="text-xs font-mono text-amber-300/90 pt-3 border-t border-amber-500/20">
-      Outcome: Shared architectural intent in git
+      Outcome: Professional engineering rigor &amp; shared intent in git
     </div>
   </div>
 
@@ -121,17 +121,53 @@ layout: default
         A <span class="text-emerald-300">Personal Tutor</span>
       </h3>
       <p class="text-base text-gray-200 leading-relaxed m-0">
-        Builds an interactive, stateful curriculum directly from your new codebase&mdash;bridging your existing mental model (React) to the new stack (Flutter &amp; Dart).
+        Builds an interactive, stateful curriculum directly from your new codebase&mdash;bridging the stack you already know (e.g., React/TS) to the stack the agent just built (e.g., Flutter &amp; Dart).
       </p>
     </div>
     <div class="text-xs font-mono text-emerald-300/90 pt-3 border-t border-emerald-500/20">
-      Outcome: Earned engineering comprehension
+      Outcome: Earned comprehension so you can extend &amp; defend your code
     </div>
   </div>
 </div>
 
 <!--
-And here is the antidote. By shaping the agent with rules and composable Agent Skills—simple SKILL.md files—we transform its role at both ends of the workflow. Before we write code, skills like /wayfinder turn the agent into a design partner that interviews us and commits durable Intent Artifacts into git. And after the code exists, /teach-code turns the agent into a personal tutor that teaches us the exact architecture it just built.
+And here is the antidote. By shaping the agent with rules and composable Agent Skills—simple SKILL.md playbooks—we transform how the LLM behaves at both ends of the workflow. Before we write code, skills like /wayfinder turn the agent into a senior design partner that interviews us, runs empirical checks, and commits durable Intent Artifacts into git. And after the code exists, /teach-code turns the agent into a personal tutor that bridges from whatever stack you already know to the exact architecture it just built.
+-->
+
+---
+layout: default
+---
+
+<!-- S02d -->
+<div class="flex items-center gap-3 mb-6">
+  <h2 class="text-2xl font-bold m-0">Meet Google Antigravity (<code>agy</code>) &amp; the Skills Stack</h2>
+</div>
+
+<ol class="space-y-4 text-sm text-gray-200 list-decimal pl-6 mt-5 leading-relaxed">
+  <li>
+    <strong class="text-white">The Harness: Google Antigravity (<code>agy</code> CLI &amp; IDE)</strong>
+    <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
+      <li>If you&rsquo;ve used Claude Code or OpenAI&rsquo;s CLI tools, <code>agy</code> is Google&rsquo;s agentic harness powered by Gemini—with sandboxed shell execution, file editing, parallel subagents (<code>invoke_subagent</code>), MCP servers, and full session transcripts in <code>~/.gemini/antigravity/brain/</code>.</li>
+      <li>Typing <code>/clear</code> resets the live context window cleanly so you can chain focused engineering sessions without context rot.</li>
+    </ul>
+  </li>
+  <li>
+    <strong class="text-white">Always-On Rules (<code>AGENTS.md</code>) vs. On-Demand Skills (<code>SKILL.md</code>)</strong>
+    <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
+      <li><strong>Rules (<code>~/.gemini/config/AGENTS.md</code> &amp; <code>./AGENTS.md</code>):</strong> Injected into <em>every</em> turn to set global posture (e.g., ask clarifying questions instead of guessing).</li>
+      <li><strong>Skills (<code>.agents/skills/&lt;name&gt;/SKILL.md</code>):</strong> Modular playbooks with YAML frontmatter (<code>name</code>, <code>description</code>), step-by-step workflows, and helper scripts loaded <em>only</em> when triggered via <code>/skill-name</code> or task relevance.</li>
+    </ul>
+  </li>
+  <li>
+    <strong class="text-white">Write Once, Run Across Agent Harnesses (<code>npx skills add</code>)</strong>
+    <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
+      <li>Skills are an open, portable format: running <code>npx skills@latest add &lt;owner&gt;/&lt;repo&gt;</code> installs <code>SKILL.md</code> playbooks into <code>.agents/skills/</code> that work across <code>agy</code>, Claude Code, Cursor, and more.</li>
+    </ul>
+  </li>
+</ol>
+
+<!--
+Before we jump into our live experiment, let's orient on the tool we're driving today. If you've used Claude Code or OpenAI's CLI harnesses, Google Antigravity—invoked from the terminal as agy, or inside the Antigravity IDE—will feel immediately familiar. It gives Gemini native file tools, a sandboxed terminal, MCP servers, background subagents, and full trajectory logs stored on disk under ~/.gemini/antigravity/brain/. More importantly, agy supports two open customization layers: AGENTS.md for short, always-on rules that shape every turn, and .agents/skills/ for rich, on-demand SKILL.md playbooks that you can install with npx skills add and invoke as slash commands without bloating your base context window.
 -->
 
 ---
@@ -228,19 +264,19 @@ layout: default
 
 <!-- S03 -->
 <div class="flex items-center gap-3 mb-6">
-  <h2 class="text-2xl font-bold m-0">Why Flutter Looks Deceptively Familiar to React Developers</h2>
+  <h2 class="text-2xl font-bold m-0">Case Study: Shipping in an Unfamiliar Stack (React &rarr; Flutter)</h2>
 </div>
 
 <ol class="space-y-4 text-sm text-gray-200 list-decimal pl-6 mt-5 leading-relaxed">
   <li>
-    <strong class="text-white">Shared Declarative DNA (<code>UI = f(state)</code>)</strong>
+    <strong class="text-white">Why Pick an Unfamiliar Stack to Test <code>agy</code> + Skills?</strong>
     <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
-      <li>You already think in declarative component trees, immutable props, and reactive state updates.</li>
-      <li>Flutter&rsquo;s <code>Widget</code> tree maps closely enough to React&rsquo;s JSX component tree that AI-generated Dart code looks <em>almost</em> readable at a glance.</li>
+      <li>At a hackathon (or on a new project), AI agents tempt you to ship on platforms you haven&rsquo;t mastered yet—like a React/TypeScript web developer building a native iOS app in Flutter &amp; Dart.</li>
+      <li>Flutter&rsquo;s <code>Widget</code> tree looks just close enough to React&rsquo;s JSX that LLM-generated Dart code feels <em>deceptively</em> readable at a glance.</li>
     </ul>
   </li>
   <li>
-    <strong class="text-white">Where the Analogy Quietly Breaks</strong>
+    <strong class="text-white">Where Surface Familiarity Quietly Breaks</strong>
     <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
       <li><strong>Type Discipline:</strong> TypeScript uses erased structural typing; Dart 3 enforces sound nominal null-safety at compile time and in the VM.</li>
       <li><strong>Tree Lifecycle:</strong> React re-runs function closures and hooks by call index; Flutter separates immutable <code>Widget</code> configs from long-lived <code>Element</code> (<code>BuildContext</code>) and <code>RenderObject</code> trees.</li>
@@ -249,13 +285,13 @@ layout: default
   <li>
     <strong class="text-white">The Comprehension Debt Trap</strong>
     <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
-      <li>When an AI generates 2,000 lines of Dart, <code>@freezed</code> codegen, and Riverpod providers, it runs on the iOS Simulator—right up until you need to debug a state race or change a storage invariant.</li>
+      <li>When an unshaped agent generates 2,000 lines of Dart, <code>@freezed</code> codegen, and Riverpod providers, it runs on the iOS Simulator—right up until you need to fix a file-write race or explain the architecture to judges.</li>
     </ul>
   </li>
 </ol>
 
 <!--
-Now, most of you have been building mobile apps with React and TypeScript. Why use Flutter for this experiment? Because Flutter sits right in that uncanny valley for a React developer. It's declarative—UI is a function of state—so when an AI generates a Flutter widget tree, you squint at it and think, "Yeah, that looks like JSX with extra parentheses." But underneath, Dart's nominal type system, compile-time const canonicalisation, and three-tree architecture behave very differently from React fibers and hooks. That gap between "it compiles and runs" and "I can confidently modify it" is where Comprehension Debt lives.
+Why did we pick React-to-Flutter as our case study for testing Antigravity and Skills? Because at a hackathon, or whenever you're prototyping something ambitious, AI agents tempt you to reach for a platform or framework you haven't mastered yet—say, a web developer who knows React and TypeScript deciding to ship a native iOS app in Flutter. And Flutter sits right in that uncanny valley: it's declarative—UI is a function of state—so when Gemini generates a widget tree, you squint at it and think, "Yeah, that looks like JSX with extra parentheses." But underneath, Dart's nominal type system, compile-time const canonicalisation, and three-tree architecture behave very differently from React fibers and hooks. That gap between "the LLM made it compile" and "I can confidently debug and extend it" is where Comprehension Debt lives.
 -->
 
 ---

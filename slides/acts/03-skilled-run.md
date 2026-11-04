@@ -88,10 +88,10 @@ layout: default
 
 <ol class="space-y-4 text-sm text-gray-200 list-decimal pl-6 mt-5 leading-relaxed">
   <li>
-    <strong class="text-white"><code>/wayfinder</code> &mdash; Chart &amp; Work the Map Across Sessions</strong>
+    <strong class="text-white"><code>/wayfinder</code> &mdash; Externalize State to Disk Across <code>/clear</code></strong>
     <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
       <li>Instead of 3 surface questions, <code>/wayfinder</code> creates <code>GLOSSARY.md</code>, <code>.scratch/parts-tracker-v1/map.md</code>, and 7 focused child tickets (<code>/grilling</code>, <code>/research</code>, <code>/prototype</code>).</li>
-      <li>Each ticket is resolved in its own fresh conversation separated by <code>/clear</code>—because the state lives on disk in Markdown, not in the context window!</li>
+      <li>Each ticket is resolved in its own fresh <code>agy</code> session separated by <code>/clear</code>—preventing context rot because architectural state lives on disk in Markdown, not in the chat window!</li>
     </ul>
   </li>
   <li>
@@ -103,13 +103,13 @@ layout: default
   <li>
     <strong class="text-white"><code>/implement</code> &mdash; Red-Green-Refactor TDD &amp; Parallel <code>/code-review</code></strong>
     <ul class="list-disc pl-5 mt-1 space-y-1 text-gray-300">
-      <li>Builds each slice test-first and dispatches parallel subagents to audit <strong>Standards</strong> and <strong>Spec Compliance</strong>.</li>
+      <li>Builds each slice test-first and uses <code>agy</code>&rsquo;s <code>invoke_subagent</code> tool to dispatch parallel subagents auditing <strong>Standards</strong> and <strong>Spec Compliance</strong>.</li>
     </ul>
   </li>
 </ol>
 
 <!--
-Instead of trying to cram requirements, architecture, UI design, and coding into one giant context window, Matt Pocock's skill chain treats the filesystem as the agent's long-term memory. Wayfinder interviews us to chart a map of seven open questions—some requiring grilling, one requiring empirical API research, and one requiring a throwaway UI prototype. After resolving each ticket, we type /clear! Because the decisions are written to GLOSSARY.md and .scratch/parts-tracker-v1/map.md, the next session picks up with a clean context window and zero amnesia.
+Here is why Workflow Skills produce such a radically more professional response from an LLM. Instead of cramming requirements, architecture, UI design, and 2,000 lines of code into one giant, degrading context window, Matt Pocock's skill chain treats the filesystem as the agent's long-term memory. Wayfinder interviews us to chart a map of seven open questions—some requiring grilling, one requiring empirical API research, and one requiring a throwaway UI prototype. After resolving each ticket, we type /clear in agy! Because the decisions are written to GLOSSARY.md and .scratch/parts-tracker-v1/map.md, the next session starts with a razor-sharp context window and zero amnesia.
 -->
 
 ---
@@ -123,7 +123,7 @@ fit: both
 
 <!-- S18 -->
 <!--
-Here is the Skilled Run recording. In raw wall-clock time, walking all seven Wayfinder sessions, building three live UI prototypes, compiling the spec, and running vertical-slice TDD took two hours—which our adaptive player compresses into six minutes across 17 chapter stop points. Notice how we can jump directly to Stop Point 4 (Charting the Map), Stop Point 7 (Running the UI Prototypes), Stop Point 11 (/to-spec), or Stop Point 13 (/implement).
+Here is the Skilled Run recording. Walking all seven Wayfinder sessions, building three live UI prototypes, compiling the spec, and running vertical-slice TDD took two hours of wall-clock time—compressed here into six minutes across 17 chapter stop points. And at a hackathon, you don't even have to run the entire two-hour chain every time: you can cherry-pick a 10-minute /grilling session to lock your schema, fire off /research in a background subagent to test an unfamiliar API, or run /prototype to compare three UI layouts in one file.
 -->
 
 ---
