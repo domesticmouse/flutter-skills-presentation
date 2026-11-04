@@ -264,7 +264,7 @@ layout: default
 
 <!-- S04 -->
 <div class="flex items-center gap-3 mb-6">
-  <h2 class="text-2xl font-bold m-0">The Controlled Three-Run Experiment in Google Antigravity (<code>agy</code>)</h2>
+  <h2 class="text-2xl font-bold m-0">The Controlled Three-Run Experiment in Google Antigravity</h2>
 </div>
 
 <div class="p-3.5 rounded-xl bg-gray-900/90 border border-cyan-500/30 text-xs font-mono text-cyan-200 mb-4">
