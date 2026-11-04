@@ -17,7 +17,64 @@ class: text-center
 </div>
 
 <!--
-This brings us to Act 3: The Comprehension Run. Even after the Skilled Run gives us a clean, well-tested Flutter architecture, if our background is React and TypeScript, we still have Comprehension Debt. What are @freezed mixins? How does a Riverpod AsyncNotifier differ from TanStack Query or Zustand? Why is const everywhere? Let's use a skill to make the agent teach us the codebase it just built.
+This brings us to Act 3: The Comprehension Run. Even after the Skilled Run gives us a clean, well-tested Flutter architecture, if our background is React and TypeScript, we still have Comprehension Debt. What are @freezed mixins? How does a Riverpod AsyncNotifier differ from TanStack Query or Zustand? Why is const everywhere? Let's install the /teach-code skill and make the agent teach us the codebase it just built.
+-->
+
+---
+layout: default
+---
+
+<!-- S27a -->
+<div class="flex items-center gap-3 mb-6">
+  <h2 class="text-2xl font-bold m-0">Installing <code>/teach-code</code> via <code>domesticmouse/skills</code></h2>
+</div>
+
+<div class="p-6 rounded-2xl bg-emerald-950/20 border border-emerald-500/40 space-y-3 mb-6">
+  <div class="flex items-center justify-between">
+    <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">One-Command Project Setup</span>
+    <span class="text-xs font-mono text-gray-400">Run inside your project root</span>
+  </div>
+  <div class="p-4 rounded-xl bg-gray-950/90 border border-gray-800 font-mono text-xl font-bold tracking-tight">
+    <span class="text-gray-500 select-none">$ </span><span class="text-emerald-300">npx skills@latest add domesticmouse/skills</span>
+  </div>
+</div>
+
+<div class="grid grid-cols-2 gap-6">
+  <div class="p-5 rounded-xl bg-gray-900/90 border border-cyan-500/30 flex flex-col justify-between space-y-3">
+    <div class="space-y-2">
+      <div class="text-xs font-mono text-cyan-400 uppercase tracking-wide">Canonical Source &amp; Documentation</div>
+      <div class="text-base font-bold font-mono">
+        <a href="https://github.com/domesticmouse/skills/" target="_blank" class="text-cyan-300 hover:underline">
+          https://github.com/domesticmouse/skills/ &nearr;
+        </a>
+      </div>
+      <p class="text-xs text-gray-300 leading-relaxed m-0">
+        Open-source Agent Skills repository hosting the <code>/teach-code</code> interactive curriculum builder and the presentation tooling used to produce this deck.
+      </p>
+    </div>
+    <div class="text-xs font-mono text-gray-400 pt-2 border-t border-gray-800">
+      Focus of Act 3: <code class="text-emerald-300">/teach-code</code> (<code>.agents/skills/teach-code/SKILL.md</code>)
+    </div>
+  </div>
+
+  <div class="p-5 rounded-xl bg-gray-900/90 border border-gray-800 space-y-2.5">
+    <div class="text-xs font-mono text-emerald-400 uppercase tracking-wide">What It Configures on Disk</div>
+    <ul class="text-xs text-gray-300 space-y-2 list-disc pl-4 m-0 leading-relaxed">
+      <li>
+        Installs <code>/teach-code</code> alongside its static HTML compiler (<code>build.py</code>), Tufte CSS templates, and verification gates into <code>.agents/skills/</code>.
+      </li>
+      <li>
+        Turns any existing or freshly generated repository into a stateful, multi-lesson course tailored to your prior engineering background.
+      </li>
+      <li>
+        Also bundles the reproducibility &amp; deck skills: <code>/slidev-deck</code>, <code>/asciinema</code>, <code>/agy-brain-explorer</code>, <code>/ios-simulator-screenshot</code>, and <code>/crop-image</code>.
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!--
+Just like we installed Matt Pocock's skills in Act 2, installing the /teach-code skill for Act 3 is a single terminal command: npx skills@latest add domesticmouse/skills. You can browse the source and documentation at https://github.com/domesticmouse/skills/. That command drops /teach-code—along with its Python HTML compiler and Tufte CSS templates—directly into .agents/skills/ so the agent can turn our newly built Flutter codebase into an interactive course.
 -->
 
 ---
